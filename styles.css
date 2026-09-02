@@ -255,6 +255,119 @@ button {
   font-size: 12px;
 }
 
+.skill-library {
+  margin-top: 84px;
+  padding-top: 30px;
+  border-top: 1px solid var(--ink);
+}
+
+.skill-library-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  align-items: end;
+}
+
+.skill-library-header h2 {
+  margin: 0;
+  font-size: clamp(30px, 5vw, 54px);
+  line-height: 1;
+  letter-spacing: -.05em;
+  font-weight: 500;
+}
+
+.skill-library-intro {
+  max-width: 720px;
+  margin: 24px 0 34px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.set-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  align-items: center;
+}
+
+.set-label,
+.skill-progress {
+  font-family: "DM Mono", monospace;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.set-label {
+  width: 100%;
+  text-align: right;
+}
+
+.compact-button {
+  min-height: 38px;
+  padding-inline: 14px;
+  font-size: 11px;
+}
+
+.domain-list {
+  display: grid;
+  gap: 42px;
+}
+
+.domain-group {
+  display: grid;
+  grid-template-columns: minmax(180px, .65fr) minmax(0, 2fr);
+  gap: 30px;
+}
+
+.domain-group h3 {
+  margin: 10px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.skill-list {
+  border-top: 1px solid var(--line);
+}
+
+.skill-row {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 28px;
+  align-items: center;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 18px 4px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.skill-row:hover {
+  background: var(--white);
+}
+
+.skill-row strong,
+.skill-row small {
+  display: block;
+}
+
+.skill-row strong {
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.skill-row small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.skill-progress {
+  white-space: nowrap;
+}
+
 .arrow {
   color: var(--ink);
   font-size: 20px;
@@ -459,6 +572,41 @@ button {
 .data-table th {
   background: var(--soft);
   font-weight: 500;
+}
+
+.question-figure {
+  margin: 4px 0 30px;
+  border: 1px solid var(--line);
+  padding: 14px;
+  background: var(--soft);
+}
+
+.question-figure svg {
+  width: 100%;
+  max-height: 320px;
+  display: block;
+  background: var(--white);
+}
+
+.question-figure figcaption {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.axis-line {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+
+.axis-label {
+  fill: var(--muted);
+  font-family: "DM Mono", monospace;
+  font-size: 12px;
+}
+
+.data-point {
+  fill: var(--ink);
 }
 
 .choices {
@@ -791,8 +939,22 @@ button {
 
   .section-grid,
   .standards,
-  .standards-list {
+  .standards-list,
+  .domain-group {
     grid-template-columns: 1fr;
+  }
+
+  .skill-library-header {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .set-controls {
+    justify-content: flex-start;
+  }
+
+  .set-label {
+    text-align: left;
   }
 
   .standards {

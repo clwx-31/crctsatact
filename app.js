@@ -2,12 +2,20 @@
   "use strict";
 
   const STORAGE_KEY = "form-sat-practice-v1";
+  const MATH_SEED_KEY = "form-sat-math-seed-v1";
+  const MATH_VARIANT_KEY = "form-sat-math-variant-v1";
+  const RW_SEED_KEY = "form-sat-rw-seed-v1";
+  const RW_VARIANT_KEY = "form-sat-rw-variant-v1";
   const app = document.querySelector("#app");
   const homeButton = document.querySelector("#home-button");
   const letters = ["A", "B", "C", "D"];
 
+  let mathSeed = localStorage.getItem(MATH_SEED_KEY) || "baseline-v1";
+  let rwSeed = localStorage.getItem(RW_SEED_KEY) || "baseline-v1";
+  if (typeof window.applySATMathSet === "function") window.applySATMathSet(mathSeed);
+  if (typeof window.applySATRWSet === "function") window.applySATRWSet(rwSeed);
   let state = loadState();
-  let view = { name: "dashboard", section: null, index: 0 };
+  let view = { name: "dashboard", section: null, skill: null, difficulty: null, index: 0 };
 
   function loadState() {
     const fallback = { responses: {}, bookmarks: {} };
@@ -23,8 +31,10 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }
 
-  function sectionQuestions(section) {
-    return window.SAT_QUESTIONS.filter((question) => question.section === section);
+  function sectionQuestions(section, skill = null, difficulty = null) {
+    return window.SAT_QUESTIONS.filter((question) => question.section === section
+      && (!skill || question.skill === skill)
+      && (!difficulty || question.difficulty === difficulty));
   }
 
   function answered(question) {
@@ -41,15 +51,15 @@
     };
   }
 
-  function startSection(section) {
-    const questions = sectionQuestions(section);
+  function startSection(section, skill = null, difficulty = null) {
+    const questions = sectionQuestions(section, skill, difficulty);
     const firstOpen = questions.findIndex((question) => !answered(question));
-    view = { name: "practice", section, index: firstOpen === -1 ? 0 : firstOpen };
+    view = { name: "practice", section, skill, difficulty, index: firstOpen === -1 ? 0 : firstOpen };
     render();
   }
 
   function goHome() {
-    view = { name: "dashboard", section: null, index: 0 };
+    view = { name: "dashboard", section: null, skill: null, difficulty: null, index: 0 };
     render();
   }
 
@@ -69,6 +79,7 @@
     const math = sectionQuestions("Math");
     const rwStats = responseStats(rw);
     const mathStats = responseStats(math);
+    const totalQuestions = window.SAT_QUESTIONS.length;
 
     app.innerHTML = `
       <div class="dashboard">
@@ -77,14 +88,14 @@
             <p class="eyebrow">Focused practice / current digital format</p>
             <h1 id="page-title">Practice precisely.</h1>
           </div>
-          <p class="hero-copy">One hundred original questions shaped around the current SAT blueprint. Work by section, see the reasoning, and keep your weak spots visible.</p>
+          <p class="hero-copy">${totalQuestions} original questions shaped around the current SAT blueprint. Drill one exact skill at a time, see the reasoning, and generate fresh variants without losing prior progress.</p>
         </section>
 
         <section class="metrics" aria-label="Practice progress">
-          <div class="metric"><span class="metric-value">${overall.completed}<span class="faint">/100</span></span><span class="metric-label">Completed</span></div>
+          <div class="metric"><span class="metric-value">${overall.completed}<span class="faint">/${totalQuestions}</span></span><span class="metric-label">Completed</span></div>
           <div class="metric"><span class="metric-value">${overall.completed ? `${overall.accuracy}%` : "—"}</span><span class="metric-label">Accuracy</span></div>
-          <div class="metric"><span class="metric-value">${rwStats.completed}<span class="faint">/50</span></span><span class="metric-label">Reading + Writing</span></div>
-          <div class="metric"><span class="metric-value">${mathStats.completed}<span class="faint">/50</span></span><span class="metric-label">Math</span></div>
+          <div class="metric"><span class="metric-value">${rwStats.completed}<span class="faint">/${rw.length}</span></span><span class="metric-label">Reading + Writing</span></div>
+          <div class="metric"><span class="metric-value">${mathStats.completed}<span class="faint">/${math.length}</span></span><span class="metric-label">Math</span></div>
         </section>
 
         <div class="section-heading">
@@ -93,15 +104,18 @@
         </div>
 
         <section class="section-grid" aria-label="SAT sections">
-          ${sectionCard("01", "Reading and Writing", "Reading + Writing", rwStats, "4 domains · 50 questions")}
-          ${sectionCard("02", "Math", "Math", mathStats, "4 domains · 50 questions")}
+          ${sectionCard("01", "Reading and Writing", "Reading + Writing", rwStats, `4 domains · 11 skills · ${rw.length} questions`, rw.length)}
+          ${sectionCard("02", "Math", "Math", mathStats, `4 domains · 20 skills · ${math.length} questions`, math.length)}
         </section>
+
+        ${renderRWLibrary()}
+        ${renderMathLibrary()}
 
         <section class="standards" aria-labelledby="standards-title">
           <h2 id="standards-title">Built to the blueprint</h2>
           <div class="standards-list">
             <div class="standard"><span class="standard-number">01 / FORMAT</span><p>Short passages, one Reading and Writing question per text, and both Math response formats.</p></div>
-            <div class="standard"><span class="standard-number">02 / COVERAGE</span><p>Domain proportions mirror the College Board specifications across both sections.</p></div>
+            <div class="standard"><span class="standard-number">02 / COVERAGE</span><p>Every targeted Math and Reading and Writing skill has 25 questions progressing through easy, medium, and hard variants.</p></div>
             <div class="standard"><span class="standard-number">03 / REVIEW</span><p>Every item includes a direct rationale designed to expose the tested idea—not just name the key.</p></div>
           </div>
         </section>
@@ -110,20 +124,126 @@
     document.querySelectorAll("[data-section]").forEach((button) => {
       button.addEventListener("click", () => startSection(button.dataset.section));
     });
+    document.querySelectorAll("[data-math-skill]").forEach((button) => {
+      button.addEventListener("click", () => startSection("Math", button.dataset.mathSkill));
+    });
+    document.querySelectorAll("[data-rw-skill]").forEach((button) => {
+      button.addEventListener("click", () => startSection("Reading and Writing", button.dataset.rwSkill));
+    });
+    document.querySelector("#todays-math-set")?.addEventListener("click", () => {
+      const today = new Date();
+      const date = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, "0"), String(today.getDate()).padStart(2, "0")].join("-");
+      applyMathSeed(`daily-${date}`);
+    });
+    document.querySelector("#new-math-variant")?.addEventListener("click", () => {
+      const next = Number(localStorage.getItem(MATH_VARIANT_KEY) || 0) + 1;
+      localStorage.setItem(MATH_VARIANT_KEY, String(next));
+      applyMathSeed(`variant-${next}`);
+    });
+    document.querySelector("#todays-rw-set")?.addEventListener("click", () => {
+      const today = new Date();
+      const date = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, "0"), String(today.getDate()).padStart(2, "0")].join("-");
+      applyRWSeed(`daily-${date}`);
+    });
+    document.querySelector("#new-rw-variant")?.addEventListener("click", () => {
+      const next = Number(localStorage.getItem(RW_VARIANT_KEY) || 0) + 1;
+      localStorage.setItem(RW_VARIANT_KEY, String(next));
+      applyRWSeed(`variant-${next}`);
+    });
   }
 
-  function sectionCard(index, section, label, stats, detail) {
-    const action = stats.completed === 50 ? "Review section" : stats.completed ? "Continue practice" : "Start practice";
+  function sectionCard(index, section, label, stats, detail, total) {
+    const action = stats.completed === total ? "Review section" : stats.completed ? "Continue practice" : "Start practice";
     return `
       <button class="section-card" type="button" data-section="${section}">
-        <span class="section-card-top"><span class="section-index">${index}</span><span class="section-count">${stats.completed}/50 complete</span></span>
+        <span class="section-card-top"><span class="section-index">${index}</span><span class="section-count">${stats.completed}/${total} complete</span></span>
         <h3>${label}</h3>
         <span class="section-card-footer"><span>${detail}</span><span><span class="sr-only">${action}</span><span class="arrow" aria-hidden="true">↗</span></span></span>
       </button>`;
   }
 
+  function renderMathLibrary() {
+    if (!Array.isArray(window.SAT_MATH_SKILLS)) return "";
+    const domains = [...new Set(window.SAT_MATH_SKILLS.map((skill) => skill.domain))];
+    return `
+      <section class="skill-library" aria-labelledby="math-library-title">
+        <div class="skill-library-header">
+          <div><p class="eyebrow">Targeted Math practice</p><h2 id="math-library-title">Choose an exact skill.</h2></div>
+          <div class="set-controls">
+            <span class="set-label">Current set: ${escapeHtml(mathSeed)}</span>
+            <button class="secondary-button compact-button" id="todays-math-set" type="button">Today's set</button>
+            <button class="secondary-button compact-button" id="new-math-variant" type="button">New variant</button>
+          </div>
+        </div>
+        <p class="skill-library-intro">Each skill contains 25 reproducible questions: 8 easy, 9 medium, and 8 hard. A new set changes the numbers and contexts while preserving the tested patterns.</p>
+        <div class="domain-list">
+          ${domains.map((domain) => `
+            <section class="domain-group">
+              <h3>${domain}</h3>
+              <div class="skill-list">
+                ${window.SAT_MATH_SKILLS.filter((skill) => skill.domain === domain).map((skill) => {
+                  const questions = sectionQuestions("Math", skill.name);
+                  const stats = responseStats(questions);
+                  return `<button class="skill-row" type="button" data-math-skill="${escapeHtml(skill.name)}">
+                    <span><strong>${escapeHtml(skill.name)}</strong><small>${escapeHtml(skill.description)}</small></span>
+                    <span class="skill-progress">${stats.completed}/25 <span aria-hidden="true">↗</span></span>
+                  </button>`;
+                }).join("")}
+              </div>
+            </section>`).join("")}
+        </div>
+      </section>`;
+  }
+
+  function renderRWLibrary() {
+    if (!Array.isArray(window.SAT_RW_SKILLS)) return "";
+    const domains = [...new Set(window.SAT_RW_SKILLS.map((skill) => skill.domain))];
+    return `
+      <section class="skill-library" aria-labelledby="rw-library-title">
+        <div class="skill-library-header">
+          <div><p class="eyebrow">Targeted Reading and Writing practice</p><h2 id="rw-library-title">Choose an exact skill.</h2></div>
+          <div class="set-controls">
+            <span class="set-label">Current set: ${escapeHtml(rwSeed)}</span>
+            <button class="secondary-button compact-button" id="todays-rw-set" type="button">Today's set</button>
+            <button class="secondary-button compact-button" id="new-rw-variant" type="button">New variant</button>
+          </div>
+        </div>
+        <p class="skill-library-intro">Each skill contains 25 original questions: 8 easy, 9 medium, and 8 hard. Passages follow the digital SAT's one-question-per-text format.</p>
+        <div class="domain-list">
+          ${domains.map((domain) => `
+            <section class="domain-group">
+              <h3>${domain}</h3>
+              <div class="skill-list">
+                ${window.SAT_RW_SKILLS.filter((skill) => skill.domain === domain).map((skill) => {
+                  const questions = sectionQuestions("Reading and Writing", skill.name);
+                  const stats = responseStats(questions);
+                  return `<button class="skill-row" type="button" data-rw-skill="${escapeHtml(skill.name)}">
+                    <span><strong>${escapeHtml(skill.name)}</strong><small>${escapeHtml(skill.description)}</small></span>
+                    <span class="skill-progress">${stats.completed}/25 <span aria-hidden="true">↗</span></span>
+                  </button>`;
+                }).join("")}
+              </div>
+            </section>`).join("")}
+        </div>
+      </section>`;
+  }
+
+  function applyMathSeed(seed) {
+    mathSeed = seed;
+    localStorage.setItem(MATH_SEED_KEY, seed);
+    window.applySATMathSet(seed);
+    goHome();
+  }
+
+  function applyRWSeed(seed) {
+    rwSeed = seed;
+    localStorage.setItem(RW_SEED_KEY, seed);
+    window.applySATRWSet(seed);
+    goHome();
+  }
+
   function renderPractice() {
-    const questions = sectionQuestions(view.section);
+    const questions = sectionQuestions(view.section, view.skill, view.difficulty);
     const question = questions[view.index];
     const stats = responseStats(questions);
     const response = state.responses[question.id] || {};
@@ -132,7 +252,7 @@
     app.innerHTML = `
       <div class="practice-shell">
         <div class="practice-toolbar">
-          <div class="toolbar-title">${view.section}</div>
+          <div class="toolbar-title">${view.skill ? escapeHtml(view.skill) : view.section}</div>
           <div class="progress-wrap">
             <div class="progress-meta"><span class="progress-label">Section progress</span><span>${stats.completed} / ${questions.length}</span></div>
             <div class="progress-track"><div class="progress-bar" style="width:${(stats.completed / questions.length) * 100}%"></div></div>
@@ -154,6 +274,7 @@
                 ${question.type === "spr" ? '<span class="tag">Student response</span>' : ""}
               </div>
               ${question.stimulus ? `<div class="stimulus">${escapeHtml(question.stimulus)}</div>` : ""}
+              ${question.figure ? renderFigure(question.figure) : ""}
               ${question.table ? renderTable(question.table) : ""}
               <h1 class="question-prompt">${escapeHtml(question.question)}</h1>
               ${question.type === "spr" ? renderStudentResponse(question, response) : renderChoices(question, response)}
@@ -207,6 +328,28 @@
         <thead><tr>${table.headers.map((header) => `<th scope="col">${escapeHtml(header)}</th>`).join("")}</tr></thead>
         <tbody>${table.rows.map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(String(cell))}</td>`).join("")}</tr>`).join("")}</tbody>
       </table>`;
+  }
+
+  function renderFigure(figure) {
+    if (figure.kind !== "scatter" || !Array.isArray(figure.points) || !figure.points.length) return "";
+    const xs = figure.points.map((point) => Number(point[0]));
+    const ys = figure.points.map((point) => Number(point[1]));
+    const minX = Math.min(0, ...xs);
+    const maxX = Math.max(...xs) || 1;
+    const minY = Math.min(0, ...ys);
+    const maxY = Math.max(...ys) || 1;
+    const plotX = (x) => 42 + ((x - minX) / (maxX - minX || 1)) * 322;
+    const plotY = (y) => 220 - ((y - minY) / (maxY - minY || 1)) * 182;
+    return `<figure class="question-figure">
+      <svg viewBox="0 0 400 260" role="img" aria-label="${escapeHtml(figure.label || "Scatterplot")}">
+        <line x1="42" y1="220" x2="372" y2="220" class="axis-line" />
+        <line x1="42" y1="228" x2="42" y2="32" class="axis-line" />
+        <text x="374" y="238" class="axis-label">x</text>
+        <text x="26" y="28" class="axis-label">y</text>
+        ${figure.points.map(([x, y]) => `<circle cx="${plotX(Number(x)).toFixed(2)}" cy="${plotY(Number(y)).toFixed(2)}" r="5" class="data-point"><title>x = ${escapeHtml(x)}, y = ${escapeHtml(y)}</title></circle>`).join("")}
+      </svg>
+      <figcaption>${escapeHtml(figure.label || "Scatterplot")}</figcaption>
+    </figure>`;
   }
 
   function renderFeedback(question, response) {
