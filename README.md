@@ -9,6 +9,9 @@ A no-build digital SAT practice site organized around exact College Board skill 
 - passages, paired texts, tables, and scatterplots
 - explanations, bookmarks, a question navigator, and locally saved progress
 - reproducible daily and numbered variant sets
+- answer-specific misconception coaching after missed practice questions
+- 10-question skill tests, 22/27-question module tests, and 98-question full simulations
+- optional timers, deferred test feedback, score estimates and uncertainty ranges, domain results, and test history
 
 All questions are original. This project is independent and is not affiliated with or endorsed by College Board. SAT is a registered trademark of College Board.
 
@@ -35,6 +38,14 @@ The dashboard has two controls for each section:
 
 The generation model, recipe catalog, seed behavior, and extension instructions are documented in [GENERATION.md](GENERATION.md).
 
+## Tests and estimated scores
+
+Every skill row includes a 10-question mini-test. The Test Center also provides one-module section tests and a four-module full-length simulation. Timed mode follows the current official module times; untimed mode uses the same question blueprint without a clock.
+
+Test answers and explanations remain hidden until submission. Results include an estimated SAT section or total score, an uncertainty range, domain performance, and answer-specific review for every missed question.
+
+The estimate is anchored to College Board's 2026 Practice Test 11 conversion ranges and widened for shorter tests. It is not an official score because the generated questions have not been psychometrically calibrated and the simulation is nonadaptive. The complete methodology is documented in [SCORING.md](SCORING.md).
+
 ## Validate the bank
 
 With Node.js installed:
@@ -44,10 +55,11 @@ node validate.js
 node --check app.js
 node --check math-generator.js
 node --check rw-generator.js
+node --check test-engine.js
 node --check questions.js
 ```
 
-The validator checks totals, exact skill and difficulty coverage, unique IDs and prompts, answer formats and SAT-grid-length responses, unique choices, table and figure structure, deterministic regeneration, alternate seeds, and independently recalculates numerical answers for high-risk Math recipes.
+The validator checks totals, exact skill and difficulty coverage, unique IDs and prompts, answer formats and SAT-grid-length responses, unique choices, table and figure structure, deterministic regeneration, alternate seeds, independent Math calculations, coaching coverage, mini-test and module blueprints, full-test assembly, and score endpoints.
 
 ## Calibration sources
 

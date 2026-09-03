@@ -4,6 +4,7 @@ global.window = {};
 require("./questions.js");
 require("./math-generator.js");
 require("./rw-generator.js");
+require("./test-engine.js");
 
 const BASELINE_SEED = "baseline-v1";
 const STRESS_SEED_COUNT = 100;
@@ -186,6 +187,17 @@ for (const question of readingWriting) {
   if (wordCount > 150) fail(`${question.id}: passage exceeds the official 150-word maximum.`);
 }
 
+for (const question of questions) {
+  const wrongValue = question.type === "mcq" ? (question.answer + 1) % 4 : "987654";
+  const correctValue = question.type === "mcq" ? question.answer : question.accepted[0];
+  if (!window.responseIsCorrect(question, correctValue)) fail(`${question.id}: the test engine rejected a correct response.`);
+  if (window.responseIsCorrect(question, wrongValue)) fail(`${question.id}: the test engine accepted a known wrong response.`);
+  const coaching = window.getSATCoaching(question, wrongValue);
+  for (const field of ["selected", "correct", "diagnosis", "solution", "rule", "nextStep"]) {
+    if (!coaching[field] || /undefined|NaN/.test(String(coaching[field]))) fail(`${question.id}: coaching is missing ${field}.`);
+  }
+}
+
 if (JSON.stringify(math) !== JSON.stringify(window.buildSATMathQuestions(BASELINE_SEED))) fail("Math generation is not deterministic for a fixed seed.");
 if (JSON.stringify(readingWriting) !== JSON.stringify(window.buildSATRWQuestions(BASELINE_SEED))) fail("Reading and Writing generation is not deterministic for a fixed seed.");
 
@@ -201,6 +213,64 @@ for (let index = 0; index < STRESS_SEED_COUNT; index += 1) {
   }
 }
 
+const testDefinitions = [
+  ...window.SAT_MATH_SKILLS.map((skill) => ({ kind: "skill", section: "Math", skill: skill.name, expected: 10 })),
+  ...window.SAT_RW_SKILLS.map((skill) => ({ kind: "skill", section: "Reading and Writing", skill: skill.name, expected: 10 })),
+  { kind: "section", section: "Math", expected: 22 },
+  { kind: "section", section: "Reading and Writing", expected: 27 },
+  { kind: "full", expected: 98 }
+];
+
+for (const definition of testDefinitions) {
+  const test = window.buildSATTest({ ...definition, seed: "validator-test" }, questions);
+  const repeated = window.buildSATTest({ ...definition, seed: "validator-test" }, questions);
+  const testQuestions = test.modules.flatMap((module) => module.questions);
+  if (testQuestions.length !== definition.expected) fail(`${test.definition.title}: expected ${definition.expected} test questions; found ${testQuestions.length}.`);
+  if (new Set(testQuestions.map((question) => question.id)).size !== testQuestions.length) fail(`${test.definition.title}: duplicate test questions.`);
+  if (JSON.stringify(test) !== JSON.stringify(repeated)) fail(`${test.definition.title}: test assembly is not deterministic.`);
+  if (definition.kind === "skill") {
+    if (testQuestions.some((question) => question.skill !== definition.skill)) fail(`${test.definition.title}: includes another skill.`);
+    if (!sameCounts(counts(testQuestions, "difficulty"), { Easy: 3, Medium: 4, Hard: 3 })) fail(`${test.definition.title}: difficulty mix is incorrect.`);
+  }
+}
+
+const fullTest = window.buildSATTest({ kind: "full", seed: "validator-full" }, questions);
+if (fullTest.modules.length !== 4 || !sameCounts(counts(fullTest.modules, "section"), { "Reading and Writing": 2, Math: 2 })) fail("Full test must contain four correctly labeled modules.");
+if (!fullTest.modules.every((module) => module.questions.length === (module.section === "Math" ? 22 : 27))) fail("Full test module lengths are incorrect.");
+if (!fullTest.modules.every((module) => module.durationSeconds === (module.section === "Math" ? 35 : 32) * 60)) fail("Full test module times are incorrect.");
+const fullQuestions = fullTest.modules.flatMap((module) => module.questions);
+if (!sameCounts(counts(fullQuestions, "domain"), {
+  "Information and Ideas": 14,
+  "Craft and Structure": 15,
+  "Expression of Ideas": 11,
+  "Standard English Conventions": 14,
+  Algebra: 15,
+  "Advanced Math": 15,
+  "Problem-Solving and Data Analysis": 7,
+  "Geometry and Trigonometry": 7
+})) fail("Full test domain quotas are incorrect.");
+const correctAnswers = Object.fromEntries(fullQuestions.map((question) => [question.id, question.type === "mcq" ? question.answer : question.answerDisplay]));
+const wrongAnswers = Object.fromEntries(fullQuestions.map((question) => [question.id, question.type === "mcq" ? (question.answer + 1) % 4 : "987654"]));
+const perfectScore = window.scoreSATTest(fullTest, correctAnswers);
+const minimumScore = window.scoreSATTest(fullTest, wrongAnswers);
+if (perfectScore.total?.estimate !== 1600 || minimumScore.total?.estimate !== 400) fail("Full-test score endpoints must be 400 and 1600.");
+for (const score of [perfectScore, minimumScore]) {
+  for (const result of Object.values(score.sections)) {
+    if (result.low > result.estimate || result.high < result.estimate || result.low < 200 || result.high > 800) fail(`${result.section}: estimated range is invalid.`);
+  }
+}
+
+let previousEstimate = 400;
+for (let correctCount = 0; correctCount <= fullQuestions.length; correctCount += 1) {
+  const answers = Object.fromEntries(fullQuestions.map((question, index) => [
+    question.id,
+    index < correctCount ? (question.type === "mcq" ? question.answer : question.accepted[0]) : (question.type === "mcq" ? (question.answer + 1) % 4 : "987654")
+  ]));
+  const estimate = window.scoreSATTest(fullTest, answers).total.estimate;
+  if (estimate < previousEstimate) fail(`Full-test estimate decreased from ${previousEstimate} to ${estimate} after an additional correct answer.`);
+  previousEstimate = estimate;
+}
+
 if (failures.length) {
   console.error(failures.join("\n"));
   process.exit(1);
@@ -211,3 +281,4 @@ console.log("775 unique questions: 275 Reading and Writing, 500 Math.");
 console.log("31 exact skill selectors; every skill has 25 questions (8 easy, 9 medium, 8 hard). ");
 console.log(`${mathTypes.mcq} Math multiple-choice and ${mathTypes.spr} Math student-produced response questions.`);
 console.log(`Deterministic generation, ${STRESS_SEED_COUNT} alternate seeds, response formats, choices, tables, figures, and independent numeric answer calculations passed.`);
+console.log("Answer-specific coaching, 31 skill mini-tests, section tests, full-test blueprints, and monotonic score estimates passed.");
