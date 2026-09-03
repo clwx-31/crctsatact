@@ -1,14 +1,16 @@
 # SAT skill-bank research and implementation report
 
-**Audience:** Form SAT Practice maintainers  
-**Research date:** 2026-09-02  
+**Audience:** Form SAT Practice maintainers
+
+**Research dates:** 2026-09-02 through 2026-09-03
+
 **Scope:** Current digital SAT Math and Reading and Writing content boundaries, item structures, and their implementation as reproducible original drills.
 
 ## Executive answer
 
-The implemented bank maps the current first-party College Board content taxonomy into 31 drill selectors: 20 Math and 11 Reading and Writing. Each selector contains 25 original questions in an 8 easy, 9 medium, and 8 hard progression, for 775 questions total. The system can regenerate each complete bank from a seed while preserving the recipe, seed, variant, input parameters, and retry count on every item.
+The implemented bank maps the current first-party College Board content taxonomy into 31 drill selectors: 20 Math and 11 Reading and Writing. Each selector contains two non-overlapping sets of 25 original questions, with 8 easy, 9 medium, and 8 hard questions in each set, for 1,550 questions total. The system can regenerate both complete banks from a seed while preserving the set, recipe, seed, variant, input parameters, and retry count on every item.
 
-This is a comprehensive skill-practice library, not a scored or adaptive SAT simulation. The difficulty tiers are instructional judgments based on the number of steps, abstraction, representation, and distractor closeness; they are not psychometrically equated. Official Bluebook tests remain the appropriate source for timing, adaptive-module practice, and score estimation.
+This is a comprehensive skill-practice library with nonadaptive practice-test simulations and transparent estimated score ranges. The difficulty tiers are instructional judgments based on the number of steps, abstraction, representation, and distractor closeness; they are not psychometrically equated. Official Bluebook tests remain the strongest source for authentic adaptive-module practice and score estimation.
 
 ## Research findings translated into the product
 
@@ -31,13 +33,13 @@ The framework treats textual and quantitative Command of Evidence as distinct te
 
 The recipe catalog covers every testing point named in the framework, including algebraic manipulation and equations; nonlinear functions and systems; ratios, percentages, data, probability, inference, and study design; area, volume, similarity, angle relationships, trigonometry, unit-circle relationships, and circles. Reading and Writing recipes cover central ideas, details, evidence, inference, vocabulary in context, text purpose and structure, cross-text connections, rhetorical synthesis, transitions, sentence boundaries, and form/structure/sense conventions.
 
-Equal 25-question banks support isolated repetition. They intentionally do not reproduce the domain proportions in a real adaptive module. The detailed recipe-to-skill inventory is maintained in `GENERATION.md`.
+Two equal 25-question sets support isolated repetition without reusing content. Each set spans the same 166 generator recipes. The skill banks intentionally do not reproduce the domain proportions in a real adaptive module; test-mode forms use separate blueprint quotas. The detailed recipe-to-skill inventory is maintained in `GENERATION.md`.
 
 ### Generation and answer integrity
 
 Each question is constructed from a known answer or relationship, rather than by generating arbitrary values and hoping for a clean result. Characteristic misconceptions become distractors. A 32-bit FNV-1a hash and xorshift32 stream make sets deterministic by seed; separate streams by skill, variant, difficulty, and retry prevent one recipe change from indiscriminately reshuffling the whole bank.
 
-Validation checks exact totals, taxonomy, difficulty counts, unique IDs and content, response formats, four distinct multiple-choice options, tables, scatterplot data, Reading and Writing passage length, deterministic output, and independently recalculated numeric answers. Alternate-seed testing probes parameter ranges and duplicate prevention beyond the baseline set.
+Validation checks all 1,550 items, the independent set boundaries, exact taxonomy, recipe parity, difficulty counts, unique IDs and content, response formats, four distinct multiple-choice options, tables, scatterplot data, Reading and Writing passage length, answer-specific coaching, deterministic output, and independently recalculated numeric answers. One hundred alternate two-set seeds probe parameter ranges and cross-set duplicate prevention beyond the baseline bank.
 
 ## Assumptions and boundaries
 
@@ -51,7 +53,7 @@ Validation checks exact totals, taxonomy, difficulty counts, unique IDs and cont
 
 | Claim used | Source | Publisher | Source date | URL | Accessed |
 |---|---|---|---|---|---|
-| Official section, domain, skill, testing-point, passage-length, and response-format definitions | *Assessment Framework for the Digital SAT Suite* | College Board | 2022 framework; current hosted copy | https://satsuite.collegeboard.org/media/pdf/assessment-framework-for-digital-sat-suite.pdf | 2026-09-02 |
+| Official section, domain, skill, detailed testing-point, passage-length, and response-format definitions | *Assessment Framework for the Digital SAT Suite*, version 3.01 | College Board | 2024-08 | https://satsuite.collegeboard.org/media/pdf/assessment-framework-for-digital-sat-suite.pdf | 2026-09-03 |
 | Current Math taxonomy and public testing-point wording | *SAT Content Domains* | College Board | Current web page | https://satsuite.collegeboard.org/higher-ed-professionals/sat-validity/content-domains | 2026-09-02 |
 | Math section scope and response-format overview | *The Math Section: Overview* | College Board | Current web page | https://satsuite.collegeboard.org/sat/whats-on-the-test/math/overview | 2026-09-02 |
 | Reading and Writing section format and domain overview | *The Reading and Writing Section: Overview* | College Board | Current web page | https://satsuite.collegeboard.org/sat/whats-on-the-test/reading-writing | 2026-09-02 |

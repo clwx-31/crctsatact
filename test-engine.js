@@ -29,10 +29,12 @@
 
   const SECTION_DOMAINS = {
     "Reading and Writing": {
+      10: { "Information and Ideas": 3, "Craft and Structure": 3, "Expression of Ideas": 2, "Standard English Conventions": 2 },
       27: { "Information and Ideas": 7, "Craft and Structure": 8, "Expression of Ideas": 5, "Standard English Conventions": 7 },
       54: { "Information and Ideas": 14, "Craft and Structure": 15, "Expression of Ideas": 11, "Standard English Conventions": 14 }
     },
     Math: {
+      10: { Algebra: 3, "Advanced Math": 3, "Problem-Solving and Data Analysis": 2, "Geometry and Trigonometry": 2 },
       22: { Algebra: 8, "Advanced Math": 8, "Problem-Solving and Data Analysis": 3, "Geometry and Trigonometry": 3 },
       44: { Algebra: 15, "Advanced Math": 15, "Problem-Solving and Data Analysis": 7, "Geometry and Trigonometry": 7 }
     }
@@ -189,20 +191,33 @@
       const minutes = section === "Math" ? 35 : 32;
       return { kind, section, skill: null, title: `${section} module test`, summary: `${questionCount} questions · ${minutes} minutes`, minutes, questionCount };
     }
+    if (kind === "mixed") {
+      return { kind, section: null, skill: null, title: "Combined Math + Reading mini-test", summary: "20 questions · 28 minutes", minutes: 28, questionCount: 20 };
+    }
     return { kind: "full", section: null, skill: null, title: "Full-length SAT simulation", summary: "98 questions · 2 hours 14 minutes", minutes: 134, questionCount: 98 };
   }
 
   function buildSATTest(options, pool = window.SAT_QUESTIONS) {
     const definition = testDefinition(options.kind, options.section, options.skill);
     const seed = String(options.seed || "test-1");
+    const practiceSets = {
+      "Reading and Writing": Number(options.practiceSets?.["Reading and Writing"] ?? options.practiceSet) === 2 ? 2 : 1,
+      Math: Number(options.practiceSets?.Math ?? options.practiceSet) === 2 ? 2 : 1
+    };
+    const sectionPool = (section) => pool.filter((question) => question.section === section && (question.practiceSet === undefined || question.practiceSet === practiceSets[section]));
     let modules;
     if (definition.kind === "skill") {
-      modules = [{ label: definition.title, section: definition.section, durationSeconds: definition.minutes * 60, questions: selectSkill(pool, definition.section, definition.skill, seed) }];
+      modules = [{ label: definition.title, section: definition.section, durationSeconds: definition.minutes * 60, questions: selectSkill(sectionPool(definition.section), definition.section, definition.skill, seed) }];
     } else if (definition.kind === "section") {
-      modules = [{ label: definition.title, section: definition.section, durationSeconds: definition.minutes * 60, questions: selectSection(pool, definition.section, definition.questionCount, seed) }];
+      modules = [{ label: definition.title, section: definition.section, durationSeconds: definition.minutes * 60, questions: selectSection(sectionPool(definition.section), definition.section, definition.questionCount, seed) }];
+    } else if (definition.kind === "mixed") {
+      modules = [
+        { label: "Reading and Writing · Mini module", section: "Reading and Writing", durationSeconds: 12 * 60, questions: selectSection(sectionPool("Reading and Writing"), "Reading and Writing", 10, `${seed}/rw`) },
+        { label: "Math · Mini module", section: "Math", durationSeconds: 16 * 60, questions: selectSection(sectionPool("Math"), "Math", 10, `${seed}/math`) }
+      ];
     } else {
-      const readingWriting = selectSection(pool, "Reading and Writing", 54, `${seed}/rw`);
-      const math = selectSection(pool, "Math", 44, `${seed}/math`);
+      const readingWriting = selectSection(sectionPool("Reading and Writing"), "Reading and Writing", 54, `${seed}/rw`);
+      const math = selectSection(sectionPool("Math"), "Math", 44, `${seed}/math`);
       modules = [
         ...splitModules(readingWriting, "Reading and Writing · Module 1", "Reading and Writing · Module 2", 32 * 60, `${seed}/rw-modules`),
         ...splitModules(math, "Math · Module 1", "Math · Module 2", 35 * 60, `${seed}/math-modules`)
@@ -210,7 +225,7 @@
     }
     const ids = modules.flatMap((module) => module.questions.map((question) => question.id));
     if (new Set(ids).size !== ids.length) throw new Error("A test contains duplicate questions.");
-    return { id: `sat-test-${hash(`${seed}/${definition.title}`).toString(36)}`, seed, definition, modules };
+    return { id: `sat-test-${hash(`${seed}/${definition.title}/${JSON.stringify(practiceSets)}`).toString(36)}`, seed, definition, practiceSets, modules };
   }
 
   function normalizeResponse(value) {
@@ -246,7 +261,7 @@
     const curve = section === "Math" ? MATH_CURVE : RW_CURVE;
     const weightedTotal = results.reduce((sum, result) => sum + DIFFICULTY_WEIGHTS[result.question.difficulty], 0);
     const weightedCorrect = results.reduce((sum, result) => sum + (result.correct ? DIFFICULTY_WEIGHTS[result.question.difficulty] : 0), 0);
-    const priorStrength = scope === "skill" ? 12 : scope === "section" ? 4 : 0;
+    const priorStrength = scope === "skill" ? 12 : scope === "section" || scope === "mixed" ? 4 : 0;
     const priorRate = 0.65;
     const estimatedRate = (weightedCorrect + priorStrength * priorRate) / (weightedTotal + priorStrength);
     const equivalentRaw = Math.max(0, Math.min(curve.length - 1, Math.round(estimatedRate * (curve.length - 1))));

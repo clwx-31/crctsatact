@@ -10,9 +10,12 @@ This yields:
 
 - 20 Math selectors: 5 Algebra, 4 Advanced Math, 7 Problem-Solving and Data Analysis, and 4 Geometry and Trigonometry
 - 11 Reading and Writing selectors: 4 Information and Ideas, 3 Craft and Structure, 2 Expression of Ideas, and 2 Standard English Conventions
-- 25 questions per selector: variants 1–8 easy, 9–17 medium, and 18–25 hard
+- two 25-question sets per selector
+- Set 1 uses variants 1–25 and Set 2 uses variants 26–50; each independently contains 8 easy, 9 medium, and 8 hard questions
 
 Equal-sized skill banks are for targeted drilling. They intentionally do not imitate the domain proportions of a 44-question adaptive Math section or a 54-question Reading and Writing section.
+
+Each set spans 166 distinct generator recipes across the 31 official skill categories. The validator requires both sets to contain the same recipe catalog while prohibiting duplicate question content between them.
 
 ## Reproducible seeds
 
@@ -26,13 +29,20 @@ Equal-sized skill banks are for targeted drilling. They intentionally do not imi
 6. Shuffle choices reproducibly.
 7. Reject duplicate prompt/stimulus/figure combinations within a skill and retry deterministically.
 
-Every question records `meta.recipe`, `meta.seed`, `meta.variant`, `meta.parameters`, and `meta.generationAttempt`. IDs include the skill slug, seed hash, and variant number, so progress from one set cannot overwrite progress from another.
+Every question records `practiceSet`, `meta.practiceSet`, `meta.recipe`, `meta.seed`, `meta.variant`, `meta.parameters`, and `meta.generationAttempt`. IDs include the skill slug, seed hash, and variant number, so Set 1 progress cannot overwrite Set 2 progress. Generation checks content signatures across both sets and stops with an error rather than accepting a duplicate after its retry limit.
 
 The default seed is `baseline-v1`. The dashboard's **Today's set** button uses `daily-YYYY-MM-DD`; **New variant** uses `variant-N`. A developer can reproduce a bank directly:
 
 ```js
 const math = window.buildSATMathQuestions("daily-2026-09-03");
 const readingWriting = window.buildSATRWQuestions("daily-2026-09-03");
+```
+
+Those calls return Set 1. To produce both permanent sets exactly as the website does:
+
+```js
+const mathSets = window.buildSATMathQuestionSets("daily-2026-09-03");
+const readingWritingSets = window.buildSATRWQuestionSets("daily-2026-09-03");
 ```
 
 ## Math recipe coverage

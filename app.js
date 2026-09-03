@@ -6,15 +6,22 @@
   const MATH_VARIANT_KEY = "form-sat-math-variant-v1";
   const RW_SEED_KEY = "form-sat-rw-seed-v1";
   const RW_VARIANT_KEY = "form-sat-rw-variant-v1";
+  const MATH_PRACTICE_SET_KEY = "form-sat-math-practice-set-v1";
+  const RW_PRACTICE_SET_KEY = "form-sat-rw-practice-set-v1";
   const ACTIVE_TEST_KEY = "form-sat-active-test-v1";
   const TEST_HISTORY_KEY = "form-sat-test-history-v1";
   const TEST_VARIANT_KEY = "form-sat-test-variant-v1";
   const app = document.querySelector("#app");
   const homeButton = document.querySelector("#home-button");
+  const topTabs = [...document.querySelectorAll("[data-top-view]")];
   const letters = ["A", "B", "C", "D"];
 
   let mathSeed = localStorage.getItem(MATH_SEED_KEY) || "baseline-v1";
   let rwSeed = localStorage.getItem(RW_SEED_KEY) || "baseline-v1";
+  const practiceSets = {
+    Math: Number(localStorage.getItem(MATH_PRACTICE_SET_KEY)) === 2 ? 2 : 1,
+    "Reading and Writing": Number(localStorage.getItem(RW_PRACTICE_SET_KEY)) === 2 ? 2 : 1
+  };
   if (typeof window.applySATMathSet === "function") window.applySATMathSet(mathSeed);
   if (typeof window.applySATRWSet === "function") window.applySATRWSet(rwSeed);
   let state = loadState();
@@ -49,10 +56,12 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }
 
-  function sectionQuestions(section, skill = null, difficulty = null) {
+  function sectionQuestions(section, skill = null, difficulty = null, practiceSet = undefined) {
+    const selectedSet = practiceSet === null ? null : (practiceSet ?? practiceSets[section]);
     return window.SAT_QUESTIONS.filter((question) => question.section === section
       && (!skill || question.skill === skill)
-      && (!difficulty || question.difficulty === difficulty));
+      && (!difficulty || question.difficulty === difficulty)
+      && (!selectedSet || question.practiceSet === selectedSet));
   }
 
   function answered(question) {
@@ -69,10 +78,19 @@
     };
   }
 
-  function startSection(section, skill = null, difficulty = null) {
-    const questions = sectionQuestions(section, skill, difficulty);
+  function setPracticeSet(section, practiceSet, shouldRender = true) {
+    const normalized = Number(practiceSet) === 2 ? 2 : 1;
+    practiceSets[section] = normalized;
+    localStorage.setItem(section === "Math" ? MATH_PRACTICE_SET_KEY : RW_PRACTICE_SET_KEY, String(normalized));
+    if (shouldRender) render();
+  }
+
+  function startSection(section, skill = null, difficulty = null, practiceSet = undefined) {
+    const selectedSet = Number(practiceSet ?? practiceSets[section]) === 2 ? 2 : 1;
+    setPracticeSet(section, selectedSet, false);
+    const questions = sectionQuestions(section, skill, difficulty, selectedSet);
     const firstOpen = questions.findIndex((question) => !answered(question));
-    view = { name: "practice", section, skill, difficulty, index: firstOpen === -1 ? 0 : firstOpen };
+    view = { name: "practice", section, skill, difficulty, practiceSet: selectedSet, index: firstOpen === -1 ? 0 : firstOpen };
     render();
   }
 
@@ -82,9 +100,26 @@
     render();
   }
 
+  function openMiniTests() {
+    clearTestTimer();
+    view = { name: "mini-tests", section: null, skill: null, difficulty: null, index: 0 };
+    render();
+  }
+
+  function syncTopTabs() {
+    const current = view.name === "mini-tests" ? "mini-tests" : "dashboard";
+    topTabs.forEach((tab) => {
+      const active = tab.dataset.topView === current;
+      tab.classList.toggle("active", active);
+      tab.setAttribute("aria-current", active ? "page" : "false");
+    });
+  }
+
   function render() {
     clearTestTimer();
+    syncTopTabs();
     if (view.name === "practice") renderPractice();
+    else if (view.name === "mini-tests") renderMiniTestHub();
     else if (view.name === "test-setup") renderTestSetup();
     else if (view.name === "test") renderTest();
     else if (view.name === "test-results") renderTestResults();
@@ -95,8 +130,8 @@
 
   function renderDashboard() {
     const overall = responseStats();
-    const rw = sectionQuestions("Reading and Writing");
-    const math = sectionQuestions("Math");
+    const rw = sectionQuestions("Reading and Writing", null, null, null);
+    const math = sectionQuestions("Math", null, null, null);
     const rwStats = responseStats(rw);
     const mathStats = responseStats(math);
     const totalQuestions = window.SAT_QUESTIONS.length;
@@ -108,7 +143,7 @@
             <p class="eyebrow">Focused practice / current digital format</p>
             <h1 id="page-title">Practice precisely.</h1>
           </div>
-          <p class="hero-copy">${totalQuestions} original questions shaped around the current SAT blueprint. Drill one exact skill at a time, see the reasoning, and generate fresh variants without losing prior progress.</p>
+          <p class="hero-copy">${totalQuestions} original questions across two permanent sets, shaped around the current SAT blueprint. Drill one exact skill at a time, see the reasoning, and generate fresh variants without losing prior progress.</p>
         </section>
 
         <section class="metrics" aria-label="Practice progress">
@@ -124,8 +159,8 @@
         </div>
 
         <section class="section-grid" aria-label="SAT sections">
-          ${sectionCard("01", "Reading and Writing", "Reading + Writing", rwStats, `4 domains · 11 skills · ${rw.length} questions`, rw.length)}
-          ${sectionCard("02", "Math", "Math", mathStats, `4 domains · 20 skills · ${math.length} questions`, math.length)}
+          ${sectionCard("01", "Reading and Writing", "Reading + Writing", rwStats, `4 domains · 11 skills · 2 sets · ${rw.length} questions`, rw.length)}
+          ${sectionCard("02", "Math", "Math", mathStats, `4 domains · 20 skills · 2 sets · ${math.length} questions`, math.length)}
         </section>
 
         ${renderTestCenter()}
@@ -137,7 +172,7 @@
           <h2 id="standards-title">Built to the blueprint</h2>
           <div class="standards-list">
             <div class="standard"><span class="standard-number">01 / FORMAT</span><p>Short passages, one Reading and Writing question per text, and both Math response formats.</p></div>
-            <div class="standard"><span class="standard-number">02 / COVERAGE</span><p>Every targeted Math and Reading and Writing skill has 25 questions progressing through easy, medium, and hard variants.</p></div>
+            <div class="standard"><span class="standard-number">02 / COVERAGE</span><p>Every targeted Math and Reading and Writing skill has two non-overlapping sets of 25 questions, each progressing through easy, medium, and hard variants.</p></div>
             <div class="standard"><span class="standard-number">03 / REVIEW</span><p>Every item includes a direct rationale designed to expose the tested idea—not just name the key.</p></div>
           </div>
         </section>
@@ -147,13 +182,13 @@
       button.addEventListener("click", () => startSection(button.dataset.section));
     });
     document.querySelectorAll("[data-math-skill]").forEach((button) => {
-      button.addEventListener("click", () => startSection("Math", button.dataset.mathSkill));
+      button.addEventListener("click", () => startSection("Math", button.dataset.mathSkill, null, button.dataset.practiceSet));
     });
     document.querySelectorAll("[data-rw-skill]").forEach((button) => {
-      button.addEventListener("click", () => startSection("Reading and Writing", button.dataset.rwSkill));
+      button.addEventListener("click", () => startSection("Reading and Writing", button.dataset.rwSkill, null, button.dataset.practiceSet));
     });
     document.querySelectorAll("[data-mini-test]").forEach((button) => {
-      button.addEventListener("click", () => openTestSetup("skill", button.dataset.testSection, button.dataset.miniTest));
+      button.addEventListener("click", () => openTestSetup("skill", button.dataset.testSection, button.dataset.miniTest, button.dataset.testSet));
     });
     document.querySelectorAll("[data-test-kind]").forEach((button) => {
       button.addEventListener("click", () => openTestSetup(button.dataset.testKind, button.dataset.testSection || null));
@@ -162,6 +197,7 @@
       view = { name: "test", section: null, skill: null, difficulty: null, index: activeTest.index || 0 };
       render();
     });
+    wirePracticeSetControls();
     document.querySelector("#todays-math-set")?.addEventListener("click", () => {
       const today = new Date();
       const date = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, "0"), String(today.getDate()).padStart(2, "0")].join("-");
@@ -212,6 +248,31 @@
       </section>`;
   }
 
+  function renderPracticeSetSelector(section, compact = false) {
+    const current = practiceSets[section];
+    return `<div class="practice-set-selector ${compact ? "compact" : ""}" role="group" aria-label="Choose ${escapeHtml(section)} question set">
+      <button type="button" class="practice-set-option ${current === 1 ? "active" : ""}" data-set-control="1" data-set-section="${escapeHtml(section)}" aria-pressed="${current === 1}">Set 1</button>
+      <button type="button" class="practice-set-option ${current === 2 ? "active" : ""}" data-set-control="2" data-set-section="${escapeHtml(section)}" aria-pressed="${current === 2}">Set 2</button>
+    </div>`;
+  }
+
+  function wirePracticeSetControls() {
+    document.querySelectorAll("[data-set-control]").forEach((button) => button.addEventListener("click", () => {
+      setPracticeSet(button.dataset.setSection, button.dataset.setControl);
+    }));
+  }
+
+  function renderSkillActions(section, skill) {
+    const attribute = section === "Math" ? "data-math-skill" : "data-rw-skill";
+    const set1 = responseStats(sectionQuestions(section, skill.name, null, 1));
+    const set2 = responseStats(sectionQuestions(section, skill.name, null, 2));
+    return `<div class="skill-set-actions">
+      <button type="button" class="${practiceSets[section] === 1 ? "current" : ""}" ${attribute}="${escapeHtml(skill.name)}" data-practice-set="1" aria-label="Practice ${escapeHtml(skill.name)}, Set 1"><span>Set 1</span><small>${set1.completed}/25</small></button>
+      <button type="button" class="${practiceSets[section] === 2 ? "current" : ""}" ${attribute}="${escapeHtml(skill.name)}" data-practice-set="2" aria-label="Practice ${escapeHtml(skill.name)}, Set 2"><span>Set 2</span><small>${set2.completed}/25</small></button>
+      <button class="mini-test-button" type="button" data-mini-test="${escapeHtml(skill.name)}" data-test-section="${escapeHtml(section)}" data-test-set="${practiceSets[section]}" aria-label="Start ${escapeHtml(skill.name)} mini-test using Set ${practiceSets[section]}">10-Q test</button>
+    </div>`;
+  }
+
   function renderMathLibrary() {
     if (!Array.isArray(window.SAT_MATH_SKILLS)) return "";
     const domains = [...new Set(window.SAT_MATH_SKILLS.map((skill) => skill.domain))];
@@ -220,26 +281,22 @@
         <div class="skill-library-header">
           <div><p class="eyebrow">Targeted Math practice</p><h2 id="math-library-title">Choose an exact skill.</h2></div>
           <div class="set-controls">
-            <span class="set-label">Current set: ${escapeHtml(mathSeed)}</span>
+            <span class="set-label">Question bank: ${escapeHtml(mathSeed)}</span>
+            ${renderPracticeSetSelector("Math", true)}
             <button class="secondary-button compact-button" id="todays-math-set" type="button">Today's set</button>
             <button class="secondary-button compact-button" id="new-math-variant" type="button">New variant</button>
           </div>
         </div>
-        <p class="skill-library-intro">Each skill contains 25 reproducible questions: 8 easy, 9 medium, and 8 hard. A new set changes the numbers and contexts while preserving the tested patterns.</p>
+        <p class="skill-library-intro">Each skill contains two non-overlapping 25-question sets. Every set has 8 easy, 9 medium, and 8 hard questions. Choose Set 1 or Set 2 beside any skill.</p>
         <div class="domain-list">
           ${domains.map((domain) => `
             <section class="domain-group">
               <h3>${domain}</h3>
               <div class="skill-list">
                 ${window.SAT_MATH_SKILLS.filter((skill) => skill.domain === domain).map((skill) => {
-                  const questions = sectionQuestions("Math", skill.name);
-                  const stats = responseStats(questions);
                   return `<div class="skill-row-wrap">
-                    <button class="skill-row" type="button" data-math-skill="${escapeHtml(skill.name)}">
-                      <span><strong>${escapeHtml(skill.name)}</strong><small>${escapeHtml(skill.description)}</small></span>
-                      <span class="skill-progress">${stats.completed}/25 <span aria-hidden="true">↗</span></span>
-                    </button>
-                    <button class="mini-test-button" type="button" data-mini-test="${escapeHtml(skill.name)}" data-test-section="Math">10-Q test</button>
+                    <div class="skill-row"><span><strong>${escapeHtml(skill.name)}</strong><small>${escapeHtml(skill.description)}</small></span></div>
+                    ${renderSkillActions("Math", skill)}
                   </div>`;
                 }).join("")}
               </div>
@@ -256,32 +313,66 @@
         <div class="skill-library-header">
           <div><p class="eyebrow">Targeted Reading and Writing practice</p><h2 id="rw-library-title">Choose an exact skill.</h2></div>
           <div class="set-controls">
-            <span class="set-label">Current set: ${escapeHtml(rwSeed)}</span>
+            <span class="set-label">Question bank: ${escapeHtml(rwSeed)}</span>
+            ${renderPracticeSetSelector("Reading and Writing", true)}
             <button class="secondary-button compact-button" id="todays-rw-set" type="button">Today's set</button>
             <button class="secondary-button compact-button" id="new-rw-variant" type="button">New variant</button>
           </div>
         </div>
-        <p class="skill-library-intro">Each skill contains 25 original questions: 8 easy, 9 medium, and 8 hard. Passages follow the digital SAT's one-question-per-text format.</p>
+        <p class="skill-library-intro">Each skill contains two non-overlapping 25-question sets, and each set has 8 easy, 9 medium, and 8 hard questions. Passages follow the digital SAT's one-question-per-text format.</p>
         <div class="domain-list">
           ${domains.map((domain) => `
             <section class="domain-group">
               <h3>${domain}</h3>
               <div class="skill-list">
                 ${window.SAT_RW_SKILLS.filter((skill) => skill.domain === domain).map((skill) => {
-                  const questions = sectionQuestions("Reading and Writing", skill.name);
-                  const stats = responseStats(questions);
                   return `<div class="skill-row-wrap">
-                    <button class="skill-row" type="button" data-rw-skill="${escapeHtml(skill.name)}">
-                      <span><strong>${escapeHtml(skill.name)}</strong><small>${escapeHtml(skill.description)}</small></span>
-                      <span class="skill-progress">${stats.completed}/25 <span aria-hidden="true">↗</span></span>
-                    </button>
-                    <button class="mini-test-button" type="button" data-mini-test="${escapeHtml(skill.name)}" data-test-section="Reading and Writing">10-Q test</button>
+                    <div class="skill-row"><span><strong>${escapeHtml(skill.name)}</strong><small>${escapeHtml(skill.description)}</small></span></div>
+                    ${renderSkillActions("Reading and Writing", skill)}
                   </div>`;
                 }).join("")}
               </div>
             </section>`).join("")}
         </div>
       </section>`;
+  }
+
+  function renderMiniTestList(section, skills) {
+    return `<section class="mini-test-section">
+      <div class="mini-test-section-header">
+        <div><p class="eyebrow">${escapeHtml(section)}</p><h2>${skills.length} skill mini-tests</h2></div>
+        ${renderPracticeSetSelector(section)}
+      </div>
+      <div class="mini-test-list">${skills.map((skill) => `<button type="button" class="mini-test-row" data-mini-test="${escapeHtml(skill.name)}" data-test-section="${escapeHtml(section)}" data-test-set="${practiceSets[section]}"><span><strong>${escapeHtml(skill.name)}</strong><small>${escapeHtml(skill.domain)} · Set ${practiceSets[section]}</small></span><span>10 questions ↗</span></button>`).join("")}</div>
+    </section>`;
+  }
+
+  function renderMiniTestHub() {
+    app.innerHTML = `<div class="dashboard mini-test-hub">
+      <section class="mini-hub-hero" aria-labelledby="mini-hub-title">
+        <div><p class="eyebrow">Mini-test library</p><h1 id="mini-hub-title">Test the pattern.</h1></div>
+        <p>Run a combined Math and Reading test or isolate one exact skill. Answers stay hidden until submission, and every result includes an estimated score range and complete mistake coaching.</p>
+      </section>
+      ${activeTest ? `<button class="resume-test" id="resume-test" type="button"><span><strong>Resume ${escapeHtml(activeTest.definition.title)}</strong><small>${escapeHtml(activeTest.modules[activeTest.moduleIndex].label)} · Question ${(activeTest.index || 0) + 1}</small></span><span aria-hidden="true">Continue ↗</span></button>` : ""}
+      <section class="combined-mini-card">
+        <div><span class="test-option-kicker">Both sections</span><h2>Combined Math + Reading</h2><p>10 Reading and Writing questions plus 10 Math questions, balanced across all eight official content domains.</p></div>
+        <div class="combined-mini-meta"><span>Reading Set ${practiceSets["Reading and Writing"]}</span><span>Math Set ${practiceSets.Math}</span><span>20 questions · 28 minutes</span></div>
+        <button class="primary-button" type="button" data-test-kind="mixed">Start combined mini-test</button>
+      </section>
+      <div class="mini-test-columns">
+        ${renderMiniTestList("Reading and Writing", window.SAT_RW_SKILLS)}
+        ${renderMiniTestList("Math", window.SAT_MATH_SKILLS)}
+      </div>
+    </div>`;
+    wirePracticeSetControls();
+    document.querySelectorAll("[data-mini-test]").forEach((button) => button.addEventListener("click", () => {
+      openTestSetup("skill", button.dataset.testSection, button.dataset.miniTest, button.dataset.testSet);
+    }));
+    document.querySelector("[data-test-kind='mixed']")?.addEventListener("click", () => openTestSetup("mixed"));
+    document.querySelector("#resume-test")?.addEventListener("click", () => {
+      view = { name: "test", section: null, skill: null, difficulty: null, index: activeTest.index || 0 };
+      render();
+    });
   }
 
   function applyMathSeed(seed) {
@@ -298,21 +389,26 @@
     goHome();
   }
 
-  function openTestSetup(kind, section = null, skill = null) {
+  function openTestSetup(kind, section = null, skill = null, practiceSet = undefined) {
     if (typeof window.buildSATTest !== "function") return;
+    if (section && practiceSet !== undefined) setPracticeSet(section, practiceSet, false);
     view = { name: "test-setup", kind, section, skill, difficulty: null, index: 0 };
     render();
   }
 
   function renderTestSetup() {
     const definition = window.SAT_TEST_DEFINITIONS.testDefinition(view.kind, view.section, view.skill);
-    const scoreLabel = definition.kind === "full" ? "estimated 400–1600 total score" : `estimated 200–800 ${definition.section} score`;
+    const scoreLabel = definition.kind === "full" || definition.kind === "mixed" ? "estimated 400–1600 total score" : `estimated 200–800 ${definition.section} score`;
+    const setSelectors = definition.section
+      ? renderPracticeSetSelector(definition.section)
+      : `<div class="test-set-pair"><div><span>Reading + Writing bank</span>${renderPracticeSetSelector("Reading and Writing")}</div><div><span>Math bank</span>${renderPracticeSetSelector("Math")}</div></div>`;
     app.innerHTML = `
       <div class="practice-shell">
         <section class="test-setup-card">
           <p class="eyebrow">Ready when you are</p>
           <h1>${escapeHtml(definition.title)}</h1>
           <p class="setup-summary">${escapeHtml(definition.summary)} · ${scoreLabel}</p>
+          <div class="test-bank-choice"><span>Question set</span>${setSelectors}</div>
           <div class="setup-details">
             <div><span>Feedback</span><strong>After submission</strong></div>
             <div><span>Question mix</span><strong>Easy, medium, and hard</strong></div>
@@ -329,13 +425,14 @@
     document.querySelector("#start-timed-test").addEventListener("click", () => startTestAttempt(true));
     document.querySelector("#start-untimed-test").addEventListener("click", () => startTestAttempt(false));
     document.querySelector("#cancel-test").addEventListener("click", goHome);
+    wirePracticeSetControls();
   }
 
   function startTestAttempt(timed) {
     const next = Number(localStorage.getItem(TEST_VARIANT_KEY) || 0) + 1;
     localStorage.setItem(TEST_VARIANT_KEY, String(next));
     const seed = `attempt-${next}/${rwSeed}/${mathSeed}`;
-    const test = window.buildSATTest({ kind: view.kind, section: view.section, skill: view.skill, seed });
+    const test = window.buildSATTest({ kind: view.kind, section: view.section, skill: view.skill, seed, practiceSets: { ...practiceSets } });
     activeTest = {
       ...test,
       timed,
@@ -553,17 +650,19 @@
   }
 
   function startSimilarQuestion(sourceQuestion) {
-    const questions = sectionQuestions(sourceQuestion.section, sourceQuestion.skill);
+    const sourceSet = sourceQuestion.practiceSet || practiceSets[sourceQuestion.section];
+    const questions = sectionQuestions(sourceQuestion.section, sourceQuestion.skill, null, sourceSet);
     const target = questions.find((question) => question.id !== sourceQuestion.id && question.meta.recipe === sourceQuestion.meta.recipe && question.difficulty === sourceQuestion.difficulty && !answered(question))
       || questions.find((question) => question.id !== sourceQuestion.id && question.meta.recipe === sourceQuestion.meta.recipe)
       || questions.find((question) => question.id !== sourceQuestion.id && question.difficulty === sourceQuestion.difficulty)
       || questions[0];
-    view = { name: "practice", section: sourceQuestion.section, skill: sourceQuestion.skill, difficulty: null, index: Math.max(0, questions.indexOf(target)) };
+    setPracticeSet(sourceQuestion.section, sourceSet, false);
+    view = { name: "practice", section: sourceQuestion.section, skill: sourceQuestion.skill, difficulty: null, practiceSet: sourceSet, index: Math.max(0, questions.indexOf(target)) };
     render();
   }
 
   function renderPractice() {
-    const questions = sectionQuestions(view.section, view.skill, view.difficulty);
+    const questions = sectionQuestions(view.section, view.skill, view.difficulty, view.practiceSet);
     const question = questions[view.index];
     const stats = responseStats(questions);
     const response = state.responses[question.id] || {};
@@ -572,12 +671,12 @@
     app.innerHTML = `
       <div class="practice-shell">
         <div class="practice-toolbar">
-          <div class="toolbar-title">${view.skill ? escapeHtml(view.skill) : view.section}</div>
+          <div class="toolbar-title">${view.skill ? escapeHtml(view.skill) : view.section}<span>Set ${view.practiceSet}</span></div>
           <div class="progress-wrap">
             <div class="progress-meta"><span class="progress-label">Section progress</span><span>${stats.completed} / ${questions.length}</span></div>
             <div class="progress-track"><div class="progress-bar" style="width:${(stats.completed / questions.length) * 100}%"></div></div>
           </div>
-          <button class="text-button" id="exit-practice" type="button">Exit practice</button>
+          <div class="practice-toolbar-actions"><div class="practice-set-selector compact" role="group" aria-label="Switch question set"><button type="button" class="practice-set-option ${view.practiceSet === 1 ? "active" : ""}" data-practice-switch="1" aria-pressed="${view.practiceSet === 1}">Set 1</button><button type="button" class="practice-set-option ${view.practiceSet === 2 ? "active" : ""}" data-practice-switch="2" aria-pressed="${view.practiceSet === 2}">Set 2</button></div><button class="text-button" id="exit-practice" type="button">Exit practice</button></div>
         </div>
 
         <div class="practice-layout">
@@ -711,6 +810,9 @@
 
   function wirePracticeEvents(questions, question, response, isLast) {
     document.querySelector("#exit-practice").addEventListener("click", goHome);
+    document.querySelectorAll("[data-practice-switch]").forEach((button) => button.addEventListener("click", () => {
+      startSection(view.section, view.skill, view.difficulty, button.dataset.practiceSwitch);
+    }));
     document.querySelector("#bookmark").addEventListener("click", () => {
       if (state.bookmarks[question.id]) {
         delete state.bookmarks[question.id];
@@ -835,6 +937,10 @@
   }
 
   homeButton.addEventListener("click", goHome);
+  topTabs.forEach((tab) => tab.addEventListener("click", () => {
+    if (tab.dataset.topView === "mini-tests") openMiniTests();
+    else goHome();
+  }));
 
   if (!Array.isArray(window.SAT_QUESTIONS)) {
     app.innerHTML = '<p class="dashboard">The question bank could not be loaded.</p>';

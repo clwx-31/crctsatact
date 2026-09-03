@@ -8,6 +8,22 @@ require("./test-engine.js");
 
 const BASELINE_SEED = "baseline-v1";
 const STRESS_SEED_COUNT = 100;
+const EXPECTED_SKILLS = {
+  "Reading and Writing": [
+    "Central Ideas and Details", "Command of Evidence: Textual", "Command of Evidence: Quantitative", "Inferences",
+    "Words in Context", "Text Structure and Purpose", "Cross-Text Connections", "Rhetorical Synthesis", "Transitions",
+    "Boundaries", "Form, Structure, and Sense"
+  ],
+  Math: [
+    "Linear equations in one variable", "Linear functions", "Linear equations in two variables", "Systems of two linear equations in two variables",
+    "Linear inequalities in one or two variables", "Equivalent expressions", "Nonlinear equations in one variable", "Systems of equations in two variables",
+    "Nonlinear functions", "Ratios, rates, proportional relationships, and units", "Percentages",
+    "One-variable data: Distributions and measures of center and spread", "Two-variable data: Models and scatterplots",
+    "Probability and conditional probability", "Inference from sample statistics and margin of error",
+    "Evaluating statistical claims: Observational studies and experiments", "Area and volume", "Lines, angles, and triangles",
+    "Right triangles and trigonometry", "Circles"
+  ]
+};
 window.applySATMathSet(BASELINE_SEED);
 window.applySATRWSet(BASELINE_SEED);
 
@@ -120,14 +136,14 @@ function auditMathAnswer(question) {
 }
 
 if (!Array.isArray(questions)) fail("Question bank is not an array.");
-if (questions.length !== 775) fail(`Expected 775 questions; found ${questions.length}.`);
+if (questions.length !== 1550) fail(`Expected 1,550 questions; found ${questions.length}.`);
 if (new Set(questions.map((question) => question.id)).size !== questions.length) fail("Question IDs are not unique.");
 
 for (const question of questions) {
   for (const field of ["id", "section", "domain", "skill", "difficulty", "type", "question", "explanation", "meta"]) {
     if (!question[field]) fail(`${question.id || "Unknown question"} is missing ${field}.`);
   }
-  if (!question.meta?.recipe || question.meta.seed !== BASELINE_SEED || !question.meta.parameters) fail(`${question.id} has incomplete generation provenance.`);
+  if (!question.meta?.recipe || question.meta.seed !== BASELINE_SEED || !question.meta.parameters || ![1, 2].includes(question.meta.practiceSet) || question.practiceSet !== question.meta.practiceSet) fail(`${question.id} has incomplete generation provenance.`);
   if (!["Easy", "Medium", "Hard"].includes(question.difficulty)) fail(`${question.id} has an invalid difficulty.`);
   if (question.type === "mcq") {
     if (!Array.isArray(question.choices) || question.choices.length !== 4) fail(`${question.id} must have four choices.`);
@@ -154,8 +170,8 @@ for (const question of questions) {
 }
 
 const specifications = [
-  { section: "Math", skills: window.SAT_MATH_SKILLS, total: 500, domains: { Algebra: 125, "Advanced Math": 100, "Problem-Solving and Data Analysis": 175, "Geometry and Trigonometry": 100 }, difficulty: { Easy: 160, Medium: 180, Hard: 160 } },
-  { section: "Reading and Writing", skills: window.SAT_RW_SKILLS, total: 275, domains: { "Information and Ideas": 100, "Craft and Structure": 75, "Expression of Ideas": 50, "Standard English Conventions": 50 }, difficulty: { Easy: 88, Medium: 99, Hard: 88 } }
+  { section: "Math", skills: window.SAT_MATH_SKILLS, total: 1000, domains: { Algebra: 250, "Advanced Math": 200, "Problem-Solving and Data Analysis": 350, "Geometry and Trigonometry": 200 }, difficulty: { Easy: 320, Medium: 360, Hard: 320 } },
+  { section: "Reading and Writing", skills: window.SAT_RW_SKILLS, total: 550, domains: { "Information and Ideas": 200, "Craft and Structure": 150, "Expression of Ideas": 100, "Standard English Conventions": 100 }, difficulty: { Easy: 176, Medium: 198, Hard: 176 } }
 ];
 
 for (const specification of specifications) {
@@ -165,11 +181,22 @@ for (const specification of specifications) {
   if (!sameCounts(counts(sectionItems, "difficulty"), specification.difficulty)) fail(`${specification.section}: difficulty coverage is incorrect.`);
   const expectedSkills = new Set(specification.skills.map((skill) => skill.name));
   const actualSkills = new Set(sectionItems.map((question) => question.skill));
+  if (JSON.stringify([...expectedSkills]) !== JSON.stringify(EXPECTED_SKILLS[specification.section])) fail(`${specification.section}: exposed selectors do not match the audited SAT skill taxonomy.`);
   if (expectedSkills.size !== actualSkills.size || [...expectedSkills].some((skill) => !actualSkills.has(skill))) fail(`${specification.section}: skill taxonomy is incomplete.`);
   for (const skill of specification.skills) {
     const items = sectionItems.filter((question) => question.skill === skill.name);
-    if (items.length !== 25) fail(`${skill.name}: expected 25 questions; found ${items.length}.`);
-    if (!sameCounts(counts(items, "difficulty"), { Easy: 8, Medium: 9, Hard: 8 })) fail(`${skill.name}: expected 8 easy, 9 medium, and 8 hard questions.`);
+    if (items.length !== 50) fail(`${skill.name}: expected 50 questions; found ${items.length}.`);
+    for (const practiceSet of [1, 2]) {
+      const setItems = items.filter((question) => question.practiceSet === practiceSet);
+      if (setItems.length !== 25) fail(`${skill.name}, set ${practiceSet}: expected 25 questions; found ${setItems.length}.`);
+      if (!sameCounts(counts(setItems, "difficulty"), { Easy: 8, Medium: 9, Hard: 8 })) fail(`${skill.name}, set ${practiceSet}: expected 8 easy, 9 medium, and 8 hard questions.`);
+      const expectedVariants = Array.from({ length: 25 }, (_, index) => index + 1 + (practiceSet - 1) * 25);
+      const actualVariants = setItems.map((question) => question.meta.variant).sort((a, b) => a - b);
+      if (JSON.stringify(actualVariants) !== JSON.stringify(expectedVariants)) fail(`${skill.name}, set ${practiceSet}: variant provenance is incomplete.`);
+    }
+    const set1Recipes = [...new Set(items.filter((question) => question.practiceSet === 1).map((question) => question.meta.recipe))].sort();
+    const set2Recipes = [...new Set(items.filter((question) => question.practiceSet === 2).map((question) => question.meta.recipe))].sort();
+    if (JSON.stringify(set1Recipes) !== JSON.stringify(set2Recipes)) fail(`${skill.name}: the two sets do not cover the same problem recipes.`);
     const signatures = items.map((question) => `${question.stimulus}|${question.question}|${JSON.stringify(question.table || null)}|${JSON.stringify(question.figure || null)}`);
     if (new Set(signatures).size !== items.length) fail(`${skill.name}: duplicate question content found.`);
   }
@@ -177,8 +204,12 @@ for (const specification of specifications) {
 
 const math = questions.filter((question) => question.section === "Math");
 const readingWriting = questions.filter((question) => question.section === "Reading and Writing");
+for (const practiceSet of [1, 2]) {
+  const recipeCount = new Set(questions.filter((question) => question.practiceSet === practiceSet).map((question) => question.meta.recipe)).size;
+  if (recipeCount !== 166) fail(`Set ${practiceSet}: expected 166 distinct problem recipes; found ${recipeCount}.`);
+}
 const mathTypes = counts(math, "type");
-if (mathTypes.mcq < 300 || mathTypes.spr < 100) fail("Math bank does not contain a substantial mix of both response formats.");
+if (mathTypes.mcq < 600 || mathTypes.spr < 200) fail("Math bank does not contain a substantial mix of both response formats.");
 if (readingWriting.some((question) => question.type !== "mcq")) fail("Reading and Writing questions must all be multiple choice.");
 for (const question of math) auditMathAnswer(question);
 
@@ -198,17 +229,19 @@ for (const question of questions) {
   }
 }
 
-if (JSON.stringify(math) !== JSON.stringify(window.buildSATMathQuestions(BASELINE_SEED))) fail("Math generation is not deterministic for a fixed seed.");
-if (JSON.stringify(readingWriting) !== JSON.stringify(window.buildSATRWQuestions(BASELINE_SEED))) fail("Reading and Writing generation is not deterministic for a fixed seed.");
+if (JSON.stringify(math) !== JSON.stringify(window.buildSATMathQuestionSets(BASELINE_SEED))) fail("Math generation is not deterministic for a fixed seed.");
+if (JSON.stringify(readingWriting) !== JSON.stringify(window.buildSATRWQuestionSets(BASELINE_SEED))) fail("Reading and Writing generation is not deterministic for a fixed seed.");
 
 for (let index = 0; index < STRESS_SEED_COUNT; index += 1) {
   const seed = `stress-${index}`;
-  const generatedSets = [["Math", window.buildSATMathQuestions(seed), 500], ["Reading and Writing", window.buildSATRWQuestions(seed), 275]];
+  const generatedSets = [["Math", window.buildSATMathQuestionSets(seed), 1000], ["Reading and Writing", window.buildSATRWQuestionSets(seed), 550]];
   for (const [label, items, expectedTotal] of generatedSets) {
     if (items.length !== expectedTotal) fail(`${label} stress seed ${seed}: wrong total.`);
     if (new Set(items.map((question) => question.id)).size !== expectedTotal) fail(`${label} stress seed ${seed}: duplicate IDs.`);
     if (items.some((question) => question.type === "mcq" && new Set(question.choices).size !== 4)) fail(`${label} stress seed ${seed}: duplicate choices.`);
     if (items.some((question) => /NaN|Infinity|undefined/.test(JSON.stringify(question)))) fail(`${label} stress seed ${seed}: nonfinite or undefined output.`);
+    const signatures = items.map((question) => `${question.stimulus}|${question.question}|${JSON.stringify(question.table || null)}|${JSON.stringify(question.figure || null)}`);
+    if (new Set(signatures).size !== items.length) fail(`${label} stress seed ${seed}: duplicate content across question sets.`);
     if (label === "Math") items.forEach(auditMathAnswer);
   }
 }
@@ -218,21 +251,32 @@ const testDefinitions = [
   ...window.SAT_RW_SKILLS.map((skill) => ({ kind: "skill", section: "Reading and Writing", skill: skill.name, expected: 10 })),
   { kind: "section", section: "Math", expected: 22 },
   { kind: "section", section: "Reading and Writing", expected: 27 },
+  { kind: "mixed", expected: 20 },
   { kind: "full", expected: 98 }
 ];
 
 for (const definition of testDefinitions) {
   const test = window.buildSATTest({ ...definition, seed: "validator-test" }, questions);
   const repeated = window.buildSATTest({ ...definition, seed: "validator-test" }, questions);
+  const secondSetTest = window.buildSATTest({ ...definition, seed: "validator-test", practiceSets: { "Reading and Writing": 2, Math: 2 } }, questions);
   const testQuestions = test.modules.flatMap((module) => module.questions);
+  const secondSetQuestions = secondSetTest.modules.flatMap((module) => module.questions);
   if (testQuestions.length !== definition.expected) fail(`${test.definition.title}: expected ${definition.expected} test questions; found ${testQuestions.length}.`);
   if (new Set(testQuestions.map((question) => question.id)).size !== testQuestions.length) fail(`${test.definition.title}: duplicate test questions.`);
   if (JSON.stringify(test) !== JSON.stringify(repeated)) fail(`${test.definition.title}: test assembly is not deterministic.`);
+  if (testQuestions.some((question) => question.practiceSet !== 1)) fail(`${test.definition.title}: default test assembly mixed question sets.`);
+  if (secondSetQuestions.some((question) => question.practiceSet !== 2)) fail(`${test.definition.title}: set 2 test assembly mixed question sets.`);
   if (definition.kind === "skill") {
     if (testQuestions.some((question) => question.skill !== definition.skill)) fail(`${test.definition.title}: includes another skill.`);
     if (!sameCounts(counts(testQuestions, "difficulty"), { Easy: 3, Medium: 4, Hard: 3 })) fail(`${test.definition.title}: difficulty mix is incorrect.`);
   }
 }
+
+const mixedTest = window.buildSATTest({ kind: "mixed", seed: "validator-mixed", practiceSets: { "Reading and Writing": 2, Math: 1 } }, questions);
+if (mixedTest.modules.length !== 2 || mixedTest.modules[0].section !== "Reading and Writing" || mixedTest.modules[1].section !== "Math") fail("Combined mini-test must contain Reading and Writing followed by Math.");
+if (mixedTest.modules[0].questions.length !== 10 || mixedTest.modules[1].questions.length !== 10) fail("Combined mini-test module lengths are incorrect.");
+if (mixedTest.modules[0].durationSeconds !== 12 * 60 || mixedTest.modules[1].durationSeconds !== 16 * 60) fail("Combined mini-test module times are incorrect.");
+if (mixedTest.modules[0].questions.some((question) => question.practiceSet !== 2) || mixedTest.modules[1].questions.some((question) => question.practiceSet !== 1)) fail("Combined mini-test did not preserve independent section set choices.");
 
 const fullTest = window.buildSATTest({ kind: "full", seed: "validator-full" }, questions);
 if (fullTest.modules.length !== 4 || !sameCounts(counts(fullTest.modules, "section"), { "Reading and Writing": 2, Math: 2 })) fail("Full test must contain four correctly labeled modules.");
@@ -277,8 +321,8 @@ if (failures.length) {
 }
 
 console.log("Question bank validation passed.");
-console.log("775 unique questions: 275 Reading and Writing, 500 Math.");
-console.log("31 exact skill selectors; every skill has 25 questions (8 easy, 9 medium, 8 hard). ");
+console.log("1,550 unique questions: 550 Reading and Writing, 1,000 Math.");
+console.log("31 exact skill selectors and 166 problem recipes per set; every skill has two unique 25-question sets (8 easy, 9 medium, 8 hard per set). ");
 console.log(`${mathTypes.mcq} Math multiple-choice and ${mathTypes.spr} Math student-produced response questions.`);
 console.log(`Deterministic generation, ${STRESS_SEED_COUNT} alternate seeds, response formats, choices, tables, figures, and independent numeric answer calculations passed.`);
-console.log("Answer-specific coaching, 31 skill mini-tests, section tests, full-test blueprints, and monotonic score estimates passed.");
+console.log("Answer-specific coaching, 31 skill mini-tests, combined mini-tests, section tests, full-test blueprints, and monotonic score estimates passed.");

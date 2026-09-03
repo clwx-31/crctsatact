@@ -986,7 +986,7 @@
       });
     }
     if (mode < 3) {
-      const factor = pick(rng, [1.1, 1.2, 1.25, 1.5, 2]);
+      const factor = pick(rng, ctx.practiceSet === 2 ? [0.5, 0.75, 0.8, 1.05, 1.3, 1.4, 1.6, 1.75, 2.5] : [1.1, 1.2, 1.25, 1.5, 2]);
       return conceptual(ctx, {
         recipe: "model-selection", stimulus: `In a data set, each 1-unit increase in x is associated with multiplying y by approximately ${factor}.`,
         question: "Which type of model is most appropriate?", correct: "An exponential model",
@@ -1152,7 +1152,10 @@
       });
     }
     if (mode < 3) {
-      const [program, outcome] = pick(rng, [["tutoring", "end-of-year scores"], ["fitness coaching", "fitness-test scores"], ["music lessons", "performance ratings"], ["meal planning", "nutrition ratings"], ["test-prep classes", "practice-test scores"]]);
+      const options = ctx.practiceSet === 2
+        ? [["reading workshops", "reading-assessment scores"], ["garden training", "crop yields"], ["coding lessons", "programming-assessment scores"], ["financial coaching", "savings rates"], ["language classes", "fluency ratings"]]
+        : [["tutoring", "end-of-year scores"], ["fitness coaching", "fitness-test scores"], ["music lessons", "performance ratings"], ["meal planning", "nutrition ratings"], ["test-prep classes", "practice-test scores"]];
+      const [program, outcome] = pick(rng, options);
       return conceptual(ctx, {
         recipe: "matched-control", stimulus: `To test a ${program} program, researchers let participants choose whether to enroll and then compare ${outcome}.`,
         question: "What is the most serious threat to a causal conclusion?", correct: "Participants who choose the program may differ initially from those who do not.",
@@ -1349,7 +1352,7 @@
     const mode = index % 6;
     const triples = [[3, 4, 5], [5, 12, 13], [8, 15, 17], [7, 24, 25]];
     const triple = pick(rng, triples);
-    const scale = int(rng, 1, difficulty === "Hard" ? 4 : 2);
+    const scale = ctx.practiceSet === 2 ? int(rng, 3, 6) : int(rng, 1, difficulty === "Hard" ? 4 : 2);
     const [a, b, c] = triple.map((value) => value * scale);
     if (difficulty === "Easy") {
       return numeric(ctx, {
@@ -1368,7 +1371,7 @@
       });
     }
     if (difficulty === "Medium") {
-      const short = int(rng, 2, 10);
+      const short = ctx.practiceSet === 2 ? int(rng, 11, 20) : int(rng, 2, 10);
       return conceptual(ctx, {
         recipe: "thirty-sixty-ninety", stimulus: `A 30°-60°-90° triangle has shorter leg length ${short}.`,
         question: "What is its hypotenuse length?", correct: String(2 * short),
@@ -1377,7 +1380,7 @@
       });
     }
     if (mode < 3) {
-      const angle = pick(rng, [20, 25, 30, 35, 40]);
+      const angle = pick(rng, ctx.practiceSet === 2 ? [10, 15, 45, 50, 55, 60, 65, 70] : [20, 25, 30, 35, 40]);
       return conceptual(ctx, {
         recipe: "complementary-trig", question: `Which expression is equal to sin ${angle}°?`, correct: `cos ${90 - angle}°`,
         distractors: [`cos ${angle}°`, `sin ${90 - angle}°`, `tan ${90 - angle}°`],
@@ -1385,7 +1388,13 @@
       });
     }
     if (mode === 3 || mode === 4) {
-      const entry = pick(rng, [
+      const entry = pick(rng, ctx.practiceSet === 2 ? [
+        { angle: "5π/6", sine: "1/2", cosine: "−√3/2" },
+        { angle: "5π/4", sine: "−√2/2", cosine: "−√2/2" },
+        { angle: "4π/3", sine: "−√3/2", cosine: "−1/2" },
+        { angle: "5π/3", sine: "−√3/2", cosine: "1/2" },
+        { angle: "7π/4", sine: "−√2/2", cosine: "√2/2" }
+      ] : [
         { angle: "π/6", sine: "1/2", cosine: "√3/2" },
         { angle: "π/4", sine: "√2/2", cosine: "√2/2" },
         { angle: "π/3", sine: "√3/2", cosine: "1/2" },
@@ -1418,9 +1427,9 @@
       const radius = int(rng, 3, 12);
       if (mode === 1 || mode === 4) {
         return conceptual(ctx, {
-          recipe: "circle-area", stimulus: `A circle has radius ${radius}.`, question: "What is its area?", correct: `${radius * radius}π`,
+          recipe: "circle-area", stimulus: `A circular region has diameter ${2 * radius}.`, question: "What is the area of the region?", correct: `${radius * radius}π`,
           distractors: [`${2 * radius}π`, `${radius}π`, `${4 * radius * radius}π`],
-          explanation: `A = πr² = π(${radius})² = ${radius * radius}π.`, parameters: { radius }
+          explanation: `The radius is half the diameter, so r = ${radius}. Then A = πr² = π(${radius})² = ${radius * radius}π.`, parameters: { radius }
         });
       }
       if (mode === 2 || mode === 5) {
@@ -1527,22 +1536,30 @@
     circles
   };
 
-  function buildSATMathQuestions(seed = "baseline-v1") {
+  function buildSATMathQuestions(seed = "baseline-v1", options = {}) {
     const normalizedSeed = String(seed).trim() || "baseline-v1";
     const setId = hash(normalizedSeed).toString(36);
+    const practiceSet = Number(options.practiceSet) === 2 ? 2 : 1;
+    const variantOffset = practiceSet === 2 ? 25 : 0;
     return SKILLS.flatMap((skill) => {
       const generated = [];
-      const signatures = new Set();
-      for (let index = 0; index < 25; index += 1) {
-        const difficulty = DIFFICULTIES[index];
+      const signatures = new Set(options.excludedSignatures?.get(skill.name) || []);
+      for (let slot = 0; slot < 25; slot += 1) {
+        const index = slot + variantOffset;
+        const difficulty = DIFFICULTIES[slot];
         let retry = 0;
         let question;
+        let signature;
         do {
           const rng = randomFor(`${normalizedSeed}/${skill.slug}/${index}/${difficulty}/${retry}`);
-          question = GENERATORS[skill.slug]({ seed: normalizedSeed, setId, skill, index, difficulty, rng });
+          question = GENERATORS[skill.slug]({ seed: normalizedSeed, setId, skill, index, difficulty, practiceSet, rng });
+          signature = `${question.stimulus}|${question.question}|${JSON.stringify(question.table || null)}|${JSON.stringify(question.figure || null)}`;
           retry += 1;
-        } while (signatures.has(`${question.stimulus}|${question.question}|${JSON.stringify(question.table || null)}|${JSON.stringify(question.figure || null)}`) && retry < 100);
-        signatures.add(`${question.stimulus}|${question.question}|${JSON.stringify(question.table || null)}|${JSON.stringify(question.figure || null)}`);
+        } while (signatures.has(signature) && retry < 250);
+        if (signatures.has(signature)) throw new Error(`Unable to generate unique Math content for ${skill.name}, set ${practiceSet}, variant ${index + 1}.`);
+        signatures.add(signature);
+        question.practiceSet = practiceSet;
+        question.meta.practiceSet = practiceSet;
         question.meta.generationAttempt = retry;
         generated.push(question);
       }
@@ -1552,9 +1569,18 @@
 
   window.SAT_MATH_SKILLS = SKILLS;
   window.buildSATMathQuestions = buildSATMathQuestions;
+  window.buildSATMathQuestionSets = function (seed) {
+    const first = buildSATMathQuestions(seed, { practiceSet: 1 });
+    const excludedSignatures = new Map();
+    for (const question of first) {
+      if (!excludedSignatures.has(question.skill)) excludedSignatures.set(question.skill, []);
+      excludedSignatures.get(question.skill).push(`${question.stimulus}|${question.question}|${JSON.stringify(question.table || null)}|${JSON.stringify(question.figure || null)}`);
+    }
+    return [...first, ...buildSATMathQuestions(seed, { practiceSet: 2, excludedSignatures })];
+  };
   window.applySATMathSet = function (seed) {
     const readingWriting = (window.SAT_QUESTIONS || []).filter((question) => question.section !== "Math");
-    window.SAT_QUESTIONS = [...readingWriting, ...buildSATMathQuestions(seed)];
+    window.SAT_QUESTIONS = [...readingWriting, ...window.buildSATMathQuestionSets(seed)];
     return window.SAT_QUESTIONS;
   };
 })();

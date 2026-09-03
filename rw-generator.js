@@ -265,7 +265,32 @@
     { text: "The second experiment was designed to ______ a weakness in the first experiment's procedure.", correct: "address", distractors: ["preserve", "conceal", "duplicate"], reason: "deal with" },
     { text: "The poem's final image is intentionally ______, allowing readers to interpret it in more than one way.", correct: "ambiguous", distractors: ["literal", "redundant", "conventional"], reason: "open to multiple meanings" },
     { text: "Rather than offering a comprehensive history, the article provides a ______ account focused on one decade.", correct: "selective", distractors: ["random", "unbiased", "continuous"], reason: "deliberately limited" },
-    { text: "The discovery may ______ researchers to reconsider how the settlement developed.", correct: "prompt", distractors: ["prevent", "permit", "force"], reason: "cause or encourage" }
+    { text: "The discovery may ______ researchers to reconsider how the settlement developed.", correct: "prompt", distractors: ["prevent", "permit", "force"], reason: "cause or encourage" },
+    { text: "Planting vegetation along the exposed bank could ______ erosion during seasonal floods.", correct: "mitigate", distractors: ["intensify", "document", "predict"], reason: "reduce the severity of" },
+    { text: "The editor attempted to ______ the two apparently conflicting dates by consulting the original records.", correct: "reconcile", distractors: ["conceal", "duplicate", "separate"], reason: "bring into agreement" },
+    { text: "Because one measurement was ______ and did not resemble any of the others, the team checked the instrument.", correct: "anomalous", distractors: ["representative", "expected", "conclusive"], reason: "deviating from the expected pattern" },
+    { text: "The newly discovered receipts may ______ the historian's claim about when the workshop opened.", correct: "substantiate", distractors: ["contradict", "obscure", "replace"], reason: "support with evidence" },
+    { text: "The survey indicates that the practice is ______ throughout the region rather than limited to a few towns.", correct: "pervasive", distractors: ["temporary", "isolated", "invisible"], reason: "widespread" },
+    { text: "A diagram was added to ______ the sequence of steps described in the dense technical paragraph.", correct: "elucidate", distractors: ["complicate", "dismiss", "shorten"], reason: "make clear" },
+    { text: "Although the building's exterior is unusual, its interior follows a more ______ arrangement of rooms.", correct: "conventional", distractors: ["experimental", "random", "imperceptible"], reason: "traditional or generally accepted" },
+    { text: "Results from the larger trial ______ the preliminary evidence reported by the smaller study.", correct: "bolster", distractors: ["undermine", "ignore", "precede"], reason: "strengthen" },
+    { text: "The revised procedure produced a ______ change in accuracy, so the researchers retained the original method.", correct: "negligible", distractors: ["substantial", "unpredictable", "beneficial"], reason: "too small to be important" },
+    { text: "The archive uses low-intensity lighting to ______ fragile pigments in the displayed manuscripts.", correct: "preserve", distractors: ["imitate", "measure", "replace"], reason: "protect from damage or loss" },
+    { text: "After estimating the available time and cost, the engineers concluded that the proposed modification was ______.", correct: "feasible", distractors: ["arbitrary", "obsolete", "decorative"], reason: "practical and possible to carry out" },
+    { text: "From the repeated marks in the margin, scholars can ______ that the reader returned to the passage several times.", correct: "infer", distractors: ["guarantee", "conceal", "prescribe"], reason: "reach a conclusion from evidence" },
+    { text: "The conservator kept ______ records of every material used during the restoration.", correct: "meticulous", distractors: ["casual", "incomplete", "speculative"], reason: "extremely careful and precise" },
+    { text: "The increase in water temperature was ______; readings returned to their earlier level within an hour.", correct: "transient", distractors: ["permanent", "cumulative", "unprecedented"], reason: "lasting only a short time" },
+    { text: "The committee must ______ its limited funds among several equally urgent projects.", correct: "allocate", distractors: ["withhold", "multiply", "disguise"], reason: "distribute for particular purposes" },
+    { text: "Dense cloud cover can ______ the instrument's ability to detect faint objects.", correct: "inhibit", distractors: ["enhance", "measure", "demonstrate"], reason: "hinder or restrain" },
+    { text: "The review emphasizes the most ______ difference between the two proposals: their projected cost.", correct: "salient", distractors: ["hidden", "irrelevant", "temporary"], reason: "most noticeable or important" },
+    { text: "A second laboratory was asked to ______ the experiment using the same materials and procedure.", correct: "replicate", distractors: ["revise", "summarize", "cancel"], reason: "repeat under the same conditions" },
+    { text: "The rainfall recorded that month was ______ in the station's eighty-year history.", correct: "unprecedented", distractors: ["typical", "gradual", "uncertain"], reason: "never previously known or experienced" },
+    { text: "The final report must ______ findings from interviews, field observations, and archival documents.", correct: "synthesize", distractors: ["separate", "discard", "rank"], reason: "combine into a coherent whole" },
+    { text: "The revised container can ______ heat longer than the earlier design can.", correct: "retain", distractors: ["generate", "measure", "release"], reason: "continue to hold" },
+    { text: "Given the study's small sample, the reviewer remained ______ of its broad conclusion.", correct: "skeptical", distractors: ["certain", "unaware", "supportive"], reason: "doubtful" },
+    { text: "The introduction clearly ______ the period and geographic area covered by the study.", correct: "delineates", distractors: ["expands", "conceals", "abandons"], reason: "defines the boundaries of" },
+    { text: "Because several records have not been located, the identification remains ______.", correct: "tentative", distractors: ["definitive", "irrelevant", "permanent"], reason: "not yet certain" },
+    { text: "The searchable index will ______ comparisons among documents held in different collections.", correct: "facilitate", distractors: ["prevent", "replace", "complicate"], reason: "make easier" }
   ];
 
   function wordsContext(ctx) {
@@ -276,7 +301,12 @@
         conflate: ["contrast sharply", "record separately", "make less certain"],
         diverge: ["become more stable", "receive further confirmation", "disappear completely"],
         varied: ["ended", "became identical", "began"],
-        scarce: ["highly noticeable", "able to adapt", "widely distributed"]
+        scarce: ["highly noticeable", "able to adapt", "widely distributed"],
+        mitigate: ["make more severe", "record in detail", "cause to begin"],
+        elucidate: ["make more complicated", "reject completely", "repeat exactly"],
+        feasible: ["chosen without reason", "no longer useful", "purely decorative"],
+        inhibit: ["make more effective", "calculate precisely", "provide evidence of"],
+        retain: ["produce for the first time", "calculate the amount of", "allow to escape"]
       };
       return item(ctx, {
         recipe: "meaning-in-context", stimulus: entry.text.replace("______", `“${entry.correct}”`),
@@ -295,7 +325,7 @@
 
   function textStructurePurpose(ctx) {
     const mode = ctx.index % 5;
-    const year = 2000 + ctx.index;
+    const year = ctx.practiceSet === 2 ? 1975 + (ctx.index - 25) : 2000 + ctx.index;
     const caseData = pick(ctx.rng, [
       { subject: "restored wetland", benefit: "reduced flooding in initial simulations", limitation: "the simulations modeled only one type of storm" },
       { subject: "translation method", benefit: "preserved technical terms more accurately than the comparison method did", limitation: "the test included documents from only one field" },
@@ -323,7 +353,7 @@
   }
 
   function crossText(ctx) {
-    const year = 2000 + ctx.index;
+    const year = ctx.practiceSet === 2 ? 1975 + (ctx.index - 25) : 2000 + ctx.index;
     const caseData = pick(ctx.rng, [
       { topic: "remote work", benefit: "can widen access to some jobs", concern: "its benefits depend on workers having reliable technology" },
       { topic: "urban tree planting", benefit: "can reduce summer heat on shaded blocks", concern: "young trees require years of maintenance before providing full shade" },
@@ -384,7 +414,7 @@
 
   function transitions(ctx) {
     const transition = TRANSITION_CASES[ctx.index % TRANSITION_CASES.length];
-    const year = 2000 + ctx.index;
+    const year = ctx.practiceSet === 2 ? 1975 + (ctx.index - 25) : 2000 + ctx.index;
     const stimulus = `${transition.setup.replace("{year}", year)} ${transition.first} ______ ${transition.second}.`;
     return item(ctx, {
       recipe: transition.relation, stimulus, question: "Which choice completes the text with the most logical transition?", correct: transition.correct,
@@ -445,7 +475,7 @@
   function boundaries(ctx) {
     const bank = ctx.difficulty === "Hard" ? BOUNDARY_HARD_CASES : ctx.difficulty === "Medium" ? BOUNDARY_MEDIUM_CASES : BOUNDARY_CASES;
     const entry = bank[ctx.index % bank.length];
-    const year = 2001 + ctx.index;
+    const year = ctx.practiceSet === 2 ? 1976 + (ctx.index - 25) : 2001 + ctx.index;
     return item(ctx, {
       recipe: entry.recipe, stimulus: `A report written in ${year} contains the following statement: ${entry.text}`, question: "Which choice completes the text so that it conforms to the conventions of Standard English?", correct: entry.correct,
       distractors: entry.distractors,
@@ -489,7 +519,7 @@
   function formStructureSense(ctx) {
     const bank = ctx.difficulty === "Hard" ? FORM_HARD_CASES : ctx.difficulty === "Medium" ? FORM_MEDIUM_CASES : FORM_CASES;
     const entry = bank[ctx.index % bank.length];
-    const year = 1995 + ctx.index;
+    const year = ctx.practiceSet === 2 ? 1970 + (ctx.index - 25) : 1995 + ctx.index;
     return item(ctx, {
       recipe: entry.recipe, stimulus: `A document revised in ${year} contains the following sentence: ${entry.text}`, question: "Which choice completes the text so that it conforms to the conventions of Standard English?", correct: entry.correct,
       distractors: entry.distractors,
@@ -511,22 +541,30 @@
     "form-structure-sense": formStructureSense
   };
 
-  function buildSATRWQuestions(seed = "baseline-v1") {
+  function buildSATRWQuestions(seed = "baseline-v1", options = {}) {
     const normalizedSeed = String(seed).trim() || "baseline-v1";
     const setId = hash(normalizedSeed).toString(36);
+    const practiceSet = Number(options.practiceSet) === 2 ? 2 : 1;
+    const variantOffset = practiceSet === 2 ? 25 : 0;
     return SKILLS.flatMap((skill) => {
       const generated = [];
-      const signatures = new Set();
-      for (let index = 0; index < 25; index += 1) {
-        const difficulty = DIFFICULTIES[index];
+      const signatures = new Set(options.excludedSignatures?.get(skill.name) || []);
+      for (let slot = 0; slot < 25; slot += 1) {
+        const index = slot + variantOffset;
+        const difficulty = DIFFICULTIES[slot];
         let retry = 0;
         let question;
+        let signature;
         do {
           const rng = randomFor(`${normalizedSeed}/${skill.slug}/${index}/${difficulty}/${retry}`);
-          question = GENERATORS[skill.slug]({ seed: normalizedSeed, setId, skill, index, difficulty, rng });
+          question = GENERATORS[skill.slug]({ seed: normalizedSeed, setId, skill, index, difficulty, practiceSet, rng });
+          signature = `${question.stimulus}|${question.question}|${JSON.stringify(question.table || null)}`;
           retry += 1;
-        } while (signatures.has(`${question.stimulus}|${question.question}|${JSON.stringify(question.table || null)}`) && retry < 100);
-        signatures.add(`${question.stimulus}|${question.question}|${JSON.stringify(question.table || null)}`);
+        } while (signatures.has(signature) && retry < 250);
+        if (signatures.has(signature)) throw new Error(`Unable to generate unique Reading and Writing content for ${skill.name}, set ${practiceSet}, variant ${index + 1}.`);
+        signatures.add(signature);
+        question.practiceSet = practiceSet;
+        question.meta.practiceSet = practiceSet;
         question.meta.generationAttempt = retry;
         generated.push(question);
       }
@@ -536,9 +574,18 @@
 
   window.SAT_RW_SKILLS = SKILLS;
   window.buildSATRWQuestions = buildSATRWQuestions;
+  window.buildSATRWQuestionSets = function (seed) {
+    const first = buildSATRWQuestions(seed, { practiceSet: 1 });
+    const excludedSignatures = new Map();
+    for (const question of first) {
+      if (!excludedSignatures.has(question.skill)) excludedSignatures.set(question.skill, []);
+      excludedSignatures.get(question.skill).push(`${question.stimulus}|${question.question}|${JSON.stringify(question.table || null)}`);
+    }
+    return [...first, ...buildSATRWQuestions(seed, { practiceSet: 2, excludedSignatures })];
+  };
   window.applySATRWSet = function (seed) {
     const math = (window.SAT_QUESTIONS || []).filter((question) => question.section === "Math");
-    window.SAT_QUESTIONS = [...buildSATRWQuestions(seed), ...math];
+    window.SAT_QUESTIONS = [...window.buildSATRWQuestionSets(seed), ...math];
     return window.SAT_QUESTIONS;
   };
 })();

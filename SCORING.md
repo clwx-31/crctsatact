@@ -1,6 +1,6 @@
 # Estimated SAT scoring model
 
-Form reports an estimated score and an uncertainty range for every mini-test, module test, and full-length simulation. These values are practice projections, not official College Board scores.
+Form reports an estimated score and an uncertainty range for every skill mini-test, combined Math + Reading mini-test, module test, and full-length simulation. These values are practice projections, not official College Board scores.
 
 ## What the official scoring system does
 
@@ -22,6 +22,7 @@ Sources, accessed 2026-09-03:
 ### Test assembly
 
 - Skill mini-test: 10 questions, split 3 easy, 4 medium, and 3 hard.
+- Combined mini-test: 10 Reading and Writing questions and 10 Math questions, balanced across all eight content domains.
 - Reading and Writing module test: 27 questions and an optional 32-minute timer.
 - Math module test: 22 questions and an optional 35-minute timer.
 - Full simulation: four modules containing 54 Reading and Writing and 44 Math questions, with official per-module times.
@@ -32,7 +33,7 @@ The full simulation is fixed and nonadaptive. Calling it adaptive would imply ca
 ### Score center
 
 1. Correct answers receive difficulty weights of 0.9 for easy, 1.0 for medium, and 1.1 for hard. This modest adjustment prevents a hard question from dominating the estimate.
-2. A skill mini-test uses a 12-question prior and a module test uses a 4-question prior, both centered at 65% performance. This guards against extreme 200 or 800 predictions from a very small sample. A full simulation uses no prior.
+2. A one-skill mini-test uses a 12-question prior. A combined mini-test or module test uses a 4-question prior because it samples multiple domains. All priors are centered at 65% performance and guard against extreme 200 or 800 predictions from a small sample. A full simulation uses no prior.
 3. The adjusted proportion is normalized to the raw-score axis of College Board Practice Test 11: 0–66 for Reading and Writing and 0–54 for Math.
 4. The corresponding official lower and upper values are looked up, and their midpoint is rounded to the nearest ten for the displayed estimate.
 

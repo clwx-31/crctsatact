@@ -2,14 +2,15 @@
 
 A no-build digital SAT practice site organized around exact College Board skill categories.
 
-- 500 generated Math questions across 20 targeted selectors
-- 275 generated Reading and Writing questions across 11 targeted selectors
-- 25 questions per selector: 8 easy, 9 medium, and 8 hard
+- 1,000 generated Math questions across 20 targeted selectors
+- 550 generated Reading and Writing questions across 11 targeted selectors
+- two non-overlapping 25-question sets per selector; each has 8 easy, 9 medium, and 8 hard
 - multiple-choice and student-produced Math responses
 - passages, paired texts, tables, and scatterplots
 - explanations, bookmarks, a question navigator, and locally saved progress
 - reproducible daily and numbered variant sets
 - answer-specific misconception coaching after missed practice questions
+- a top-level mini-test library with a combined 20-question Math + Reading test
 - 10-question skill tests, 22/27-question module tests, and 98-question full simulations
 - optional timers, deferred test feedback, score estimates and uncertainty ranges, domain results, and test history
 
@@ -31,7 +32,7 @@ Then open `http://localhost:8000`. The site can also be opened directly through 
 
 ## Generate fresh sets
 
-The dashboard has two controls for each section:
+Every skill has permanent **Set 1** and **Set 2** buttons. Progress is tracked independently because the two banks use distinct question IDs. The dashboard also has two controls for regenerating both sets in a section:
 
 - **Today's set** uses a date-based seed, so the same date always reproduces the same bank.
 - **New variant** increments a locally stored variant number and creates a new reproducible bank.
@@ -40,7 +41,7 @@ The generation model, recipe catalog, seed behavior, and extension instructions 
 
 ## Tests and estimated scores
 
-Every skill row includes a 10-question mini-test. The Test Center also provides one-module section tests and a four-module full-length simulation. Timed mode follows the current official module times; untimed mode uses the same question blueprint without a clock.
+The **Mini tests** tab in the site header collects every skill test and provides a combined 20-question test with 10 Reading and Writing and 10 Math questions. Every skill row also links directly to its 10-question mini-test. The Test Center provides one-module section tests and a four-module full-length simulation. Timed mode follows the current official module times; untimed mode uses the same question blueprint without a clock.
 
 Test answers and explanations remain hidden until submission. Results include an estimated SAT section or total score, an uncertainty range, domain performance, and answer-specific review for every missed question.
 
@@ -59,7 +60,7 @@ node --check test-engine.js
 node --check questions.js
 ```
 
-The validator checks totals, exact skill and difficulty coverage, unique IDs and prompts, answer formats and SAT-grid-length responses, unique choices, table and figure structure, deterministic regeneration, alternate seeds, independent Math calculations, coaching coverage, mini-test and module blueprints, full-test assembly, and score endpoints.
+The validator checks all 1,550 questions, both set boundaries, exact skill and difficulty coverage, cross-set content uniqueness, recipe parity, unique IDs and prompts, answer formats and SAT-grid-length responses, unique choices, table and figure structure, deterministic regeneration, 100 alternate two-set banks, independent Math calculations, coaching coverage, mini-test and module blueprints, full-test assembly, and score behavior.
 
 ## Calibration sources
 
