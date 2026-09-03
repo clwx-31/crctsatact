@@ -6,7 +6,7 @@ require("./math-generator.js");
 require("./rw-generator.js");
 require("./test-engine.js");
 
-const BASELINE_SEED = "baseline-v1";
+const BASELINE_SEED = "baseline-v2";
 const STRESS_SEED_COUNT = 100;
 const EXPECTED_SKILLS = {
   "Reading and Writing": [
@@ -143,7 +143,7 @@ for (const question of questions) {
   for (const field of ["id", "section", "domain", "skill", "difficulty", "type", "question", "explanation", "meta"]) {
     if (!question[field]) fail(`${question.id || "Unknown question"} is missing ${field}.`);
   }
-  if (!question.meta?.recipe || question.meta.seed !== BASELINE_SEED || !question.meta.parameters || ![1, 2].includes(question.meta.practiceSet) || question.practiceSet !== question.meta.practiceSet) fail(`${question.id} has incomplete generation provenance.`);
+  if (!question.meta?.recipe || question.meta.generationVersion !== "authenticity-v2" || question.meta.seed !== BASELINE_SEED || !question.meta.parameters || ![1, 2].includes(question.meta.practiceSet) || question.practiceSet !== question.meta.practiceSet) fail(`${question.id} has incomplete generation provenance.`);
   if (!["Easy", "Medium", "Hard"].includes(question.difficulty)) fail(`${question.id} has an invalid difficulty.`);
   if (question.type === "mcq") {
     if (!Array.isArray(question.choices) || question.choices.length !== 4) fail(`${question.id} must have four choices.`);
@@ -210,12 +210,22 @@ for (const practiceSet of [1, 2]) {
 }
 const mathTypes = counts(math, "type");
 if (mathTypes.mcq < 600 || mathTypes.spr < 200) fail("Math bank does not contain a substantial mix of both response formats.");
+const mathMultipleChoiceShare = mathTypes.mcq / math.length;
+if (mathMultipleChoiceShare < 0.7 || mathMultipleChoiceShare > 0.8) fail("Math multiple-choice share is outside the official approximate three-quarters target.");
 if (readingWriting.some((question) => question.type !== "mcq")) fail("Reading and Writing questions must all be multiple choice.");
-for (const question of math) auditMathAnswer(question);
+for (const question of math) {
+  const standardizedWordCount = `${question.stimulus || ""} ${question.question}`.length / 6;
+  if (standardizedWordCount > 50) fail(`${question.id}: Math prompt exceeds the official typical 50-word-equivalent context ceiling.`);
+  auditMathAnswer(question);
+}
 
 for (const question of readingWriting) {
-  const wordCount = question.stimulus.trim().split(/\s+/).filter(Boolean).length;
-  if (wordCount > 150) fail(`${question.id}: passage exceeds the official 150-word maximum.`);
+  const completedStimulus = question.stimulus.includes("______")
+    ? question.stimulus.replace("______", answerText(question))
+    : question.stimulus;
+  const standardizedWordCount = completedStimulus.length / 6;
+  if (standardizedWordCount < 25) fail(`${question.id}: passage is below the official 25-word-equivalent minimum.`);
+  if (standardizedWordCount > 150) fail(`${question.id}: passage exceeds the official 150-word-equivalent maximum.`);
 }
 
 for (const question of questions) {
@@ -242,7 +252,20 @@ for (let index = 0; index < STRESS_SEED_COUNT; index += 1) {
     if (items.some((question) => /NaN|Infinity|undefined/.test(JSON.stringify(question)))) fail(`${label} stress seed ${seed}: nonfinite or undefined output.`);
     const signatures = items.map((question) => `${question.stimulus}|${question.question}|${JSON.stringify(question.table || null)}|${JSON.stringify(question.figure || null)}`);
     if (new Set(signatures).size !== items.length) fail(`${label} stress seed ${seed}: duplicate content across question sets.`);
-    if (label === "Math") items.forEach(auditMathAnswer);
+    if (label === "Math") {
+      for (const question of items) {
+        if (`${question.stimulus || ""} ${question.question}`.length / 6 > 50) fail(`${question.id}: alternate-seed Math prompt exceeds 50 word equivalents.`);
+        auditMathAnswer(question);
+      }
+    } else {
+      for (const question of items) {
+        const completedStimulus = question.stimulus.includes("______")
+          ? question.stimulus.replace("______", answerText(question))
+          : question.stimulus;
+        const standardizedWordCount = completedStimulus.length / 6;
+        if (standardizedWordCount < 25 || standardizedWordCount > 150) fail(`${question.id}: alternate-seed Reading and Writing passage is outside 25–150 word equivalents.`);
+      }
+    }
   }
 }
 

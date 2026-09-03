@@ -16,8 +16,16 @@
   const topTabs = [...document.querySelectorAll("[data-top-view]")];
   const letters = ["A", "B", "C", "D"];
 
-  let mathSeed = localStorage.getItem(MATH_SEED_KEY) || "baseline-v1";
-  let rwSeed = localStorage.getItem(RW_SEED_KEY) || "baseline-v1";
+  let mathSeed = localStorage.getItem(MATH_SEED_KEY) || "baseline-v2";
+  let rwSeed = localStorage.getItem(RW_SEED_KEY) || "baseline-v2";
+  if (mathSeed === "baseline-v1") {
+    mathSeed = "baseline-v2";
+    localStorage.setItem(MATH_SEED_KEY, mathSeed);
+  }
+  if (rwSeed === "baseline-v1") {
+    rwSeed = "baseline-v2";
+    localStorage.setItem(RW_SEED_KEY, rwSeed);
+  }
   const practiceSets = {
     Math: Number(localStorage.getItem(MATH_PRACTICE_SET_KEY)) === 2 ? 2 : 1,
     "Reading and Writing": Number(localStorage.getItem(RW_PRACTICE_SET_KEY)) === 2 ? 2 : 1

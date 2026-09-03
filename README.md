@@ -6,7 +6,7 @@ A no-build digital SAT practice site organized around exact College Board skill 
 - 550 generated Reading and Writing questions across 11 targeted selectors
 - two non-overlapping 25-question sets per selector; each has 8 easy, 9 medium, and 8 hard
 - multiple-choice and student-produced Math responses
-- passages, paired texts, tables, and scatterplots
+- academic and original literary passages, paired texts, tables, and scatterplots
 - explanations, bookmarks, a question navigator, and locally saved progress
 - reproducible daily and numbered variant sets
 - answer-specific misconception coaching after missed practice questions
@@ -60,13 +60,14 @@ node --check test-engine.js
 node --check questions.js
 ```
 
-The validator checks all 1,550 questions, both set boundaries, exact skill and difficulty coverage, cross-set content uniqueness, recipe parity, unique IDs and prompts, answer formats and SAT-grid-length responses, unique choices, table and figure structure, deterministic regeneration, 100 alternate two-set banks, independent Math calculations, coaching coverage, mini-test and module blueprints, full-test assembly, and score behavior.
+The validator checks all 1,550 questions, both set boundaries, exact skill and difficulty coverage, cross-set content uniqueness, recipe parity, unique IDs and prompts, the official Reading and Writing passage-length range and typical Math context ceiling, the Math response-format mix, answer formats and SAT-grid-length responses, unique choices, table and figure structure, deterministic regeneration, 100 alternate two-set banks, independent Math calculations, coaching coverage, mini-test and module blueprints, full-test assembly, and score behavior.
 
 ## Calibration sources
 
 Content boundaries and question stems were mapped to current first-party College Board materials:
 
 - [Assessment Framework for the Digital SAT Suite](https://satsuite.collegeboard.org/media/pdf/assessment-framework-for-digital-sat-suite.pdf)
+- [Digital SAT Sample Questions and Explanations](https://satsuite.collegeboard.org/media/pdf/digital-sat-sample-questions.pdf)
 - [Student Question Bank: Math Questions](https://satsuite.collegeboard.org/practice/student-question-bank/math)
 - [Student Question Bank: Reading and Writing Questions](https://satsuite.collegeboard.org/practice/student-question-bank/reading-writing)
 - [SAT content domains](https://satsuite.collegeboard.org/higher-ed-professionals/sat-validity/content-domains)

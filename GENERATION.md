@@ -29,16 +29,18 @@ Each set spans 166 distinct generator recipes across the 31 official skill categ
 6. Shuffle choices reproducibly.
 7. Reject duplicate prompt/stimulus/figure combinations within a skill and retry deterministically.
 
-Every question records `practiceSet`, `meta.practiceSet`, `meta.recipe`, `meta.seed`, `meta.variant`, `meta.parameters`, and `meta.generationAttempt`. IDs include the skill slug, seed hash, and variant number, so Set 1 progress cannot overwrite Set 2 progress. Generation checks content signatures across both sets and stops with an error rather than accepting a duplicate after its retry limit.
+Reading and Writing passages are checked using College Board's standardized measure: the completed stimulus character count divided by six. Every generated passage must fall from 25 through 150 word equivalents. Completion questions are measured after inserting the keyed response. The generator uses academically framed passages rather than adding empty filler solely to reach the range.
 
-The default seed is `baseline-v1`. The dashboard's **Today's set** button uses `daily-YYYY-MM-DD`; **New variant** uses `variant-N`. A developer can reproduce a bank directly:
+Every question records `practiceSet`, `meta.practiceSet`, `meta.recipe`, `meta.generationVersion`, `meta.seed`, `meta.variant`, `meta.parameters`, and `meta.generationAttempt`. IDs include the skill slug, versioned seed hash, and variant number, so Set 1 progress cannot overwrite Set 2 progress and a revised generator cannot reuse an earlier question's saved answer. Generation checks content signatures across both sets and stops with an error rather than accepting a duplicate after its retry limit.
+
+The default seed is `baseline-v2`. This version marks the September 2026 authenticity pass, so saved answers from the earlier bank cannot be attached to revised questions. The dashboard's **Today's set** button uses `daily-YYYY-MM-DD`; **New variant** uses `variant-N`. A developer can reproduce a bank directly:
 
 ```js
 const math = window.buildSATMathQuestions("daily-2026-09-03");
 const readingWriting = window.buildSATRWQuestions("daily-2026-09-03");
 ```
 
-Those calls return Set 1. To produce both permanent sets exactly as the website does:
+Those calls return Set 1. Every ID and metadata record also includes the `authenticity-v2` generator version, preventing saved daily or numbered-variant answers from being attached to content produced by a later generator. To produce both permanent sets exactly as the website does:
 
 ```js
 const mathSets = window.buildSATMathQuestionSets("daily-2026-09-03");
@@ -93,6 +95,15 @@ const readingWritingSets = window.buildSATRWQuestionSets("daily-2026-09-03");
 - **Boundaries:** between-sentence punctuation, introductory elements, lists, supplementary information, conjunctive adverbs, and cases requiring no punctuation.
 - **Form, Structure, and Sense:** subject–verb and pronoun–antecedent agreement, verb finiteness, tense/aspect, modifier placement, parallel structure, logical comparison, genitives, and plurals.
 
+## Authenticity controls
+
+- Reading and Writing stems follow the recurring wording in College Board's framework and released samples.
+- Evidence and comprehension distractors remain on-topic and encode a reversal, an unsupported absolute, the wrong comparison, or a conclusion that outruns the evidence.
+- Boundaries choices show the words surrounding the tested punctuation, matching the completion format of released questions instead of presenting abstract labels such as “no punctuation.”
+- Academic contexts span scientific research, history and social studies, and the humanities; rhetorical-synthesis notes retain the concise bullet-note format.
+- Math keeps the official approximate response-format mix: the baseline bank is 73.8% multiple choice and 26.2% student-produced response.
+- Default-bank revisions receive a new baseline seed so previously stored answers cannot be scored against changed content.
+
 ## Adding or changing a recipe
 
 1. Add the recipe inside the generator for its exact skill; do not create an unofficial skill label just for a subtype.
@@ -108,4 +119,4 @@ const readingWritingSets = window.buildSATRWQuestionSets("daily-2026-09-03");
 - All items are original and derived from skill definitions and question structures, not copied official questions.
 - Difficulty is an instructional construction based on steps, abstraction, representation, and distractor closeness. It has not been statistically equated on a student population.
 - A generated bank is a drill library, not an adaptive scored SAT form. Use official Bluebook practice tests for score prediction, timing, and adaptive-module experience.
-- Generator changes that alter an existing seed's output should use a new baseline version such as `baseline-v2` so old progress remains interpretable.
+- Generator changes that alter an existing seed's output should use a new baseline version such as `baseline-v3` so old progress remains interpretable.

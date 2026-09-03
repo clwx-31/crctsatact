@@ -6,6 +6,7 @@
     ...Array(9).fill("Medium"),
     ...Array(8).fill("Hard")
   ];
+  const GENERATOR_VERSION = "authenticity-v2";
 
   const SKILLS = [
     { slug: "linear-equations-one", domain: "Algebra", name: "Linear equations in one variable", description: "Solve, create, and interpret linear equations in one variable." },
@@ -163,6 +164,7 @@
       type: details.type,
       meta: {
         recipe: `${ctx.skill.slug}/${details.recipe}`,
+        generationVersion: GENERATOR_VERSION,
         seed: ctx.seed,
         variant: ctx.index + 1,
         parameters: details.parameters || {}
@@ -1138,9 +1140,9 @@
     }
     if (difficulty === "Medium") {
       const pair = pick(rng, [
-        ["students who sleep more", "earn higher grades", "sleep", "grades"],
-        ["adults who exercise more", "report lower stress", "exercise", "stress"],
-        ["towns with more parks", "have lower summer temperatures", "parks", "temperature"],
+        ["students who sleep more", "earn higher grades", "amount of sleep", "grades"],
+        ["adults who exercise more", "report lower stress", "amount of exercise", "stress"],
+        ["towns with more parks", "have lower summer temperatures", "number of parks", "summer temperature"],
         ["workers with shorter commutes", "report greater job satisfaction", "commute length", "job satisfaction"]
       ]);
       const observations = int(rng, 120, 980);
@@ -1536,9 +1538,9 @@
     circles
   };
 
-  function buildSATMathQuestions(seed = "baseline-v1", options = {}) {
-    const normalizedSeed = String(seed).trim() || "baseline-v1";
-    const setId = hash(normalizedSeed).toString(36);
+  function buildSATMathQuestions(seed = "baseline-v2", options = {}) {
+    const normalizedSeed = String(seed).trim() || "baseline-v2";
+    const setId = hash(`${GENERATOR_VERSION}/${normalizedSeed}`).toString(36);
     const practiceSet = Number(options.practiceSet) === 2 ? 2 : 1;
     const variantOffset = practiceSet === 2 ? 25 : 0;
     return SKILLS.flatMap((skill) => {
@@ -1551,7 +1553,7 @@
         let question;
         let signature;
         do {
-          const rng = randomFor(`${normalizedSeed}/${skill.slug}/${index}/${difficulty}/${retry}`);
+          const rng = randomFor(`${GENERATOR_VERSION}/${normalizedSeed}/${skill.slug}/${index}/${difficulty}/${retry}`);
           question = GENERATORS[skill.slug]({ seed: normalizedSeed, setId, skill, index, difficulty, practiceSet, rng });
           signature = `${question.stimulus}|${question.question}|${JSON.stringify(question.table || null)}|${JSON.stringify(question.figure || null)}`;
           retry += 1;

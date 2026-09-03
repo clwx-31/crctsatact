@@ -6,6 +6,7 @@
     ...Array(9).fill("Medium"),
     ...Array(8).fill("Hard")
   ];
+  const GENERATOR_VERSION = "authenticity-v2";
 
   const SKILLS = [
     { slug: "central-ideas-details", domain: "Information and Ideas", name: "Central Ideas and Details", description: "Identify a text's central idea or accurately interpret a key detail." },
@@ -87,6 +88,7 @@
       explanation: details.explanation,
       meta: {
         recipe: `${ctx.skill.slug}/${details.recipe}`,
+        generationVersion: GENERATOR_VERSION,
         seed: ctx.seed,
         variant: ctx.index + 1,
         parameters: details.parameters || {}
@@ -109,23 +111,54 @@
     { researcher: "musicologist Theo Grant", surname: "Grant", subject: "handwritten revisions in a score", result: "Later revisions altered the rhythm of a passage while leaving its principal melody intact.", detail: "later revisions changed the rhythm but preserved the principal melody", main: "Grant found that the revisions refined a passage's rhythm without replacing its main melody." }
   ];
 
+  const LITERARY_CASES = [
+    { text: "Mara had already locked the bakery when she noticed that one tray of rolls sat crooked in the window. She told herself that no customer would see it before morning. Still, she unlocked the door, straightened the tray, and checked the display twice before leaving again.", main: "Mara cares enough about the bakery's appearance to correct a small problem after closing.", detailQuestion: "What does Mara do after first locking the bakery?", detail: "She returns inside to straighten a tray in the window.", distractors: ["She decides to replace all the rolls before morning.", "She waits outside for a customer to notice the display.", "She leaves the crooked tray for someone else to fix."] },
+    { text: "All afternoon, Eli rehearsed the apology he meant to give his brother. Yet when they met at the gate, Eli spoke at length about the weather and the loose hinge, attending to everything except the words he had practiced.", main: "Although Eli intends to apologize, he avoids doing so when he meets his brother.", detailQuestion: "What subjects does Eli discuss at the gate?", detail: "He talks about the weather and a loose hinge.", distractors: ["He explains why he had practiced an apology.", "He discusses a message from his brother.", "He says nothing before leaving the gate."] },
+    { text: "Nia's violin case was scarred from years of travel, and its handle had been repaired more than once. At the shop, she ignored the gleaming new cases and asked the clerk for another strip of leather to reinforce the old handle.", main: "Nia prefers to preserve her familiar violin case instead of replacing it.", detailQuestion: "What does Nia ask the clerk to provide?", detail: "She asks for leather to reinforce the old case's handle.", distractors: ["She asks for a new violin to fit the case.", "She asks for a gleaming case with an unmarked handle.", "She asks the clerk to remove an earlier repair."] },
+    { text: "When the first drops struck the pavement, everyone in the market hurried toward the awnings. Tomas remained beside his table, calmly covering each carved bird with cloth. Only after the last figure was protected did he lift the table and follow the others.", main: "Tomas protects his carvings methodically before seeking shelter from the rain.", detailQuestion: "What does Tomas cover with cloth?", detail: "He covers the carved birds displayed on his table.", distractors: ["He covers the market's awnings.", "He covers the pavement around his table.", "He covers the figures only after entering a shelter."] },
+    { text: "The map showed a road continuing beyond the hill, but Sora found only a narrow footpath nearly hidden by grass. She folded the map without complaint and began marking the path's turns in the margin as she walked.", main: "Sora adapts when the map proves inaccurate and records what she observes.", detailQuestion: "How does Sora respond to finding a footpath instead of a road?", detail: "She notes the footpath's turns on the map.", distractors: ["She abandons the trip and complains about the map.", "She searches for a road on the opposite side of the hill.", "She removes the map's original markings."] },
+    { text: "Mr. Ibarra claimed that the clock in the hall was five minutes slow, though he had never compared it with another clock. Each evening, he nevertheless adjusted his watch to match it, saying that a familiar error was easier to manage than an uncertain correction.", main: "Mr. Ibarra knowingly relies on a possibly inaccurate clock because its error feels predictable.", detailQuestion: "Why does Mr. Ibarra continue to use the hall clock?", detail: "He considers its familiar error easier to manage than an uncertain correction.", distractors: ["He has confirmed that the hall clock is completely accurate.", "He is unable to adjust the time on his watch.", "He wants the clock's error to become less predictable."] },
+    { text: "Leena had expected the committee to reject her garden plan, so its approval left her briefly speechless. By evening, however, her desk was covered with seed catalogs, sketches, and lists of neighbors who might lend tools.", main: "Leena quickly turns her surprise at the plan's approval into practical preparation.", detailQuestion: "What covers Leena's desk by evening?", detail: "Seed catalogs, sketches, and lists of potential tool lenders cover it.", distractors: ["Letters explaining why the plan was rejected cover it.", "Tools borrowed from several neighbors cover it.", "Minutes from the committee's next meeting cover it."] },
+    { text: "The other runners watched the storm clouds and shortened their warm-ups. Dev studied the same clouds, then added a second knot to each shoelace and continued his usual routine. He could not control the weather, he reasoned, but he could avoid giving it one more advantage.", main: "Dev responds to uncertain weather by carefully controlling what he can.", detailQuestion: "What change does Dev make before continuing his routine?", detail: "He ties a second knot in each shoelace.", distractors: ["He shortens his warm-up to match the other runners.", "He changes into a different pair of shoes.", "He waits for the storm clouds to disappear."] },
+    { text: "For weeks, the empty frame above the mantel bothered Jo. When her painting was finally finished, she leaned it against the wall beneath the frame and left it there. The blank space, she realized, had begun to seem less like an absence than a promise.", main: "Jo comes to value the empty frame for representing future possibility.", detailQuestion: "Where does Jo place her completed painting?", detail: "She leans it against the wall beneath the empty frame.", distractors: ["She hangs it in the frame above the mantel.", "She stores it where the empty frame cannot be seen.", "She gives it away before deciding where to display it."] },
+    { text: "Ari recognized the melody drifting from the apartment upstairs, but its rhythm was slower than he remembered. He paused on the stairs until the final note faded, then hummed the older version as he continued upward, listening for where the two versions agreed.", main: "Hearing an altered melody prompts Ari to compare it with the version he remembers.", detailQuestion: "What does Ari do after the final note fades?", detail: "He hums the older version while continuing up the stairs.", distractors: ["He asks the musician to stop playing the melody.", "He writes down the new version before moving.", "He returns downstairs because he does not recognize the tune."] }
+  ];
+
   function centralIdeasDetails(ctx) {
+    if (ctx.index % 5 === 4) {
+      const literary = LITERARY_CASES[Math.floor(ctx.index / 5)];
+      if (ctx.index % 3 === 0) {
+        return item(ctx, {
+          recipe: "key-detail", stimulus: literary.text, question: literary.detailQuestion, correct: literary.detail,
+          distractors: literary.distractors,
+          explanation: "The correct choice restates the action or reason given in the passage. Each distractor changes its object, timing, or purpose.", parameters: { literary }
+        });
+      }
+      return item(ctx, {
+        recipe: "central-idea", stimulus: literary.text, question: "Which choice best states the main idea of the text?", correct: literary.main,
+        distractors: [literary.distractors[0], literary.distractors[1], literary.detail],
+        explanation: "The correct choice captures both the character's situation and response. The other choices contradict the passage or focus on a detail without expressing its central point.", parameters: { literary }
+      });
+    }
     const topic = pick(ctx.rng, TOPICS);
     const duration = ctx.index + 4;
-    const hardQualification = ctx.difficulty === "Hard" ? ` Because the evidence concerns a limited set of observations, ${topic.surname} does not claim that the pattern must occur in every setting.` : "";
-    const stimulus = `${topic.researcher[0].toUpperCase()}${topic.researcher.slice(1)} conducted a ${duration}-week study of ${topic.subject}. ${topic.result}${hardQualification}`;
+    const methodDetail = ctx.difficulty === "Easy"
+      ? "The observations were made under the same procedure throughout the study."
+      : `To reduce the chance that a short-lived condition would determine the result, the team repeated its measurements throughout the ${duration}-week period.`;
+    const hardQualification = ctx.difficulty === "Hard" ? ` Even so, because the evidence concerns a limited set of observations, ${topic.surname} does not claim that the pattern must occur in every setting.` : "";
+    const stimulus = `${topic.researcher[0].toUpperCase()}${topic.researcher.slice(1)} conducted a ${duration}-week study of ${topic.subject}. ${methodDetail} ${topic.result}${hardQualification}`;
     if (ctx.index % 3 === 0) {
       return item(ctx, {
         recipe: "key-detail", stimulus, question: `According to the text, what did ${topic.surname} find?`,
         correct: `${topic.detail[0].toUpperCase()}${topic.detail.slice(1)}.`,
-        distractors: [`The study found no difference or recurring pattern.`, `The study examined only a single observation made on one occasion.`, `The results proved that the pattern occurs in every possible setting.`],
-        explanation: `The correct choice restates the result reported in the second sentence without contradicting or overstating it.`, parameters: { topic, duration }
+        distractors: [`The study established that the pattern was caused entirely by the measurement procedure.`, `The study found the same outcome only during the first observation period.`, `The results showed that the pattern must occur in every possible setting.`],
+        explanation: `The correct choice restates the reported result without contradicting or overstating it.`, parameters: { topic, duration }
       });
     }
     return item(ctx, {
       recipe: "central-idea", stimulus, question: "Which choice best states the main idea of the text?",
       correct: topic.main,
-      distractors: [`${topic.surname}'s study found no meaningful pattern in ${topic.subject}.`, `${topic.surname}'s primary purpose was to establish that the result applies in every setting.`, `The text mainly argues that a ${duration}-week study is always more reliable than a shorter study.`],
+      distractors: [`${topic.surname}'s repeated measurements explain why the observed pattern disappeared by the end of the study.`, `${topic.surname}'s study shows that the reported result applies in settings the team did not examine.`, `The study's main finding is that repeating a measurement guarantees that outside conditions cannot affect the result.`],
       explanation: `The correct choice accurately summarizes the study and its result. The distractors contradict the result, overstate its reach, or focus on an incidental detail.`, parameters: { topic, duration }
     });
   }
@@ -164,10 +197,13 @@
       }
     ]);
     const qualifier = ctx.difficulty === "Easy" ? "directly" : ctx.difficulty === "Medium" ? "most directly" : "most strongly";
+    const method = ctx.difficulty === "Easy"
+      ? "The investigation compared observations made under two relevant conditions."
+      : "The researcher is looking for a result that bears on the proposed relationship, rather than merely describing the same general subject.";
     return item(ctx, {
-      recipe: "support-claim", stimulus: `After reviewing evidence from a ${ctx.index + 3}-month investigation, a researcher claims that ${caseData.claim}.`,
+      recipe: "support-claim", stimulus: `After reviewing evidence from a ${ctx.index + 3}-month investigation, a researcher claims that ${caseData.claim}. ${method}`,
       question: `Which finding, if true, would ${qualifier} support the researcher's claim?`, correct: caseData.correct,
-      distractors: ctx.difficulty === "Hard" ? caseData.hardDistractors : caseData.distractors,
+      distractors: ctx.difficulty === "Easy" ? caseData.distractors : caseData.hardDistractors,
       explanation: `The correct finding provides evidence about the exact relationship in the claim. The other findings may concern ${caseData.subject}, but they do not support that relationship.`, parameters: { caseData }
     });
   }
@@ -185,21 +221,22 @@
     const values = [first, second, third];
     const unit = pick(ctx.rng, ["survival rate (%)", "mean score", "retention (%)", "observed count"]);
     const table = { caption: `${unit[0].toUpperCase()}${unit.slice(1)} by group`, headers: ["Group", unit], rows: names.map((name, index) => [name, values[index]]) };
+    const context = `A research team applied the same measurement procedure to three groups and recorded the results in the table. The team then compared the groups rather than treating any single value in isolation.`;
     if (ctx.index % 2 === 0) {
       return item(ctx, {
-        recipe: "support-comparison", stimulus: `A researcher claims that ${names[2]} had a higher value than either of the other groups.`, table,
+        recipe: "support-comparison", stimulus: `${context} A researcher claims that ${names[2]} had a higher value than either of the other groups.`, table,
         question: "Which choice most effectively uses data from the table to support the claim?",
         correct: `${names[2]}'s ${unit} was ${third}, compared with ${second} for ${names[1]} and ${first} for ${names[0]}.`,
-        distractors: [`${names[0]}'s ${unit} was ${first}, the lowest value shown.`, `${names[1]} and ${names[2]} differed by ${third - second}, but the table gives no data for ${names[0]}.`, `All three groups had the same ${unit}.`],
+        distractors: [`${names[2]}'s ${unit} was ${third}, which was ${third - second} higher than ${names[1]}'s; the table therefore gives no basis for comparing ${names[2]} with ${names[0]}.`, `${names[1]}'s ${unit} was ${second}, compared with ${first} for ${names[0]}, so ${names[1]} had the highest value shown.`, `${names[0]}'s ${unit} was ${first}, which was ${third - first} lower than ${names[2]}'s, but ${names[1]}'s value was not reported.`],
         explanation: `The correct choice accurately cites all three values and directly establishes that ${third} is the greatest.`, parameters: { names, values, unit }
       });
     }
     const difference = third - first;
     return item(ctx, {
-      recipe: "quantify-difference", stimulus: `A student claims that the outcome for ${names[2]} exceeded the outcome for ${names[0]}.`, table,
+      recipe: "quantify-difference", stimulus: `${context} A student claims that the outcome for ${names[2]} exceeded the outcome for ${names[0]}.`, table,
       question: "Which choice most effectively uses data from the table to support the student's claim?",
       correct: `${names[2]}'s value was ${third}, which was ${difference} greater than ${names[0]}'s value of ${first}.`,
-      distractors: [`${names[0]}'s value was ${difference} greater than ${names[2]}'s.`, `${names[1]}'s value was ${second}, which proves the two named groups were equal.`, `${names[2]}'s value was ${third - second} greater than ${names[0]}'s.`],
+      distractors: [`${names[0]}'s value was ${first}, which was ${difference} greater than ${names[2]}'s value of ${third}.`, `${names[2]}'s value was ${third}, which was ${third - second} greater than ${names[0]}'s value of ${first}.`, `${names[1]}'s value was ${second}, which was ${second - first} greater than ${names[0]}'s; therefore, ${names[2]} and ${names[0]} differed by ${second - first}.`],
       explanation: `${third} − ${first} = ${difference}, so the correct choice reports both values and their difference accurately.`, parameters: { names, values, unit }
     });
   }
@@ -209,32 +246,36 @@
       {
         text: "A museum moved several light-sensitive textiles into cases fitted with new filters. Over the next year, color measurements changed less for those textiles than for similar textiles kept under the previous lighting system.",
         correct: "The new filters likely reduced a source of color fading.",
-        distractors: ["The filtered textiles were made more recently.", "All color change can be prevented permanently.", "The previous lighting system used no electricity."]
+        distractors: ["The new filters completely prevented the textiles from changing color.", "The previous lighting system caused the textiles to fade at a constant rate.", "The cases fitted with filters exposed the textiles to more light than the old cases did."]
       },
       {
         text: "Seedlings of one grass species grew equally well in two soil types when watered often. When watering was reduced, however, seedlings in the sandier soil grew substantially less.",
         correct: "Soil type affected the seedlings' growth more under limited water than under frequent watering.",
-        distractors: ["The seedlings cannot grow in sandy soil.", "Frequent watering reduced growth in both soils.", "The two soil types held exactly the same amount of water."]
+        distractors: ["The seedlings grew better in sandier soil whenever water was plentiful.", "Reducing the water affected seedlings in both soil types to exactly the same degree.", "Soil type, rather than water availability, determined seedling growth under both watering conditions."]
       },
       {
         text: "A novelist's early drafts describe a secondary character only briefly. In each later draft, scenes involving that character become longer, and the published version gives the character a decisive role in the ending.",
         correct: "The novelist increased the character's importance while revising the work.",
-        distractors: ["The novelist removed the character before publication.", "The published ending is identical to the earliest draft.", "The character was based on a documented historical person."]
+        distractors: ["The novelist preserved the character's role without substantial revision.", "The novelist shortened the character's scenes while strengthening the character's role in the ending.", "The character became more important only after the published version was completed."]
       },
       {
         text: "Two groups solved the same puzzles. One group received immediate information after each attempt; the other received all information at the end. The first group improved more rapidly during the session, but both groups performed similarly on a test one week later.",
         correct: "Immediate information aided short-term improvement but did not produce a clear long-term advantage in this study.",
-        distractors: ["Delayed information prevented all learning.", "Immediate information guaranteed superior performance one week later.", "The groups solved different kinds of puzzles."]
+        distractors: ["Delayed information produced faster improvement during the session than immediate information did.", "Immediate information produced an advantage that became larger one week later.", "The timing of information had no relationship to performance at any point in the study."]
       },
       {
         text: "After a city added protected bicycle lanes, bicycle counts rose on streets with the new lanes and on several nearby streets without them. Counts remained nearly unchanged in a distant comparison district.",
         correct: "The lane project may have influenced cycling beyond the streets where lanes were installed.",
-        distractors: ["Cycling decreased on every street without a protected lane.", "The distant district had more protected lanes.", "The project eliminated all other forms of transportation."]
+        distractors: ["The lane project affected bicycle counts only on streets where lanes were installed.", "Bicycle counts rose equally in the project area and the distant comparison district.", "The project caused every resident of nearby streets to replace other transportation with cycling."]
       }
     ]);
     const stem = ctx.difficulty === "Hard" ? "Which conclusion is best supported by the text?" : "Which choice is most strongly supported by the text?";
+    const analysisYear = ctx.practiceSet === 2 ? 1970 + (ctx.index - 25) : 1995 + ctx.index;
+    const observationDetail = ctx.difficulty === "Easy"
+      ? `A ${analysisYear} analysis considered the sequence of evidence described below.`
+      : `A ${analysisYear} analysis considered the sequence and relative outcomes in the evidence below without assuming that the pattern must occur in every setting.`;
     return item(ctx, {
-      recipe: "supported-inference", stimulus: `In observation set ${ctx.index + 1}, researchers documented the following pattern. ${caseData.text}`, question: stem, correct: caseData.correct,
+      recipe: "supported-inference", stimulus: `${observationDetail} ${caseData.text} The evidence supports a limited conclusion about the reported pattern.`, question: stem, correct: caseData.correct,
       distractors: caseData.distractors,
       explanation: `The correct choice follows from the comparison or change described in the text without claiming more than the evidence supports.`, parameters: { caseData }
     });
@@ -295,6 +336,12 @@
 
   function wordsContext(ctx) {
     const entry = WORD_CASES[ctx.index % WORD_CASES.length];
+    const lead = [
+      "In an academic discussion of how evidence can alter an initial interpretation, a writer makes the following observation:",
+      "A researcher summarizing a broader analysis offers the following assessment:",
+      "While explaining the significance of a recent finding, an author makes the following point:",
+      "A scholarly review considers how the available information should be interpreted:"
+    ][ctx.index % 4];
     if (ctx.index % 5 === 0) {
       const definitionDistractors = {
         refine: ["delay a decision about", "copy the outward form of", "reject as unusable"],
@@ -309,14 +356,14 @@
         retain: ["produce for the first time", "calculate the amount of", "allow to escape"]
       };
       return item(ctx, {
-        recipe: "meaning-in-context", stimulus: entry.text.replace("______", `“${entry.correct}”`),
+        recipe: "meaning-in-context", stimulus: `${lead} ${entry.text.replace("______", `“${entry.correct}”`)}`,
         question: `As used in the text, what does “${entry.correct}” most nearly mean?`, correct: entry.reason,
         distractors: definitionDistractors[entry.correct],
         explanation: `In this context, “${entry.correct}” means ${entry.reason}. That meaning makes the sentence's logic coherent.`, parameters: { entry }
       });
     }
     return item(ctx, {
-      recipe: "logical-precise-word", stimulus: entry.text,
+      recipe: "logical-precise-word", stimulus: `${lead} ${entry.text}`,
       question: "Which choice completes the text with the most logical and precise word?", correct: entry.correct,
       distractors: entry.distractors,
       explanation: `“${entry.correct}” means ${entry.reason}, which precisely fits the relationship established in the sentence.`, parameters: { entry }
@@ -339,7 +386,7 @@
       return item(ctx, {
         recipe: "sentence-function", stimulus, question: "Which choice best describes the function of the second sentence in the text as a whole?",
         correct: "It identifies a limitation that qualifies the encouraging result in the first sentence.",
-        distractors: ["It gives an unrelated historical example.", "It repeats the first sentence without adding information.", "It proves that the initial result was fraudulent."],
+        distractors: ["It describes the procedure that produced the encouraging result in the first sentence.", "It offers a second example that broadens the first sentence's result to another setting.", "It rejects the first sentence's result by identifying evidence that the result did not occur."],
         explanation: `Introduced by “However,” the second sentence limits the scope or strength of the positive first-sentence result.`, parameters: { caseData, year }
       });
     }
@@ -347,7 +394,7 @@
     return item(ctx, {
       recipe: "overall-purpose", stimulus, question: "Which choice best describes the overall purpose of the text?",
       correct: "To describe evidence that challenges an earlier view while acknowledging a limitation of that evidence",
-      distractors: ["To prove that all earlier research was intentionally misleading", "To list instructions for reproducing the tests", "To argue that limitations make experimental evidence useless"],
+      distractors: ["To explain why an earlier view remains more convincing than the evidence presented against it", "To compare two procedures and recommend the one that produced the more encouraging result", "To argue that the limitation identified by researchers prevents the evidence from having any value"],
       explanation: `The text contrasts an earlier assumption with new evidence and then qualifies that evidence; the correct choice captures all three moves.`, parameters: { caseData, year }
     });
   }
@@ -368,14 +415,14 @@
       return item(ctx, {
         recipe: "agreement", stimulus: `${text1}\n\n${text2}`, question: "Based on the texts, both authors would most likely agree with which statement?",
         correct: `${topic[0].toUpperCase()}${topic.slice(1)} ${benefit}.`,
-        distractors: [`${topic[0].toUpperCase()}${topic.slice(1)} should never be expanded.`, `Small trials have already resolved every uncertainty.`, `Implementation has no effect on outcomes.`],
+        distractors: [`${topic[0].toUpperCase()}${topic.slice(1)} should be expanded immediately in every setting.`, `The stated benefit of ${topic} is outweighed in all cases by the concern Text 2 identifies.`, `Limited trials cannot provide useful information about whether ${topic} should be expanded.`],
         explanation: `Both texts explicitly recognize the stated benefit. They differ about how quickly or broadly to act on it.`, parameters: { caseData, year }
       });
     }
     return item(ctx, {
       recipe: "response", stimulus: `${text1}\n\n${text2}`, question: "How would the author of Text 2 most likely respond to Text 1's recommendation?",
       correct: `The recommendation may be justified eventually, but ${concern}, so limited trials should come first.`,
-      distractors: ["The recommendation is based on a benefit that does not exist.", "The recommendation is too cautious because expansion should occur without testing.", "The recommendation concerns a completely different topic from Text 2."],
+      distractors: [`The recommendation correctly identifies a benefit, but that benefit applies only after the practice has already been expanded broadly.`, `The recommendation is too cautious because the concern identified in Text 2 supports expansion without further testing.`, `The recommendation should be rejected because ${topic} cannot provide the benefit both texts acknowledge.`],
       explanation: `Text 2 accepts the possible benefit but adds a concern and favors trials before broad expansion.`, parameters: { caseData, year }
     });
   }
@@ -388,28 +435,37 @@
       { subject: "engineer Fazlur Rahman Khan", work: "advanced tubular structural systems", year: 1963, feature: "enabled tall buildings to use less structural material", category: "engineering" },
       { subject: "botanist Ynes Mexia", work: "began major collecting expeditions", year: 1925, feature: "resulted in the collection of thousands of plant specimens across the Americas", category: "botany" }
     ]);
+    const [role, ...nameParts] = data.subject.split(" ");
+    const name = nameParts.join(" ");
+    const roleWithArticle = `${/^[aeiou]/i.test(role) ? "an" : "a"} ${role}`;
     const noteDetail = pick(ctx.rng, ["The student's source is a museum catalog.", "The student's source includes an archival photograph.", "The student is preparing a short presentation.", "The notes will be used in a biographical paragraph.", "The source was published by a university archive."]);
-    const notes = `While researching a topic, a student has taken the following notes:\n• ${data.subject} worked in ${data.category}.\n• In ${data.year}, ${data.subject.split(" ").slice(-1)[0]} ${data.work}.\n• The work ${data.feature}.\n• ${noteDetail}`;
+    const notes = `While researching a topic, a student has taken the following notes:\n• ${name} was ${roleWithArticle}.\n• In ${data.year}, ${name.split(" ").slice(-1)[0]} ${data.work}.\n• The work ${data.feature}.\n• ${noteDetail}`;
     const goal = ctx.index % 3 === 0 ? "emphasize the work's significance" : ctx.index % 3 === 1 ? "introduce the work and give its date" : "describe the subject's field and achievement";
     let correct;
-    if (ctx.index % 3 === 0) correct = `${data.subject}'s work was significant because it ${data.feature}.`;
-    else if (ctx.index % 3 === 1) correct = `In ${data.year}, ${data.subject} ${data.work}.`;
-    else correct = `${data.subject}, a figure in ${data.category}, ${data.work}.`;
+    if (ctx.index % 3 === 0) correct = `${name}'s work was significant because it ${data.feature}.`;
+    else if (ctx.index % 3 === 1) correct = `In ${data.year}, ${name} ${data.work}.`;
+    else correct = `${name}, ${roleWithArticle}, ${data.work}.`;
+    const lastName = name.split(" ").slice(-1)[0];
+    const distractors = ctx.index % 3 === 0
+      ? [`In ${data.year}, ${lastName} ${data.work}.`, `${name} was ${roleWithArticle}, and the student's source includes information about this field.`, `${name}'s work is one example of an achievement completed in ${data.year}.`]
+      : ctx.index % 3 === 1
+        ? [`${name}'s work was significant because it ${data.feature}.`, `${name} was ${roleWithArticle} who later became known for an important achievement.`, `The source used for the student's research provides information about ${name}.`]
+        : [`In ${data.year}, ${name} completed work that later proved significant.`, `${name}'s achievement was significant because it ${data.feature}.`, `${noteDetail.replace(/^The student's /, "The ")}`];
     return item(ctx, {
       recipe: "notes-to-goal", stimulus: notes, question: `The student wants to ${goal}. Which choice most effectively uses relevant information from the notes to accomplish this goal?`,
       correct,
-      distractors: [`${data.year} was an important year, and ${data.category} is a broad field.`, `${data.subject} worked in ${data.category}; the notes do not identify any achievement.`, `${data.subject} ${data.work}, but the date and significance are unknown.`],
+      distractors,
       explanation: `The correct choice selects accurate information from the notes that directly serves the stated goal; the other choices are irrelevant or contradict the notes.`, parameters: { data, goal, noteDetail }
     });
   }
 
   const TRANSITION_CASES = [
-    { relation: "contrast", setup: "A replication study published in {year} compared two trials.", first: "The first trial produced a strong effect.", second: "the larger replication found almost no effect", correct: "However,", distractors: ["Similarly,", "Therefore,", "For example,"] },
-    { relation: "result", setup: "An archive completed a preservation project in {year}.", first: "The archive digitized its most fragile documents.", second: "researchers can now examine the documents without handling the originals", correct: "Consequently,", distractors: ["Nevertheless,", "Meanwhile,", "For instance,"] },
-    { relation: "example", setup: "A {year} biology article discusses drought tolerance.", first: "Some plants can survive long periods with little rainfall.", second: "the resurrection fern can lose most of its water and recover when rain returns", correct: "For example,", distractors: ["Instead,", "Likewise,", "Therefore,"] },
-    { relation: "addition", setup: "A {year} report compares two manufacturing materials.", first: "The new material is lighter than the conventional material.", second: "it is less expensive to manufacture", correct: "Moreover,", distractors: ["In contrast,", "Nevertheless,", "Specifically,"] },
-    { relation: "concession", setup: "In {year}, historians assessed a newly discovered set of letters.", first: "The letters do not settle who proposed the final design.", second: "they narrow the possible dates on which the decision was made", correct: "Even so,", distractors: ["For example,", "As a result,", "In other words,"] },
-    { relation: "sequence", setup: "In {year}, a team prepared sensors for fieldwork.", first: "The team first calibrated each sensor.", second: "the researchers installed the sensors in the field", correct: "Next,", distractors: ["Instead,", "Nevertheless,", "For instance,"] }
+    { relation: "contrast", setup: "A replication study published in {year} tested whether an earlier result would hold with a larger and more diverse sample.", first: "The first trial produced a strong effect.", second: "the larger replication found almost no effect", correct: "However,", distractors: ["Similarly,", "Therefore,", "For example,"] },
+    { relation: "result", setup: "An archive completed a preservation project in {year} to reduce the handling of its most fragile documents.", first: "The archive created detailed digital images of those materials.", second: "researchers can now examine the documents without handling the originals", correct: "Consequently,", distractors: ["Nevertheless,", "Meanwhile,", "For instance,"] },
+    { relation: "example", setup: "A {year} biology article discusses physiological strategies that allow some plants to tolerate drought.", first: "Certain species can survive long periods with very little rainfall.", second: "the resurrection fern can lose most of its water and recover when rain returns", correct: "For example,", distractors: ["Instead,", "Likewise,", "Therefore,"] },
+    { relation: "addition", setup: "A {year} report compares a new manufacturing material with the conventional material it could replace.", first: "The new material is lighter than the conventional material.", second: "it is less expensive to manufacture", correct: "Moreover,", distractors: ["In contrast,", "Nevertheless,", "Specifically,"] },
+    { relation: "concession", setup: "In {year}, historians assessed a newly discovered set of letters for evidence about a disputed architectural plan.", first: "The letters do not settle who proposed the final design.", second: "they narrow the possible dates on which the decision was made", correct: "Even so,", distractors: ["For example,", "As a result,", "In other words,"] },
+    { relation: "sequence", setup: "In {year}, a team prepared a network of environmental sensors for an extended period of fieldwork.", first: "The team first calibrated each sensor under controlled conditions.", second: "the researchers installed the sensors in the field", correct: "Next,", distractors: ["Instead,", "Nevertheless,", "For instance,"] }
   ];
 
   function transitions(ctx) {
@@ -472,13 +528,70 @@
     { recipe: "interrupting-phrase", text: "The restored panels, along with the original frame ______ are displayed in the east gallery.", correct: ",", distractors: [";", ":", "no punctuation"], reason: "The phrase beginning “along with” is supplementary and must be closed with a comma." }
   ];
 
+  function boundaryPresentation(entry) {
+    const parts = entry.text.split("______");
+    const variants = [entry.correct, ...entry.distractors];
+    if (parts.length === 2) {
+      const leftMatch = parts[0].match(/^(.*\s)(\S+)\s*$/);
+      const rightMatch = parts[1].match(/^\s*(\S+)([\s\S]*)$/);
+      if (!leftMatch || !rightMatch) return { text: entry.text, correct: entry.correct, distractors: entry.distractors };
+      const [, before, left] = leftMatch;
+      const [, right, after] = rightMatch;
+      const complete = (punctuation) => {
+        if (punctuation === "no punctuation") return `${left} ${right}`;
+        if (/^[A-Za-z]/.test(punctuation)) return `${left} ${punctuation} ${right}`;
+        return `${left}${punctuation} ${right}`;
+      };
+      return { text: `${before}______${after}`, correct: complete(variants[0]), distractors: variants.slice(1).map(complete) };
+    }
+    if (parts.length === 3) {
+      const leftMatch = parts[0].match(/^(.*\s)(\S+)\s*$/);
+      const rightMatch = parts[2].match(/^\s*(\S+)([\s\S]*)$/);
+      if (!leftMatch || !rightMatch) return { text: entry.text, correct: entry.correct, distractors: entry.distractors };
+      const [, before, left] = leftMatch;
+      const [, right, after] = rightMatch;
+      const middle = parts[1].trim();
+      const complete = (pair) => {
+        const [first, second] = pair.split(" / ");
+        const firstMark = first === "no punctuation" ? "" : first;
+        const secondMark = second === "no punctuation" ? "" : second;
+        return `${left}${firstMark} ${middle}${secondMark} ${right}`;
+      };
+      return { text: `${before}______${after}`, correct: complete(variants[0]), distractors: variants.slice(1).map(complete) };
+    }
+    return { text: entry.text, correct: entry.correct, distractors: entry.distractors };
+  }
+
   function boundaries(ctx) {
     const bank = ctx.difficulty === "Hard" ? BOUNDARY_HARD_CASES : ctx.difficulty === "Medium" ? BOUNDARY_MEDIUM_CASES : BOUNDARY_CASES;
     const entry = bank[ctx.index % bank.length];
     const year = ctx.practiceSet === 2 ? 1976 + (ctx.index - 25) : 2001 + ctx.index;
+    const presentation = boundaryPresentation(entry);
+    const leadByRecipe = {
+      "independent-clauses": `A ${year} project history traces how two consecutive surveys or archival collections were organized.`,
+      "introductory-phrase": `A ${year} technical report explains how a team reconsidered an estimate after inspecting additional evidence.`,
+      "colon-list": `A field manual revised in ${year} describes the equipment researchers carry when collecting measurements.`,
+      "nonrestrictive-clause": `A ${year} laboratory report compares samples collected at different times and under different conditions.`,
+      "no-subject-verb-comma": `A ${year} imaging study uses early photographs to reconstruct how damage to an object developed.`,
+      "semicolon-conjunctive-adverb": `A ${year} methods paper evaluates whether an inexpensive procedure is precise enough for research.`,
+      "coordinating-conjunction": `A ${year} report describes how a coastal station maintained data collection while its building was repaired.`,
+      "colon-explanation": `A ${year} investigation considers whether contamination or another factor affected the study's result.`,
+      appositive: `A museum catalog published in ${year} discusses several historic scientific instruments that remain in use.`,
+      "dependent-to-independent": `A ${year} field report explains why measurements made after a sensor adjustment could be trusted.`,
+      "compound-predicate": `A ${year} archive report describes the processing of a large collection of newly donated documents.`,
+      "semicolon-transition": `A ${year} analysis compares an initial estimate with the conclusion supported by later measurements.`,
+      "colon-series": `A planning report released in ${year} identifies environmental risks to a coastal community.`,
+      parenthetical: `A ${year} cartographic study compares an updated map with an earlier version of the same region.`,
+      "semicolon-parenthetical": `A ${year} methods review weighs a procedure's low cost against limits on its precision.`,
+      "restrictive-clause": `A ${year} laboratory schedule explains the order in which samples from different collection periods were processed.`,
+      "introductory-dependent-clause": `A ${year} historical analysis reevaluates an estimate that had been based on incomplete records.`,
+      "colon-elaboration": `A ${year} laboratory summary describes measurements taken at two stages of a controlled procedure.`,
+      "interrupting-phrase": `A museum guide issued in ${year} identifies the parts of a restored artwork that are currently on view.`
+    };
+    const lead = leadByRecipe[entry.recipe];
     return item(ctx, {
-      recipe: entry.recipe, stimulus: `A report written in ${year} contains the following statement: ${entry.text}`, question: "Which choice completes the text so that it conforms to the conventions of Standard English?", correct: entry.correct,
-      distractors: entry.distractors,
+      recipe: entry.recipe, stimulus: `${lead} ${presentation.text}`, question: "Which choice completes the text so that it conforms to the conventions of Standard English?", correct: presentation.correct,
+      distractors: presentation.distractors,
       explanation: entry.reason, parameters: { entry, year }
     });
   }
@@ -520,8 +633,21 @@
     const bank = ctx.difficulty === "Hard" ? FORM_HARD_CASES : ctx.difficulty === "Medium" ? FORM_MEDIUM_CASES : FORM_CASES;
     const entry = bank[ctx.index % bank.length];
     const year = ctx.practiceSet === 2 ? 1970 + (ctx.index - 25) : 1995 + ctx.index;
+    const leadByRecipe = {
+      "subject-verb-agreement": `A catalog updated in ${year} describes how maps and reference materials are stored or displayed.`,
+      "pronoun-agreement": `A ${year} museum inventory records the identifying information and original labels retained by individual objects in the collection.`,
+      "pronoun-case": `A ${year} institutional report identifies the people selected to complete a particular task or receive an honor.`,
+      "verb-tense": `A project history written in ${year} distinguishes an earlier completed action from a later event.`,
+      "dangling-modifier": `A ${year} account describes a specialist using close observation to identify previously unnoticed details.`,
+      "modifier-placement": `A ${year} laboratory summary explains the extent to which a research team examined its samples with newly acquired equipment.`,
+      "parallel-structure": `A program description issued in ${year} lists several equally important requirements or goals.`,
+      "logical-comparison": `A comparative study published in ${year} evaluates corresponding features in two collections or populations.`,
+      possessive: `A ${year} field report distinguishes records or territories associated with more than one observer or species.`,
+      "verb-finiteness": `A ${year} research summary states what a set of images, samples, or documents makes possible or reveals.`
+    };
+    const lead = leadByRecipe[entry.recipe];
     return item(ctx, {
-      recipe: entry.recipe, stimulus: `A document revised in ${year} contains the following sentence: ${entry.text}`, question: "Which choice completes the text so that it conforms to the conventions of Standard English?", correct: entry.correct,
+      recipe: entry.recipe, stimulus: `${lead} ${entry.text}`, question: "Which choice completes the text so that it conforms to the conventions of Standard English?", correct: entry.correct,
       distractors: entry.distractors,
       explanation: entry.reason, parameters: { entry, year }
     });
@@ -541,9 +667,9 @@
     "form-structure-sense": formStructureSense
   };
 
-  function buildSATRWQuestions(seed = "baseline-v1", options = {}) {
-    const normalizedSeed = String(seed).trim() || "baseline-v1";
-    const setId = hash(normalizedSeed).toString(36);
+  function buildSATRWQuestions(seed = "baseline-v2", options = {}) {
+    const normalizedSeed = String(seed).trim() || "baseline-v2";
+    const setId = hash(`${GENERATOR_VERSION}/${normalizedSeed}`).toString(36);
     const practiceSet = Number(options.practiceSet) === 2 ? 2 : 1;
     const variantOffset = practiceSet === 2 ? 25 : 0;
     return SKILLS.flatMap((skill) => {
@@ -556,7 +682,7 @@
         let question;
         let signature;
         do {
-          const rng = randomFor(`${normalizedSeed}/${skill.slug}/${index}/${difficulty}/${retry}`);
+          const rng = randomFor(`${GENERATOR_VERSION}/${normalizedSeed}/${skill.slug}/${index}/${difficulty}/${retry}`);
           question = GENERATORS[skill.slug]({ seed: normalizedSeed, setId, skill, index, difficulty, practiceSet, rng });
           signature = `${question.stimulus}|${question.question}|${JSON.stringify(question.table || null)}`;
           retry += 1;

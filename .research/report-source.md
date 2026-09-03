@@ -2,7 +2,7 @@
 
 **Audience:** Form SAT Practice maintainers
 
-**Research dates:** 2026-09-02 through 2026-09-03
+**Research dates:** 2026-09-02 through 2026-09-03, with an item-authenticity audit on 2026-09-03
 
 **Scope:** Current digital SAT Math and Reading and Writing content boundaries, item structures, and their implementation as reproducible original drills.
 
@@ -21,7 +21,15 @@ This is a comprehensive skill-practice library with nonadaptive practice-test si
 - The official framework and public content pages organize Math into Algebra, Advanced Math, Problem-Solving and Data Analysis, and Geometry and Trigonometry.
 - Reading and Writing is organized into Information and Ideas, Craft and Structure, Expression of Ideas, and Standard English Conventions.
 
-Product consequences: Reading and Writing items are all multiple choice and keep stimuli at or below 150 words. Math includes both response formats. The dashboard exposes both section and exact-skill practice.
+Product consequences: Reading and Writing items are all multiple choice and keep completed stimuli within 25–150 standardized word equivalents (characters divided by six). Completion questions are measured with the keyed response inserted. Math includes both response formats. The dashboard exposes both section and exact-skill practice.
+
+### Item-authenticity audit
+
+Released sample questions and the framework's test-development appendix were compared with the generated parent models. The audit found three actionable differences: some generated Reading and Writing stimuli were shorter than the official floor; several distractors could be dismissed as irrelevant without applying the tested skill; and punctuation choices described punctuation abstractly rather than completing the passage as released SAT choices do.
+
+The `baseline-v2` pass corrects those issues at the generator level. Reading and Writing passages now meet both ends of the official standardized range, evidence and comprehension distractors use close-but-wrong comparisons or claims, and Boundaries answer choices include the words around the blank. Academic lead-in sentences are tied to the tested passage topic. The validator reconstructs completed passages and enforces the official length range across the baseline and alternate seeds.
+
+The framework also explains that College Board keeps the number of child questions from each automated parent model relatively low, reviews every permitted Reading and Writing variable in advance, constrains Math parameters for equivalent challenge, and subjects content to expert, editorial, fairness, and statistical review. The local generators can adopt the first three design principles but cannot reproduce College Board's field testing or psychometric calibration. This remains an important limit on any “true SAT” claim.
 
 ### Taxonomy resolution
 
@@ -54,6 +62,7 @@ Validation checks all 1,550 items, the independent set boundaries, exact taxonom
 | Claim used | Source | Publisher | Source date | URL | Accessed |
 |---|---|---|---|---|---|
 | Official section, domain, skill, detailed testing-point, passage-length, and response-format definitions | *Assessment Framework for the Digital SAT Suite*, version 3.01 | College Board | 2024-08 | https://satsuite.collegeboard.org/media/pdf/assessment-framework-for-digital-sat-suite.pdf | 2026-09-03 |
+| Released stem patterns, passage styles, completion formats, and distractor explanations | *Digital SAT Sample Questions and Explanations* | College Board | 2022 | https://satsuite.collegeboard.org/media/pdf/digital-sat-sample-questions.pdf | 2026-09-03 |
 | Current Math taxonomy and public testing-point wording | *SAT Content Domains* | College Board | Current web page | https://satsuite.collegeboard.org/higher-ed-professionals/sat-validity/content-domains | 2026-09-02 |
 | Math section scope and response-format overview | *The Math Section: Overview* | College Board | Current web page | https://satsuite.collegeboard.org/sat/whats-on-the-test/math/overview | 2026-09-02 |
 | Reading and Writing section format and domain overview | *The Reading and Writing Section: Overview* | College Board | Current web page | https://satsuite.collegeboard.org/sat/whats-on-the-test/reading-writing | 2026-09-02 |
