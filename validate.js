@@ -338,6 +338,146 @@ for (let correctCount = 0; correctCount <= fullQuestions.length; correctCount +=
   previousEstimate = estimate;
 }
 
+// --- Construct-validity checks -------------------------------------------
+// A question is only measuring its skill if it cannot be answered without it.
+// These checks fail the bank when an item is solvable by test-wiseness alone,
+// when "difficulty" carries no information, or when decorative digits are
+// standing in for genuine item variation.
+
+const HEURISTIC_CEILING = 0.4;      // chance is 0.25 on a 4-choice item
+const RW_DISTINCT_FLOOR = 50;       // every R&W item in a skill must be distinct
+const MATH_HARD_TEMPLATE_FLOOR = 3; // 8 hard questions may not come from 1-2 molds
+
+const HEURISTIC_STOPWORDS = new Set(
+  ("the a an and or but of to in for on with that this these those from as at by is are was were be been " +
+   "it its their they them which who what when whom does did do not more most than then also such some other")
+    .split(" ")
+);
+
+function contentWords(text) {
+  return new Set(
+    String(text || "").toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/)
+      .filter((word) => word.length > 3 && !HEURISTIC_STOPWORDS.has(word))
+  );
+}
+
+// Collapse digits so index-derived years and week counts cannot pass as variation.
+function contentSignature(question) {
+  const strip = (text) => String(text || "").replace(/\d+/g, "#").replace(/\s+/g, " ").trim();
+  return [
+    strip(question.stimulus),
+    question.passages ? strip(JSON.stringify(question.passages)) : "",
+    strip(question.question),
+    (question.choices || []).map(strip).sort().join("~")
+  ].join("|");
+}
+
+const ABSOLUTE_PATTERN = /\b(every|all|always|never|must|entirely|completely|only|any|guarantees|cannot|none)\b/i;
+
+// Each heuristic returns the index it would pick, or -1 if it does not apply.
+const HEURISTICS = {
+  "topic-word overlap": (question) => {
+    const stimulus = contentWords(
+      (question.stimulus || "") + " " + (question.passages ? JSON.stringify(question.passages) : "")
+    );
+    if (!stimulus.size) return -1;
+    let bestIndex = -1;
+    let bestRatio = -1;
+    question.choices.forEach((choice, index) => {
+      const words = contentWords(choice);
+      if (!words.size) return;
+      let shared = 0;
+      for (const word of words) if (stimulus.has(word)) shared += 1;
+      const ratio = shared / words.size;
+      if (ratio > bestRatio) {
+        bestRatio = ratio;
+        bestIndex = index;
+      }
+    });
+    return bestIndex;
+  },
+  "longest choice": (question) => {
+    let bestIndex = 0;
+    question.choices.forEach((choice, index) => {
+      if (choice.length > question.choices[bestIndex].length) bestIndex = index;
+    });
+    return bestIndex;
+  },
+  "eliminate absolutes": (question) => {
+    const surviving = question.choices
+      .map((choice, index) => index)
+      .filter((index) => !ABSOLUTE_PATTERN.test(question.choices[index]));
+    return surviving.length === 1 ? surviving[0] : -1;
+  }
+};
+
+const skillNames = [...new Set(questions.map((question) => question.skill))];
+
+for (const skill of skillNames) {
+  const choiceItems = questions.filter((question) => question.skill === skill && question.type === "mcq");
+  if (choiceItems.length < 10) continue;
+  for (const [name, heuristic] of Object.entries(HEURISTICS)) {
+    let applicable = 0;
+    let correct = 0;
+    for (const question of choiceItems) {
+      const picked = heuristic(question);
+      if (picked < 0) continue;
+      applicable += 1;
+      if (picked === question.answer) correct += 1;
+    }
+    if (applicable < 10) continue;
+    const rate = correct / applicable;
+    if (rate > HEURISTIC_CEILING) {
+      fail(
+        `${skill}: the "${name}" heuristic answers ${(rate * 100).toFixed(0)}% of items correctly ` +
+        `(${correct}/${applicable}); chance is 25% and the ceiling is ${HEURISTIC_CEILING * 100}%. ` +
+        `These items are solvable without the tested skill.`
+      );
+    }
+  }
+}
+
+// Difficulty must describe the item, not the slot it happened to land in.
+const tiersBySignature = new Map();
+for (const question of questions) {
+  const signature = question.skill + "|" + contentSignature(question);
+  if (!tiersBySignature.has(signature)) tiersBySignature.set(signature, new Set());
+  tiersBySignature.get(signature).add(question.difficulty);
+}
+const straddling = [...tiersBySignature.values()].filter((tiers) => tiers.size > 1).length;
+if (straddling) {
+  fail(`${straddling} question(s) appear under more than one difficulty label; difficulty must be a property of the item.`);
+}
+
+// Decorative digits must not be the only thing separating two questions.
+for (const skill of skillNames) {
+  const items = questions.filter((question) => question.skill === skill);
+  if (items[0].section === "Math") continue; // numeric parameters are genuine content in Math
+  const distinct = new Set(items.map(contentSignature)).size;
+  if (distinct < RW_DISTINCT_FLOOR) {
+    fail(
+      `${skill}: only ${distinct} of ${items.length} questions are distinct once decorative digits are ` +
+      `normalized (floor is ${RW_DISTINCT_FLOOR}). Years and counts are not item variation.`
+    );
+  }
+}
+
+// A difficulty tier built from one or two molds cannot vary its own difficulty.
+for (const skill of skillNames) {
+  const items = questions.filter((question) => question.skill === skill);
+  if (items[0].section !== "Math") continue;
+  for (const set of [1, 2]) {
+    const hard = items.filter((question) => question.difficulty === "Hard" && question.practiceSet === set);
+    const templates = new Set(hard.map((question) => question.meta.recipe)).size;
+    if (templates < MATH_HARD_TEMPLATE_FLOOR) {
+      fail(
+        `${skill} (set ${set}): ${hard.length} hard questions are generated from only ${templates} ` +
+        `recipe(s); the floor is ${MATH_HARD_TEMPLATE_FLOOR}.`
+      );
+    }
+  }
+}
+
 if (failures.length) {
   console.error(failures.join("\n"));
   process.exit(1);
