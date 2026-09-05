@@ -98,6 +98,27 @@
     return result;
   }
 
+  // Each case is authored at one difficulty and used once. Set 1 takes the first
+  // cases in a tier, set 2 the next, so no question repeats and no decorative
+  // digit is needed to tell two questions apart.
+  const TIER_STARTS = { Easy: 0, Medium: 8, Hard: 17 };
+  const TIER_SIZES = { Easy: 8, Medium: 9, Hard: 8 };
+
+  function tieredCase(ctx, cases) {
+    const recipeOf = (entry) => entry.recipe || entry.relation || "default";
+    const pool = cases
+      .filter((entry) => entry.difficulty === ctx.difficulty)
+      .sort((left, right) => (recipeOf(left) < recipeOf(right) ? -1 : recipeOf(left) > recipeOf(right) ? 1 : 0));
+    // Deal alternately from a recipe-ordered pool so both practice sets drill
+    // the same recipes while sharing no question.
+    const lane = pool.filter((entry, position) => position % 2 === (ctx.practiceSet === 2 ? 1 : 0));
+    const position = (ctx.index % 25) - TIER_STARTS[ctx.difficulty];
+    if (position < 0 || position >= lane.length) {
+      throw new Error(`${ctx.skill.name}: no ${ctx.difficulty} case at position ${position}; that lane holds ${lane.length}.`);
+    }
+    return lane[position];
+  }
+
   const TOPICS = [
     { researcher: "urban ecologist Mara Chen", surname: "Chen", subject: "tree canopies", result: "Blocks with denser tree canopies had lower afternoon surface temperatures than nearby blocks with little shade.", detail: "blocks with denser tree canopies had lower afternoon surface temperatures", main: "Chen's observations associate denser tree cover with cooler neighborhood surfaces." },
     { researcher: "marine biologist Luis Ortega", surname: "Ortega", subject: "oyster reefs", result: "Marsh edges behind restored oyster reefs lost less sediment during storms than unprotected edges did.", detail: "marsh edges behind restored oyster reefs lost less sediment during storms", main: "Ortega's comparison suggests that restored oyster reefs can reduce storm-related shoreline erosion." },
@@ -459,23 +480,94 @@
     });
   }
 
+  // `relation` names the precise logical link and drives the explanation;
+  // `family` is the coarser recipe label. Every family appears at least twice
+  // per difficulty tier so both practice sets drill the same recipes.
+  const RELATION_PHRASES = {
+    contrast: "sets its statement against the preceding one",
+    comparison: "sets a parallel case beside the preceding one",
+    result: "states an outcome of the preceding statement",
+    inference: "draws a conclusion from the preceding statements",
+    example: "gives a specific instance of the preceding statement",
+    specification: "narrows the preceding statement to a particular case",
+    addition: "adds a further point of the same kind",
+    concession: "grants the preceding point and then asserts something despite it",
+    sequence: "reports what happened next",
+    restatement: "restates the preceding statement in different terms",
+    summary: "sums up the preceding statements"
+  };
+  const RELATION_FAMILIES = {
+    contrast: "contrast", comparison: "contrast",
+    result: "causal", inference: "causal",
+    example: "elaboration", specification: "elaboration",
+    restatement: "restatement", summary: "restatement",
+    addition: "addition", concession: "concession", sequence: "sequence"
+  };
+
   const TRANSITION_CASES = [
-    { relation: "contrast", setup: "A replication study published in {year} tested whether an earlier result would hold with a larger and more diverse sample.", first: "The first trial produced a strong effect.", second: "the larger replication found almost no effect", correct: "However,", distractors: ["Similarly,", "Therefore,", "For example,"] },
-    { relation: "result", setup: "An archive completed a preservation project in {year} to reduce the handling of its most fragile documents.", first: "The archive created detailed digital images of those materials.", second: "researchers can now examine the documents without handling the originals", correct: "Consequently,", distractors: ["Nevertheless,", "Meanwhile,", "For instance,"] },
-    { relation: "example", setup: "A {year} biology article discusses physiological strategies that allow some plants to tolerate drought.", first: "Certain species can survive long periods with very little rainfall.", second: "the resurrection fern can lose most of its water and recover when rain returns", correct: "For example,", distractors: ["Instead,", "Likewise,", "Therefore,"] },
-    { relation: "addition", setup: "A {year} report compares a new manufacturing material with the conventional material it could replace.", first: "The new material is lighter than the conventional material.", second: "it is less expensive to manufacture", correct: "Moreover,", distractors: ["In contrast,", "Nevertheless,", "Specifically,"] },
-    { relation: "concession", setup: "In {year}, historians assessed a newly discovered set of letters for evidence about a disputed architectural plan.", first: "The letters do not settle who proposed the final design.", second: "they narrow the possible dates on which the decision was made", correct: "Even so,", distractors: ["For example,", "As a result,", "In other words,"] },
-    { relation: "sequence", setup: "In {year}, a team prepared a network of environmental sensors for an extended period of fieldwork.", first: "The team first calibrated each sensor under controlled conditions.", second: "the researchers installed the sensors in the field", correct: "Next,", distractors: ["Instead,", "Nevertheless,", "For instance,"] }
+    { difficulty: "Easy", relation: "contrast", before: "In laboratory trials, seedlings of the climbing vine grew steadily toward the brightest light source available to them.", after: "plants of the same species in open forest often bent away from the clearest patches of sky", correct: "However,", distractors: ["Therefore,", "For example,", "Similarly,"] },
+    { difficulty: "Easy", relation: "result", before: "The museum photographed its most fragile illuminated manuscripts at very high resolution over three years.", after: "visitors can now study individual pages without ever handling the originals", correct: "As a result,", distractors: ["Nevertheless,", "For instance,", "Meanwhile,"] },
+    { difficulty: "Easy", relation: "example", before: "Several desert mammals escape the punishing midday heat by retreating underground for most of the day.", after: "the kangaroo rat remains in a cool sealed burrow until well after sunset", correct: "For example,", distractors: ["However,", "Therefore,", "Instead,"] },
+    { difficulty: "Easy", relation: "addition", before: "The new alloy weighs a third less than the structural steel it was designed to replace in bridges.", after: "it resists corrosion far better in the salt water that surrounds coastal spans", correct: "Moreover,", distractors: ["In contrast,", "Nevertheless,", "Specifically,"] },
+    { difficulty: "Easy", relation: "concession", before: "The excavation never located the pottery workshop that the team had spent two seasons expecting to find.", after: "it uncovered a tile kiln in nearly complete condition beneath the courtyard", correct: "Even so,", distractors: ["As a result,", "For example,", "In other words,"] },
+    { difficulty: "Easy", relation: "sequence", before: "The technicians calibrated each streamflow sensor under controlled conditions in the laboratory first.", after: "they installed the finished units at twelve points along the riverbank", correct: "Next,", distractors: ["Instead,", "Nevertheless,", "For instance,"] },
+    { difficulty: "Easy", relation: "contrast", before: "Eighteenth-century maps of the region depict the harbor as a single broad and uninterrupted basin.", after: "survey records compiled in the same decade describe two clearly separate inlets", correct: "However,", distractors: ["Consequently,", "Likewise,", "In particular,"] },
+    { difficulty: "Easy", relation: "result", before: "A fungal blight killed nearly every mature American chestnut in the region within about forty years.", after: "oaks and hickories now dominate forests that chestnut canopies once shaded", correct: "Consequently,", distractors: ["Nevertheless,", "For example,", "Beforehand,"] },
+    { difficulty: "Easy", relation: "example", before: "Some composers construct an entire symphonic movement out of a single short rhythmic figure.", after: "Beethoven develops one four-note motif throughout the opening movement of his Fifth Symphony", correct: "For instance,", distractors: ["Even so,", "Therefore,", "By comparison,"] },
+    { difficulty: "Easy", relation: "addition", before: "The archive's newly published catalog records the date, sender, and recipient of every letter it holds.", after: "it identifies the paper stock and ink used in each individual document", correct: "In addition,", distractors: ["In contrast,", "Therefore,", "Namely,"] },
+    { difficulty: "Easy", relation: "sequence", before: "The survey team spent its first week mapping the limestone cave's main chamber in detail.", after: "the members traced the dozen narrow passages branching from its walls", correct: "Then,", distractors: ["Instead,", "Nevertheless,", "That is,"] },
+    { difficulty: "Easy", relation: "result", before: "A run of warmer springs has pushed the flowering of the alpine meadow several weeks earlier than usual.", after: "the bees that feed on those flowers now emerge after the bloom has passed", correct: "As a result,", distractors: ["Even so,", "For example,", "Similarly,"] },
+    { difficulty: "Easy", relation: "contrast", before: "The novel sold fewer than four hundred copies in the two years after it appeared in 1937.", after: "it is now assigned in most university survey courses covering the period", correct: "However,", distractors: ["Therefore,", "Likewise,", "For example,"] },
+    { difficulty: "Easy", relation: "concession", before: "The wax cylinder has warped so badly that the singer's voice can no longer be identified.", after: "it preserves a melody that survives in no other known recording", correct: "Nevertheless,", distractors: ["As a result,", "For example,", "Likewise,"] },
+    { difficulty: "Easy", relation: "example", before: "Certain metal alloys return to a shape they were trained to remember whenever they are heated.", after: "a sharply bent nickel-titanium wire straightens itself when dropped into hot water", correct: "For example,", distractors: ["However,", "Consequently,", "Previously,"] },
+    { difficulty: "Easy", relation: "addition", before: "The revised cable-stay design reduced the amount of structural steel the bridge project required.", after: "it shortened the construction schedule by nearly a full year", correct: "Furthermore,", distractors: ["In contrast,", "For instance,", "Afterward,"] },
+
+    { difficulty: "Medium", relation: "concession", before: "The survey reached only twelve households, so its findings cannot be generalized to the region.", after: "its detailed interviews documented patterns that much larger studies had overlooked", correct: "Even so,", distractors: ["Therefore,", "Similarly,", "For example,"] },
+    { difficulty: "Medium", relation: "result", before: "The lake's main inflow was diverted for irrigation in 1962, and within two decades its surface area had fallen by half.", after: "the newly exposed lakebed became the region's largest source of windblown dust", correct: "In turn,", distractors: ["Nevertheless,", "By comparison,", "Admittedly,"] },
+    { difficulty: "Medium", relation: "restatement", before: "The company sold more units every year through the decade while its share of the market steadily declined.", after: "it was growing more slowly than the industry expanding around it", correct: "In other words,", distractors: ["For example,", "Nevertheless,", "Afterward,"] },
+    { difficulty: "Medium", relation: "concession", before: "Loggerhead hatchlings are widely thought to navigate by sensing Earth's magnetic field.", after: "turtles raised in tanks where that field was deliberately distorted still oriented themselves correctly", correct: "Nevertheless,", distractors: ["Consequently,", "Likewise,", "That is,"] },
+    { difficulty: "Medium", relation: "specification", before: "The early-intervention therapy produced markedly better outcomes in some children than in others.", after: "it yielded the largest gains in those diagnosed before the age of six", correct: "Specifically,", distractors: ["However,", "Therefore,", "Likewise,"] },
+    { difficulty: "Medium", relation: "result", before: "Ash from the 1815 eruption of Tambora spread through the upper atmosphere and circled the globe within months.", after: "Europe and North America recorded frost in every month of the following summer", correct: "As a result,", distractors: ["Even so,", "For example,", "Meanwhile,"] },
+    { difficulty: "Medium", relation: "concession", before: "Digitization makes fragile manuscripts available to readers anywhere in the world at no cost.", after: "a photograph cannot record the texture, watermarks, and binding that scholars examine", correct: "However,", distractors: ["Therefore,", "For instance,", "Similarly,"] },
+    { difficulty: "Medium", relation: "sequence", before: "Kahlo painted the first version of the portrait during a long hospital stay in the winter of 1946.", after: "she returned to the same subject in three progressively larger canvases", correct: "Afterward,", distractors: ["Instead,", "Nonetheless,", "Namely,"] },
+    { difficulty: "Medium", relation: "comparison", before: "The northern population of the warbler migrates more than two thousand kilometers every autumn.", after: "the southern population moves only between neighboring mountain valleys", correct: "By comparison,", distractors: ["Consequently,", "Furthermore,", "In short,"] },
+    { difficulty: "Medium", relation: "result", before: "The eighteenth-century recipe calls for a soft wheat flour that no commercial mill produces today.", after: "modern bakers can only approximate the texture the author described", correct: "Therefore,", distractors: ["Even so,", "For example,", "Likewise,"] },
+    { difficulty: "Medium", relation: "addition", before: "The proposed orbiting telescope would resolve finer detail than any instrument built on the ground.", after: "it would observe at infrared wavelengths that the atmosphere blocks completely", correct: "More important,", distractors: ["In contrast,", "For example,", "Previously,"] },
+    { difficulty: "Medium", relation: "concession", before: "Only about six hundred lines of the epic survive, scattered across four damaged papyrus fragments.", after: "those lines preserve enough of the meter to reconstruct the poem's original form", correct: "Still,", distractors: ["Therefore,", "Similarly,", "For instance,"] },
+    { difficulty: "Medium", relation: "example", before: "Many pigments used by European painters before 1800 were made from minerals ground by hand.", after: "ultramarine was produced from lapis lazuli carried overland from a single Afghan valley", correct: "For example,", distractors: ["In short,", "However,", "Consequently,"] },
+    { difficulty: "Medium", relation: "summary", before: "The replacement alloy is lighter, cheaper, and easier to shape than the material it succeeded.", after: "it improved on the older material in every property the engineers thought to measure", correct: "In short,", distractors: ["Nevertheless,", "For example,", "Meanwhile,"] },
+    { difficulty: "Medium", relation: "contrast", before: "Radiocarbon dating of the timber returns an age range that can span several decades.", after: "counting the growth rings in the same beam can fix a felling date to a single year", correct: "By contrast,", distractors: ["Accordingly,", "Likewise,", "For instance,"] },
+    { difficulty: "Medium", relation: "result", before: "The corrective lens eliminated the blurring that had distorted the outer edges of every exposure.", after: "astronomers could finally measure the positions of faint stars near the frame's border", correct: "Consequently,", distractors: ["Nonetheless,", "Similarly,", "Namely,"] },
+    { difficulty: "Medium", relation: "sequence", before: "The conservators removed four layers of discolored varnish from the panel over eighteen months.", after: "they filled the losses along the lower edge with reversible pigment", correct: "Only then,", distractors: ["Nevertheless,", "In short,", "For instance,"] },
+    { difficulty: "Medium", relation: "addition", before: "The estuary restoration returned tidal flow to nine hundred hectares of diked farmland.", after: "it reopened a migratory corridor that juvenile salmon had not used in eighty years", correct: "Beyond that,", distractors: ["By comparison,", "In other words,", "Admittedly,"] },
+
+    { difficulty: "Hard", relation: "restatement", before: "The census recorded only heads of household, so any figure for total population rests on an assumption about average family size.", after: "the number usually cited is an estimate rather than a count", correct: "In other words,", distractors: ["For example,", "Even so,", "Meanwhile,"] },
+    { difficulty: "Hard", relation: "result", before: "The instrument's readings drift as the laboratory warms, so the team recalibrated it at the start of every hour.", after: "the published measurements stayed within the tolerance the method requires", correct: "As a result,", distractors: ["Nevertheless,", "In other words,", "For example,"] },
+    { difficulty: "Hard", relation: "concession", before: "The tidal model predicts water levels at this harbor to within a few centimeters across the whole year.", after: "it performs poorly in estuaries where seasonal river discharge is large", correct: "Admittedly,", distractors: ["Consequently,", "Similarly,", "In particular,"] },
+    { difficulty: "Hard", relation: "result", before: "The glaze was brushed onto the vessel before it entered the kiln for a second firing.", after: "the pigment sank into the softened surface instead of resting on top of it", correct: "As a result,", distractors: ["Beforehand,", "Similarly,", "Nevertheless,"] },
+    { difficulty: "Hard", relation: "restatement", before: "Sea level at the site rose faster than the marsh could build up new sediment beneath itself.", after: "the marsh could not keep pace with the water and was gradually submerged", correct: "That is,", distractors: ["By comparison,", "For example,", "Admittedly,"] },
+    { difficulty: "Hard", relation: "concession", before: "Both dating techniques place the sediment layer in roughly the same century of deposition.", after: "they disagree sharply about the order in which the individual layers formed", correct: "Nevertheless,", distractors: ["Accordingly,", "In other words,", "For instance,"] },
+    { difficulty: "Hard", relation: "example", before: "The alloy fails under repeated moderate loading rather than under a single heavy load.", after: "it survives one blow of eight tons but cracks after ten thousand cycles at one ton", correct: "For example,", distractors: ["In short,", "Nevertheless,", "Therefore,"] },
+    { difficulty: "Hard", relation: "concession", before: "Nothing in the composer's surviving correspondence makes any mention of the commission.", after: "the payment to her appears in the court's account book for that year", correct: "Even so,", distractors: ["Accordingly,", "Namely,", "Likewise,"] },
+    { difficulty: "Hard", relation: "inference", before: "Every surviving copy of the pamphlet was printed on paper from one mill, and that mill operated for only three years.", after: "the pamphlet must have been printed within a narrow window", correct: "Therefore,", distractors: ["Nonetheless,", "For example,", "By comparison,"] },
+    { difficulty: "Hard", relation: "contrast", before: "The drug shortened the illness by roughly a day in otherwise healthy younger adults.", after: "in patients over seventy it reduced the risk of hospitalization by nearly half", correct: "By contrast,", distractors: ["In other words,", "Consequently,", "Admittedly,"] },
+    { difficulty: "Hard", relation: "result", before: "Only one of the four anemometers returned usable data during the eighteen hours of the storm.", after: "the team based its published wind estimates on that single record", correct: "Therefore,", distractors: ["Nevertheless,", "Similarly,", "For instance,"] },
+    { difficulty: "Hard", relation: "restatement", before: "The technique cannot distinguish a pigment applied in 1500 from the very same pigment applied in 1900.", after: "it dates the material but not the painting", correct: "In other words,", distractors: ["Even so,", "Consequently,", "For example,"] },
+    { difficulty: "Hard", relation: "concession", before: "Reintroduced wolves have not measurably reduced the size of the valley's elk population.", after: "the elk now avoid the open riverbanks where the willows are recovering", correct: "Even so,", distractors: ["As a result,", "In short,", "Likewise,"] },
+    { difficulty: "Hard", relation: "contrast", before: "Museum attendance rose in each of the five years that followed the building's renovation.", after: "the share of visitors who lived in the surrounding neighborhood fell in every one of those years", correct: "However,", distractors: ["Accordingly,", "Likewise,", "In particular,"] },
+    { difficulty: "Hard", relation: "inference", before: "The two manuscripts share the same unusual spelling errors at the same points in the same passages.", after: "one was almost certainly copied directly from the other", correct: "Accordingly,", distractors: ["Nevertheless,", "For example,", "Meanwhile,"] },
+    { difficulty: "Hard", relation: "specification", before: "The restoration succeeded in some reaches of the river and failed conspicuously in others.", after: "the gravel beds rebuilt themselves only where the winter flow exceeded the design minimum", correct: "In particular,", distractors: ["Nevertheless,", "By comparison,", "In short,"] }
   ];
 
   function transitions(ctx) {
-    const transition = TRANSITION_CASES[ctx.index % TRANSITION_CASES.length];
-    const year = ctx.practiceSet === 2 ? 1975 + (ctx.index - 25) : 2000 + ctx.index;
-    const stimulus = `${transition.setup.replace("{year}", year)} ${transition.first} ______ ${transition.second}.`;
+    const transition = tieredCase(ctx, TRANSITION_CASES);
+    const stimulus = `${transition.before} ______ ${transition.after}.`;
     return item(ctx, {
-      recipe: transition.relation, stimulus, question: "Which choice completes the text with the most logical transition?", correct: transition.correct,
+      recipe: RELATION_FAMILIES[transition.relation], stimulus,
+      question: "Which choice completes the text with the most logical transition?", correct: transition.correct,
       distractors: transition.distractors,
-      explanation: `The second sentence has a ${transition.relation} relationship to the first, and “${transition.correct.replace(",", "")}” signals that relationship.`, parameters: { transition, year }
+      explanation: `The sentence after the blank ${RELATION_PHRASES[transition.relation]}, and “${transition.correct.replace(",", "")}” signals that relationship. The other choices signal a relationship the text does not establish.`,
+      parameters: { transition }
     });
   }
 
