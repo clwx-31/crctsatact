@@ -420,31 +420,185 @@
     });
   }
 
+  // Real cross-text items vary the relation between the texts. These pairs
+  // cover disputed conclusions, alternative explanations, challenged methods,
+  // limited scope, and extension. Every choice names the topic, so a reader
+  // cannot find the key by looking for the choice that echoes the passage.
+  const CROSS_TEXT_PAIRS = [
+    { difficulty: "Easy", relation: "limit-scope",
+      text1: "Planting street trees is the cheapest way for a city to cut summer heat. Blocks with full canopy in our survey ran up to five degrees cooler than bare blocks nearby.",
+      text2: "Street trees do cool the blocks that have them, and our measurements agree closely with those figures. But a sapling casts little shade for its first fifteen years. A city that plants now is buying relief for the 2040s, not for this summer.",
+      agreement: { correct: "Mature street trees measurably lower summer temperatures on the blocks where they grow.", distractors: ["Street trees begin lowering summer temperatures on a block within a few years of being planted there.", "Cities should stop planting street trees because the cooling arrives too slowly to matter.", "The cooling effect of street trees has been measured only on blocks that were already cool."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's claim that planting trees is the cheapest way to cut summer heat?", correct: "By noting that the cooling Text 1 measured belongs to mature canopy, so the benefit arrives long after the expense.", distractors: ["By arguing that the temperature differences Text 1 reports are too small to detect reliably.", "By agreeing that the cooling benefit arrives immediately but questioning whether cities can afford to plant at scale.", "By pointing out that the bare blocks in Text 1's survey were warmer for reasons unrelated to trees."] } },
+
+    { difficulty: "Easy", relation: "alternative-explanation",
+      text1: "Recordings made beside highways show that city sparrows sing at a higher pitch than country sparrows. The birds appear to be adjusting their songs to carry over low-frequency traffic noise.",
+      text2: "The pitch difference in those recordings is real and easy to replicate. Whether it is an adjustment is another matter. City sparrows are on average smaller, and smaller birds sing higher regardless of what they are competing with.",
+      agreement: { correct: "City sparrows sing at a higher pitch than sparrows recorded in the countryside.", distractors: ["City sparrows actively raise the pitch of their songs in order to carry over low-frequency traffic noise.", "The pitch difference between city and country sparrows disappears once body size is measured.", "Recordings made beside highways are too noisy to measure sparrow pitch reliably."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's explanation of the pitch difference?", correct: "By proposing that a difference in body size could produce the same pattern without any adjustment to noise.", distractors: ["By denying that city and country sparrows differ in pitch at all.", "By agreeing that traffic noise drives the pitch difference but doubting that the roadside recordings are accurate.", "By arguing that traffic noise is too variable to affect birdsong in any consistent way."] } },
+
+    { difficulty: "Easy", relation: "extend",
+      text1: "Surface trawls recover only a small fraction of the plastic estimated to enter the ocean each year. The rest of it is unaccounted for.",
+      text2: "The missing fraction is not so much missing as sinking. Cores taken from deep-sea sediment contain microplastic at concentrations that rise sharply after 1970, which is roughly where the surface budget's shortfall begins.",
+      agreement: { correct: "Far less plastic is found floating at the ocean surface than enters the ocean annually.", distractors: ["Most of the plastic entering the ocean each year remains at the surface, where standard trawls can recover it.", "The amount of plastic entering the ocean each year has been substantially overestimated.", "Deep-sea sediment cores show no measurable change in microplastic since 1970."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's statement that the remaining plastic is unaccounted for?", correct: "By identifying deep-sea sediment as a destination that accounts for much of the shortfall.", distractors: ["By arguing that the apparent shortfall is an artifact of the depth at which surface trawls sample the water.", "By agreeing that the missing plastic has not yet been located anywhere.", "By suggesting that less plastic enters the ocean each year than Text 1 assumes."] } },
+
+    { difficulty: "Easy", relation: "challenge-method",
+      text1: "Restaurants that respond to negative online reviews recover their ratings faster than restaurants that ignore them. Managers should reply.",
+      text2: "The restaurants that reply are also the ones with staff to spare, renovated dining rooms, and money for new menus. Any of those could lift a rating on its own. The study compares repliers with non-repliers, not replies with silence.",
+      agreement: { correct: "Restaurants that reply to negative reviews tend to see their ratings recover more quickly.", distractors: ["Replying to a negative review is itself the direct cause of the faster rating recovery that repliers show.", "Restaurants that ignore negative reviews improve their ratings just as quickly.", "Online restaurant ratings are too unreliable to show any pattern of recovery."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's recommendation that managers reply?", correct: "By observing that repliers differ from non-repliers in ways that could explain the recovery by themselves.", distractors: ["By agreeing that replying causes the recovery but questioning whether most managers have the time to do it.", "By denying that restaurant ratings recover at all after a negative review.", "By recommending that managers reply only to reviews that are factually inaccurate."] } },
+
+    { difficulty: "Easy", relation: "limit-scope",
+      text1: "Companies that moved to a four-day week reported no drop in output and a sharp fall in staff turnover.",
+      text2: "Those results come almost entirely from firms whose work is project-based and measured in finished tasks. In hospitals and warehouses, where output is measured in hours covered, the same schedule has produced staffing gaps rather than savings.",
+      agreement: { correct: "Some organizations have maintained their output after adopting a four-day week.", distractors: ["A four-day week maintains output in every kind of workplace, including those where output is measured in hours.", "A four-day week reduces output in project-based firms.", "Staff turnover is unaffected by the length of the working week."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's report of unchanged output?", correct: "By accepting the finding for project-based firms while denying that it carries over to hour-based work.", distractors: ["By arguing that output did fall in the project-based firms Text 1 studied but that the decline went unrecorded.", "By agreeing that the schedule works everywhere but costs more than Text 1 allows.", "By claiming that turnover, not output, is the only measure worth reporting."] } },
+
+    { difficulty: "Easy", relation: "alternative-explanation",
+      text1: "Tree rings show three consecutive cold, wet summers before the famine of 1315. The weather destroyed the harvest.",
+      text2: "The rings are accurate, but grain prices in the same region began climbing four years before the first cold summer. Whatever set the shortage in motion was already at work when the weather turned.",
+      agreement: { correct: "The summers immediately preceding the 1315 famine were unusually cold and wet.", distractors: ["The famine of 1315 was caused entirely by the three cold, wet summers that the tree rings record.", "Tree-ring records from the period are too damaged to indicate past weather.", "Grain prices in the region remained stable until the harvest failed."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's conclusion about the cause of the famine?", correct: "By pointing to a price rise that predates the weather and so cannot be explained by it.", distractors: ["By disputing the tree-ring evidence for cold, wet summers.", "By agreeing that the weather was the sole cause of the famine but dating the cold summers several years earlier.", "By arguing that grain prices are a poor indicator of the food supply."] } },
+
+    { difficulty: "Easy", relation: "dispute-conclusion",
+      text1: "Students who take lecture notes by hand score higher on conceptual questions than students who type. Writing slowly forces them to summarize rather than transcribe.",
+      text2: "The score gap holds up. But when typists are simply told not to transcribe verbatim, the gap closes. What matters is how the notes are taken, not what they are taken with.",
+      agreement: { correct: "Students who write lecture notes by hand have outperformed typists on conceptual questions.", distractors: ["The advantage on conceptual questions comes from the physical act of handwriting rather than from any strategy.", "Typists and handwriters score identically on conceptual questions in every condition.", "Verbatim transcription improves student performance on conceptual questions."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's explanation of the score gap?", correct: "By noting that instructing typists to summarize removes the gap, which locates the cause in strategy rather than medium.", distractors: ["By denying that handwriters have ever outscored typists on such questions.", "By agreeing that the writing medium is what matters but adding that typing speed varies too much to compare.", "By arguing that conceptual questions are not a fair test of lecture notes."] } },
+
+    { difficulty: "Easy", relation: "extend",
+      text1: "Corals transplanted from a naturally warm lagoon survived a bleaching event that killed most of the reef around them.",
+      text2: "That result is now understood well enough to act on. The transplanted colonies carried heat-tolerant symbiotic algae, and those algae can be introduced to nursery-raised corals before they are ever placed on a reef.",
+      agreement: { correct: "Corals originating in a warm lagoon withstood a bleaching event better than the surrounding reef.", distractors: ["Transplanted corals survive bleaching because of the depth at which they are placed rather than the algae they carry.", "No coral on the reef survived the bleaching event described in either text.", "Heat tolerance in corals cannot be transferred between colonies."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's finding about the transplanted corals?", correct: "By treating it as the basis for a technique that could give nursery corals the same tolerance.", distractors: ["By questioning whether the corals transplanted from the warm lagoon were genuinely more heat tolerant at all.", "By arguing that the surrounding reef died for reasons unrelated to heat.", "By concluding that transplantation is the only way to protect a reef."] } },
+
+    { difficulty: "Medium", relation: "dispute-conclusion",
+      text1: "Children raised in bilingual homes are better at ignoring distractions. Managing two languages appears to train general attention control.",
+      text2: "The advantage shows up reliably in laboratory tasks and almost never in classrooms. A skill that appears only where it is tested most closely may be a feature of the test rather than of the child.",
+      agreement: { correct: "Bilingual children have outperformed monolingual children on laboratory measures of attention.", distractors: ["Bilingual children show the same measurable attention advantage in ordinary classrooms that they show in laboratories.", "Managing two languages has no measurable effect on any attention task.", "Laboratory attention tasks are the most accurate available measure of classroom behavior."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's claim that bilingualism trains attention control?", correct: "By observing that an effect confined to laboratory tasks may reflect the measurement rather than a general skill.", distractors: ["By denying that bilingual children differ from monolingual children on any laboratory task.", "By agreeing that bilingualism improves attention control but attributing the improvement to schooling instead.", "By arguing that classrooms are too noisy for attention to be assessed at all."] } },
+
+    { difficulty: "Medium", relation: "challenge-method",
+      text1: "Isotopes in the skeletons show that this community ate mostly marine protein. The settlement's economy must have been built on fishing.",
+      text2: "The sampled skeletons all came from the cemetery nearest the shore. Two inland cemeteries from the same period have never been excavated, and there is no reason to assume they would look the same.",
+      agreement: { correct: "The skeletons that have been analyzed indicate a diet high in marine protein.", distractors: ["The whole community, including the households buried inland, depended on fishing for its livelihood.", "Isotope analysis cannot distinguish marine protein from terrestrial protein.", "The inland cemeteries have been shown to contain a different dietary signature."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's conclusion about the settlement's economy?", correct: "By arguing that the sample was drawn from one location and may not represent the whole settlement.", distractors: ["By disputing the accuracy of the isotope measurements themselves.", "By agreeing that fishing dominated the settlement's economy but adding that inland farming also contributed.", "By claiming that the inland cemeteries have already disproved the conclusion."] } },
+
+    { difficulty: "Medium", relation: "limit-scope",
+      text1: "Small loans to market traders raised household income by nearly a fifth within two years.",
+      text2: "The gain concentrates almost entirely among borrowers who already ran a business when the loan arrived. Among first-time borrowers the average change was close to zero, and the spread of outcomes was wide.",
+      agreement: { correct: "Small loans have been associated with higher household income for some borrowers.", distractors: ["Small loans raise household income by roughly a fifth for every category of borrower who receives them.", "Small loans reduce household income among traders who already run a business.", "Household income is unaffected by whether a trader has access to credit."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's figure for income gains?", correct: "By accepting the average while arguing that it conceals a group for whom the loans did little.", distractors: ["By disputing that any borrower's household income rose after receiving a loan.", "By agreeing with the reported figure and recommending substantially larger loans for first-time borrowers.", "By arguing that two years is too short an interval for household income to change."] } },
+
+    { difficulty: "Medium", relation: "alternative-explanation",
+      text1: "The outer stars of spiral galaxies orbit far faster than the visible mass can explain. Some unseen matter must be supplying the missing gravity.",
+      text2: "The rotation curves are not in doubt. But an unseen substance is only one way to close the gap. A modification to the law of gravity at very low accelerations closes it too, and without requiring a new particle.",
+      agreement: { correct: "The observed rotation of spiral galaxies cannot be explained by their visible mass alone.", distractors: ["Unseen matter supplying the missing gravity is the only available explanation for the observed rotation curves.", "The measured rotation curves of spiral galaxies are unreliable.", "Modified gravity has been shown to fail at very low accelerations."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's inference that unseen matter exists?", correct: "By noting that the same observations follow from altering gravity, so they do not establish a new substance.", distractors: ["By rejecting the measurements that produced the rotation curves.", "By agreeing that unseen matter must exist but disputing how much of it the rotation curves require.", "By arguing that visible mass alone accounts for the observed rotation."] } },
+
+    { difficulty: "Medium", relation: "alternative-explanation",
+      text1: "Fields planted with the cover crop yielded a tenth more grain than fields left bare over winter. The cover crop enriched the soil.",
+      text2: "Enrichment is plausible, but the covered fields also lost far less topsoil in the spring rains. A field that keeps its soil will outyield one that does not, whatever is happening to the nitrogen.",
+      agreement: { correct: "Fields planted with the cover crop produced higher grain yields than bare fields.", distractors: ["The cover crop's yield advantage comes entirely from the nitrogen it adds rather than from any soil it retains.", "Cover-cropped fields and bare fields produce equivalent grain yields.", "Topsoil loss has no measurable effect on the grain yield of a field."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's explanation of the yield gain?", correct: "By offering erosion control as a mechanism that could produce the gain without any change in fertility.", distractors: ["By denying that the fields planted with the cover crop yielded more grain than the fields left bare.", "By agreeing that added nitrogen explains the gain but doubting its size.", "By arguing that spring rains affect covered and bare fields equally."] } },
+
+    { difficulty: "Medium", relation: "extend",
+      text1: "A quarter of vaccine doses shipped to remote clinics are discarded because refrigeration fails somewhere along the route.",
+      text2: "Refrigeration is the wrong thing to fix. Freeze-drying the same formulations makes them stable at room temperature for months, which removes the cold chain from the problem rather than repairing it.",
+      agreement: { correct: "A substantial share of vaccine doses sent to remote clinics is lost before it can be used.", distractors: ["Vaccine losses at remote clinics are caused mainly by scheduling delays rather than by any failure of refrigeration.", "Freeze-dried vaccines have proved less effective than refrigerated ones.", "Nearly all vaccine doses shipped to remote clinics arrive in usable condition."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's account of the discarded doses?", correct: "By accepting the figure and proposing a formulation change that makes refrigeration unnecessary.", distractors: ["By disputing the share of shipped vaccine doses that Text 1 reports as discarded before use.", "By recommending heavier investment in refrigeration along the same routes.", "By arguing that remote clinics should receive fewer doses to limit the waste."] } },
+
+    { difficulty: "Medium", relation: "challenge-method",
+      text1: "Adults who walk ten thousand steps a day have markedly lower rates of heart disease. The target is worth adopting.",
+      text2: "People who can walk ten thousand steps a day are people who are well enough to walk ten thousand steps a day. Illness that has not yet been diagnosed lowers step counts long before it appears in any medical record.",
+      agreement: { correct: "High daily step counts are associated with lower observed rates of heart disease.", distractors: ["Walking ten thousand steps a day directly prevents heart disease in adults who adopt the target.", "Daily step counts and rates of heart disease are unrelated.", "Undiagnosed illness has no effect on how much a person walks each day."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's recommendation of the ten-thousand-step target?", correct: "By suggesting that existing health may be producing the step counts rather than the reverse.", distractors: ["By disputing the association between daily step counts and heart disease.", "By agreeing that walking prevents heart disease but proposing a substantially lower daily step target.", "By arguing that step counters are too inaccurate to support any target."] } },
+
+    { difficulty: "Medium", relation: "dispute-conclusion",
+      text1: "Pigment analysis dates the panel's paint to the 1480s, within the master's lifetime. The attribution to his hand should stand.",
+      text2: "The pigments are of the period, which rules out a later forgery. It does not distinguish the master from the dozen assistants who ground the same pigments in the same workshop.",
+      agreement: { correct: "The pigments used in the panel are consistent with the 1480s.", distractors: ["The pigment evidence establishes that the master, rather than an assistant, painted the panel himself.", "The panel was painted well after the master's lifetime had ended.", "Workshop assistants used pigments that were distinct from the master's."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's defense of the attribution?", correct: "By granting the dating while denying that it can identify which hand in the workshop was responsible.", distractors: ["By arguing that the pigment analysis has misdated the panel and that it belongs to a later century.", "By agreeing that the master painted the panel but questioning the date.", "By concluding that the panel is a later forgery after all."] } },
+
+    { difficulty: "Medium", relation: "limit-scope",
+      text1: "Charging drivers to enter the city center cut traffic there by a fifth and shortened bus journeys.",
+      text2: "Inside the charging zone the gains are real. Just outside it, traffic on the ring road rose by a comparable amount as drivers rerouted, and journey times there grew worse than before the scheme began.",
+      agreement: { correct: "Traffic within the charging zone declined after the scheme was introduced.", distractors: ["The scheme reduced traffic across the whole metropolitan area, including the roads outside the charging zone.", "Traffic inside the charging zone was unaffected by the scheme.", "Bus journey times inside the zone grew longer after the charge began."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's account of the scheme's effects?", correct: "By accepting the reduction inside the zone while arguing that traffic was displaced rather than removed.", distractors: ["By disputing that traffic inside the charging zone fell at all once rerouting is taken into account.", "By agreeing that the scheme worked everywhere but cost too much to operate.", "By claiming that bus journeys inside the zone did not actually improve."] } },
+
+    { difficulty: "Hard", relation: "limit-scope",
+      text1: "People who sleep six hours or less show worse memory consolidation in the laboratory. Short sleep degrades memory.",
+      text2: "The laboratory results are sound, and I would not argue with the mechanism. My objection is to the population: habitual short sleepers were excluded from those samples as a confound, and they are precisely the group the conclusion is being applied to.",
+      agreement: { correct: "Restricting sleep under laboratory conditions is associated with poorer memory consolidation.", distractors: ["Habitual short sleepers show the same memory consolidation deficits that experimentally restricted sleepers show.", "The mechanism linking sleep and memory consolidation has been disproved.", "Short sleep improves memory consolidation under laboratory conditions."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's conclusion that short sleep degrades memory?", correct: "By accepting the mechanism but noting that the group it is applied to was excluded from the evidence.", distractors: ["By rejecting the laboratory findings on memory consolidation as methodologically unsound throughout.", "By arguing that memory consolidation cannot be measured in a laboratory at all.", "By agreeing fully and extending the conclusion to habitual short sleepers."] } },
+
+    { difficulty: "Hard", relation: "alternative-explanation",
+      text1: "Districts that adopted the new reading curriculum saw test scores rise within three years. The curriculum works.",
+      text2: "Adoption was not random. Districts chose the curriculum when they had the budget for a coordinator, smaller classes, and new books, and the score gains track the budget more closely than they track the curriculum.",
+      agreement: { correct: "Reading scores rose in the districts that adopted the new curriculum.", distractors: ["The new curriculum itself caused the rise in reading scores that the adopting districts recorded.", "Reading scores fell in the districts that adopted the new curriculum.", "District budgets bear no relationship to reading achievement."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's inference that the curriculum works?", correct: "By arguing that districts able to adopt it differed beforehand in ways that predict the same gains.", distractors: ["By disputing that reading test scores rose at all in the districts that adopted the new curriculum.", "By agreeing that the curriculum works but doubting the gains will last.", "By claiming that the curriculum was adopted at random across districts."] } },
+
+    { difficulty: "Hard", relation: "challenge-method",
+      text1: "Our survey found sixty percent support for the measure, with a margin of error of three points. Support is clearly above half.",
+      text2: "The three-point figure describes sampling error alone. It says nothing about the eight percent who answered, the wording of the question, or the people who hung up. Those sources of error are larger and do not shrink with sample size.",
+      agreement: { correct: "The survey's reported margin of error reflects only one source of potential error.", distractors: ["The survey's three-point margin of error accounts for nonresponse and question wording as well as sampling.", "Sixty percent support has been shown to be an underestimate of true support.", "A larger sample would eliminate the survey's nonresponse problem."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's conclusion that support is above half?", correct: "By arguing that errors unmeasured by the stated margin could be large enough to leave the conclusion unsupported.", distractors: ["By claiming that the survey's arithmetic was performed incorrectly.", "By agreeing that support is above half but recommending a larger sample to narrow the stated margin.", "By asserting that support for the measure is certainly below half."] } },
+
+    { difficulty: "Hard", relation: "limit-scope",
+      text1: "Resistance genes appear in soil bacteria from sites that have never been treated with antibiotics. Resistance is ancient and not driven by medical use.",
+      text2: "The genes are ancient; nobody disputes the sequencing. What is new is their frequency. In treated environments the same genes sit on mobile elements and spread between species, which is the property that makes them a clinical problem.",
+      agreement: { correct: "Resistance genes occur in bacteria from environments never exposed to medical antibiotics.", distractors: ["Antibiotic use has no influence on the distribution or the mobility of resistance genes in bacteria.", "Resistance genes originated only after the clinical use of antibiotics began.", "Resistance genes in untreated soil sit on mobile genetic elements."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's claim that resistance is not driven by medical use?", correct: "By distinguishing the age of the genes from their mobility and frequency, which medical use does affect.", distractors: ["By disputing that resistance genes occur in soil from sites never treated with antibiotics at all.", "By agreeing that medical use is irrelevant to clinical resistance.", "By arguing that the sequencing of soil bacteria is unreliable."] } },
+
+    { difficulty: "Hard", relation: "dispute-conclusion",
+      text1: "Employment in the county's restaurants did not fall in the year after the wage increase. The increase cost no jobs.",
+      text2: "Headcount held, but scheduled hours per worker fell by about six percent over the same year. A payroll can keep every name on it and still buy less labor than it did before.",
+      agreement: { correct: "The number of people employed in the county's restaurants did not decline after the increase.", distractors: ["The wage increase had no effect on the total amount of labor that the county's restaurants purchased.", "Restaurant employment in the county fell sharply after the wage increase.", "Scheduled hours per worker rose in the year following the wage increase."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's conclusion that the increase cost no jobs?", correct: "By arguing that headcount is the wrong measure because hours fell while the payroll stayed intact.", distractors: ["By disputing that restaurant headcount remained stable in the year following the wage increase.", "By agreeing that no labor was lost but questioning the level of the wage.", "By claiming that hours per worker are impossible to measure reliably."] } },
+
+    { difficulty: "Hard", relation: "alternative-explanation",
+      text1: "Isotopes in the tooth enamel show these individuals grew up hundreds of kilometers away. A population migrated into the valley.",
+      text2: "The enamel signature is not in dispute. But it records where a person drank water as a child, and in a society that moved brides between valleys, a cemetery full of non-local women means marriage, not migration.",
+      agreement: { correct: "The individuals analyzed spent their childhoods away from the valley where they were buried.", distractors: ["An entire population relocated into the valley during the period that the buried individuals lived.", "Tooth enamel cannot indicate where an individual grew up.", "The individuals analyzed grew up in the valley where they were buried."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's inference that a population migrated?", correct: "By proposing that a marriage practice moving individuals between valleys would leave the same signature.", distractors: ["By rejecting the tooth-enamel isotope evidence that the individuals had non-local childhoods.", "By agreeing that migration occurred but disputing its direction.", "By arguing that childhood water sources vary too much to be informative."] } },
+
+    { difficulty: "Hard", relation: "challenge-method",
+      text1: "The model answered ninety percent of the benchmark's questions correctly, approaching expert performance on the subject.",
+      text2: "The benchmark was assembled from public examination papers. The model's training data was scraped from the open web in the same years. A high score may measure recall of the answer key rather than command of the subject.",
+      agreement: { correct: "The model produced correct answers to most of the benchmark's questions.", distractors: ["The model's benchmark score demonstrates genuine command of the subject rather than recall of published answers.", "The model answered fewer than half of the benchmark questions correctly.", "The benchmark's questions were written specifically for this evaluation."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's description of the score as near-expert performance?", correct: "By noting that the questions may have appeared in training data, which would make the score uninformative about understanding.", distractors: ["By disputing the reported percentage of benchmark questions that the model answered correctly.", "By agreeing the model understands the subject but doubting it matches experts.", "By arguing that public examination papers are too difficult for the model."] } },
+
+    { difficulty: "Hard", relation: "dispute-conclusion",
+      text1: "The replanted forest has absorbed carbon at twice the rate projected when the scheme was designed.",
+      text2: "For the first fifteen years, yes. Fast-growing species front-load their uptake and then plateau, and the projection was written for a hundred-year average. A doubled rate now is consistent with the projection being right.",
+      agreement: { correct: "The replanted forest's recent carbon uptake has exceeded the rate initially projected.", distractors: ["The replanted forest will continue absorbing carbon at twice the projected rate over the scheme's full century.", "The forest has absorbed less carbon than the scheme's designers projected.", "Fast-growing species maintain a constant rate of carbon uptake as they age."] },
+      response: { question: "How would the author of Text 2 most likely respond to Text 1's report of a doubled uptake rate?", correct: "By explaining that early uptake in fast-growing stands is expected to level off, leaving the long-run projection intact.", distractors: ["By disputing the measurements showing that the replanted forest doubled its projected uptake rate.", "By agreeing that the original projection was too conservative.", "By arguing that replanted forests absorb no carbon in their early years."] } }
+  ];
+
+  const CROSS_TEXT_CASES = CROSS_TEXT_PAIRS.flatMap((pair) => [
+    { difficulty: pair.difficulty, recipe: "agreement", pair, form: "agreement" },
+    { difficulty: pair.difficulty, recipe: "response", pair, form: "response" }
+  ]);
+
   function crossText(ctx) {
-    const year = ctx.practiceSet === 2 ? 1975 + (ctx.index - 25) : 2000 + ctx.index;
-    const caseData = pick(ctx.rng, [
-      { topic: "remote work", benefit: "can widen access to some jobs", concern: "its benefits depend on workers having reliable technology" },
-      { topic: "urban tree planting", benefit: "can reduce summer heat on shaded blocks", concern: "young trees require years of maintenance before providing full shade" },
-      { topic: "museum digitization", benefit: "can widen access to fragile collections", concern: "digital images cannot preserve every physical feature of an object" },
-      { topic: "wildlife corridors", benefit: "can connect previously separated animal populations", concern: "the locations of corridors strongly affect which species can use them" },
-      { topic: "automated translation", benefit: "can make routine multilingual communication more efficient", concern: "specialized or culturally specific language may still require human review" }
-    ]);
-    const { topic, benefit, concern } = caseData;
-    const text1 = `Text 1\nAn analysis published in ${year} argues that ${topic} ${benefit}. On this basis, the author recommends expanding the practice.`;
-    const text2 = `Text 2\nA response to the ${year} analysis agrees that ${topic} ${benefit}, but emphasizes that ${concern}. The author recommends small trials before broad expansion.`;
-    if (ctx.index % 2 === 0) {
+    const entry = tieredCase(ctx, CROSS_TEXT_CASES);
+    const { pair } = entry;
+    const stimulus = `Text 1\n${pair.text1}\n\nText 2\n${pair.text2}`;
+    if (entry.form === "agreement") {
       return item(ctx, {
-        recipe: "agreement", stimulus: `${text1}\n\n${text2}`, question: "Based on the texts, both authors would most likely agree with which statement?",
-        correct: `${topic[0].toUpperCase()}${topic.slice(1)} ${benefit}.`,
-        distractors: [`${topic[0].toUpperCase()}${topic.slice(1)} should be expanded immediately in every setting.`, `The stated benefit of ${topic} is outweighed in all cases by the concern Text 2 identifies.`, `Limited trials cannot provide useful information about whether ${topic} should be expanded.`],
-        explanation: `Both texts explicitly recognize the stated benefit. They differ about how quickly or broadly to act on it.`, parameters: { caseData, year }
+        recipe: "agreement", stimulus,
+        question: "Based on the texts, both authors would most likely agree with which statement?",
+        correct: pair.agreement.correct, distractors: pair.agreement.distractors,
+        explanation: `Both texts commit to this statement. The other choices are asserted by only one author, are rejected by one of them, or go beyond what either text claims.`,
+        parameters: { relation: pair.relation }
       });
     }
     return item(ctx, {
-      recipe: "response", stimulus: `${text1}\n\n${text2}`, question: "How would the author of Text 2 most likely respond to Text 1's recommendation?",
-      correct: `The recommendation may be justified eventually, but ${concern}, so limited trials should come first.`,
-      distractors: [`The recommendation correctly identifies a benefit, but that benefit applies only after the practice has already been expanded broadly.`, `The recommendation is too cautious because the concern identified in Text 2 supports expansion without further testing.`, `The recommendation should be rejected because ${topic} cannot provide the benefit both texts acknowledge.`],
-      explanation: `Text 2 accepts the possible benefit but adds a concern and favors trials before broad expansion.`, parameters: { caseData, year }
+      recipe: "response", stimulus, question: pair.response.question,
+      correct: pair.response.correct, distractors: pair.response.distractors,
+      explanation: `Text 2 relates to Text 1 by ${pair.relation.replace(/-/g, " ")}. The other choices misstate which part of Text 1 the second author accepts and which part is being challenged.`,
+      parameters: { relation: pair.relation }
     });
   }
 
