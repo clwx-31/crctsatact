@@ -6,7 +6,7 @@ require("./math-generator.js");
 require("./rw-generator.js");
 require("./test-engine.js");
 
-const BASELINE_SEED = "baseline-v2";
+const BASELINE_SEED = "baseline-v3";
 const MINIMUM_RECIPES = 153;   // a floor, so adding a recipe is not a failure
 const STRESS_SEED_COUNT = 100;
 const EXPECTED_SKILLS = {
@@ -196,7 +196,7 @@ for (const question of questions) {
   for (const field of ["id", "section", "domain", "skill", "difficulty", "type", "question", "explanation", "meta"]) {
     if (!question[field]) fail(`${question.id || "Unknown question"} is missing ${field}.`);
   }
-  if (!question.meta?.recipe || question.meta.generationVersion !== "authenticity-v2" || question.meta.seed !== BASELINE_SEED || !question.meta.parameters || ![1, 2].includes(question.meta.practiceSet) || question.practiceSet !== question.meta.practiceSet) fail(`${question.id} has incomplete generation provenance.`);
+  if (!question.meta?.recipe || question.meta.generationVersion !== "construct-validity-v3" || question.meta.seed !== BASELINE_SEED || !question.meta.parameters || ![1, 2].includes(question.meta.practiceSet) || question.practiceSet !== question.meta.practiceSet) fail(`${question.id} has incomplete generation provenance.`);
   if (!["Easy", "Medium", "Hard"].includes(question.difficulty)) fail(`${question.id} has an invalid difficulty.`);
   if (question.type === "mcq") {
     if (!Array.isArray(question.choices) || question.choices.length !== 4) fail(`${question.id} must have four choices.`);

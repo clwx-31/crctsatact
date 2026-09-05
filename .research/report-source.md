@@ -2,7 +2,7 @@
 
 **Audience:** Form SAT Practice maintainers
 
-**Research dates:** 2026-09-02 through 2026-09-03, with an item-authenticity audit on 2026-09-03
+**Research dates:** 2026-09-02 through 2026-09-03, with an item-authenticity audit on 2026-09-03 and a cold construct-validity re-audit on 2026-09-04
 
 **Scope:** Current digital SAT Math and Reading and Writing content boundaries, item structures, and their implementation as reproducible original drills.
 
@@ -27,7 +27,18 @@ Product consequences: Reading and Writing items are all multiple choice and keep
 
 Released sample questions and the framework's test-development appendix were compared with the generated parent models. The audit found three actionable differences: some generated Reading and Writing stimuli were shorter than the official floor; several distractors could be dismissed as irrelevant without applying the tested skill; and punctuation choices described punctuation abstractly rather than completing the passage as released SAT choices do.
 
-The `baseline-v2` pass corrects those issues at the generator level. Reading and Writing passages now meet both ends of the official standardized range, evidence and comprehension distractors use close-but-wrong comparisons or claims, and Boundaries answer choices include the words around the blank. Academic lead-in sentences are tied to the tested passage topic. The validator reconstructs completed passages and enforces the official length range across the baseline and alternate seeds.
+The `baseline-v2` pass addressed part of this. Reading and Writing passages were brought inside the official standardized range, and Boundaries answer choices were changed to include the words around the blank. The validator reconstructs completed passages and enforces the length range across the baseline and alternate seeds.
+
+### Correction: what the v2 pass did not fix
+
+A cold re-audit on 2026-09-04 found that two of the three v2 claims did not hold in the generated bank, and that a larger problem had gone unmeasured. The record above should be read with these corrections.
+
+- **Distractors were not fixed.** Command of Evidence items still carried options that could be dismissed without reading the claim ("The species has colorful wing feathers"). Because those options were also short, picking the longest choice answered 100% of the skill's fifty items.
+- **Lead-in sentences were padding, not context.** They were added unconditionally to clear the 25-word-equivalent floor, and accounted for roughly 23% of all Reading and Writing stimulus text. The claim that the generator avoided "empty filler solely to reach the range" was not accurate.
+- **Item counts were inflated.** Years and week counts were taken directly from the loop index, which made each signature unique and so satisfied the uniqueness check while leaving the questions identical. Normalizing those digits reduced 550 Reading and Writing items to 256 distinct ones; Transitions held six.
+- **Difficulty labels carried little information.** Nine of eleven Reading and Writing skills drew every tier from one pool. For Transitions and Cross-Text Connections, 100% of distinct items appeared under more than one label. In Inferences, the sentence appended to make an item "hard" pre-eliminated a distractor in fourteen of sixteen cases, making the hard variant easier than the easy one.
+
+The `baseline-v3` pass rebuilds the affected skills from authored, difficulty-tagged case pools and adds construct-validity checks to the validator so these properties are measured rather than asserted. The lesson for future passes is that the earlier report described intentions accurately but was not checked against generated output; the claims in this document should be re-derived from the bank before they are relied on.
 
 The framework also explains that College Board keeps the number of child questions from each automated parent model relatively low, reviews every permitted Reading and Writing variable in advance, constrains Math parameters for equivalent challenge, and subjects content to expert, editorial, fairness, and statistical review. The local generators can adopt the first three design principles but cannot reproduce College Board's field testing or psychometric calibration. This remains an important limit on any “true SAT” claim.
 

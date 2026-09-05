@@ -6,7 +6,7 @@
     ...Array(9).fill("Medium"),
     ...Array(8).fill("Hard")
   ];
-  const GENERATOR_VERSION = "authenticity-v2";
+  const GENERATOR_VERSION = "construct-validity-v3";
 
   const SKILLS = [
     { slug: "linear-equations-one", domain: "Algebra", name: "Linear equations in one variable", description: "Solve, create, and interpret linear equations in one variable." },
@@ -1806,8 +1806,8 @@
     circles
   };
 
-  function buildSATMathQuestions(seed = "baseline-v2", options = {}) {
-    const normalizedSeed = String(seed).trim() || "baseline-v2";
+  function buildSATMathQuestions(seed = "baseline-v3", options = {}) {
+    const normalizedSeed = String(seed).trim() || "baseline-v3";
     const setId = hash(`${GENERATOR_VERSION}/${normalizedSeed}`).toString(36);
     const practiceSet = Number(options.practiceSet) === 2 ? 2 : 1;
     const variantOffset = practiceSet === 2 ? 25 : 0;

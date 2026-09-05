@@ -16,14 +16,14 @@
   const topTabs = [...document.querySelectorAll("[data-top-view]")];
   const letters = ["A", "B", "C", "D"];
 
-  let mathSeed = localStorage.getItem(MATH_SEED_KEY) || "baseline-v2";
-  let rwSeed = localStorage.getItem(RW_SEED_KEY) || "baseline-v2";
+  let mathSeed = localStorage.getItem(MATH_SEED_KEY) || "baseline-v3";
+  let rwSeed = localStorage.getItem(RW_SEED_KEY) || "baseline-v3";
   if (mathSeed === "baseline-v1") {
-    mathSeed = "baseline-v2";
+    mathSeed = "baseline-v3";
     localStorage.setItem(MATH_SEED_KEY, mathSeed);
   }
   if (rwSeed === "baseline-v1") {
-    rwSeed = "baseline-v2";
+    rwSeed = "baseline-v3";
     localStorage.setItem(RW_SEED_KEY, rwSeed);
   }
   const practiceSets = {

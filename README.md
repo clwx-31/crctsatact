@@ -5,6 +5,7 @@ A no-build digital SAT practice site organized around exact College Board skill 
 - 1,000 generated Math questions across 20 targeted selectors
 - 550 generated Reading and Writing questions across 11 targeted selectors
 - two non-overlapping 25-question sets per selector; each has 8 easy, 9 medium, and 8 hard
+- difficulty is a property of the item, not of the slot it lands in
 - multiple-choice and student-produced Math responses
 - academic and original literary passages, paired texts, tables, and scatterplots
 - explanations, bookmarks, a question navigator, and locally saved progress
@@ -61,6 +62,14 @@ node --check questions.js
 ```
 
 The validator checks all 1,550 questions, both set boundaries, exact skill and difficulty coverage, cross-set content uniqueness, recipe parity, unique IDs and prompts, the official Reading and Writing passage-length range and typical Math context ceiling, the Math response-format mix, answer formats and SAT-grid-length responses, unique choices, table and figure structure, deterministic regeneration, 100 alternate two-set banks, independent Math calculations, coaching coverage, mini-test and module blueprints, full-test assembly, and score behavior.
+
+It also enforces construct validity, which structural checks alone cannot see:
+
+- three test-wiseness heuristics — topic-word overlap, longest choice, and eliminating absolutes — must stay at or below 40% per skill, against a 25% chance baseline
+- no question may appear under more than one difficulty label
+- every Reading and Writing question in a skill must be distinct once decorative digits are normalized, so a year or a counter cannot pass as item variation
+- each Math hard tier must draw on at least three recipes
+- any recipe with a numeric answer must have an independent recalculation in the validator
 
 ## Calibration sources
 
