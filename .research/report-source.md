@@ -52,7 +52,7 @@ The framework treats textual and quantitative Command of Evidence as distinct te
 
 The recipe catalog covers every testing point named in the framework, including algebraic manipulation and equations; nonlinear functions and systems; ratios, percentages, data, probability, inference, and study design; area, volume, similarity, angle relationships, trigonometry, unit-circle relationships, and circles. Reading and Writing recipes cover central ideas, details, evidence, inference, vocabulary in context, text purpose and structure, cross-text connections, rhetorical synthesis, transitions, sentence boundaries, and form/structure/sense conventions.
 
-Two equal 25-question sets support isolated repetition without reusing content. Each set spans the same 166 generator recipes. The skill banks intentionally do not reproduce the domain proportions in a real adaptive module; test-mode forms use separate blueprint quotas. The detailed recipe-to-skill inventory is maintained in `GENERATION.md`.
+Two equal 25-question sets support isolated repetition without reusing content. Each set spans the same 153 generator recipes. The skill banks intentionally do not reproduce the domain proportions in a real adaptive module; test-mode forms use separate blueprint quotas. The detailed recipe-to-skill inventory is maintained in `GENERATION.md`.
 
 ### Generation and answer integrity
 

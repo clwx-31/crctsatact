@@ -18,11 +18,15 @@
 
   let mathSeed = localStorage.getItem(MATH_SEED_KEY) || "baseline-v3";
   let rwSeed = localStorage.getItem(RW_SEED_KEY) || "baseline-v3";
-  if (mathSeed === "baseline-v1") {
+  // Move returning visitors off superseded baselines. Their saved answers are
+  // keyed by IDs that embed the generator version, so old progress is orphaned
+  // rather than scored against questions that have since changed.
+  const SUPERSEDED_SEEDS = ["baseline-v1", "baseline-v2"];
+  if (SUPERSEDED_SEEDS.includes(mathSeed)) {
     mathSeed = "baseline-v3";
     localStorage.setItem(MATH_SEED_KEY, mathSeed);
   }
-  if (rwSeed === "baseline-v1") {
+  if (SUPERSEDED_SEEDS.includes(rwSeed)) {
     rwSeed = "baseline-v3";
     localStorage.setItem(RW_SEED_KEY, rwSeed);
   }

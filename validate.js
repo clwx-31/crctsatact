@@ -408,6 +408,13 @@ for (let correctCount = 0; correctCount <= fullQuestions.length; correctCount +=
 // standing in for genuine item variation.
 
 const HEURISTIC_CEILING = 0.4;      // chance is 0.25 on a 4-choice item
+// The check is deliberately one-sided. A key that echoes the passage is a cue a
+// reader can use; a key that echoes it less than the distractors mostly is not.
+// Function and citation items are built with an abstract key ("It concedes
+// that...") against distractors that name passage content, so their overlap
+// score sits near zero by design. A two-sided band would push those items away
+// from the form the SAT actually uses. Eliminating the top-overlap choice and
+// guessing is worth about 30% against a 25% baseline on the current bank.
 const RW_DISTINCT_FLOOR = 50;       // every R&W item in a skill must be distinct
 const MATH_HARD_TEMPLATE_FLOOR = 3; // 8 hard questions may not come from 1-2 molds
 const VISIBLY_LONGER_CHARS = 12;   // a length edge smaller than this is not a usable cue
