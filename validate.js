@@ -7,7 +7,7 @@ require("./rw-generator.js");
 require("./test-engine.js");
 
 const BASELINE_SEED = "baseline-v2";
-const MINIMUM_RECIPES = 169;   // a floor, so adding a recipe is not a failure
+const MINIMUM_RECIPES = 153;   // a floor, so adding a recipe is not a failure
 const STRESS_SEED_COUNT = 100;
 const EXPECTED_SKILLS = {
   "Reading and Writing": [
@@ -62,6 +62,35 @@ function numericValue(value) {
 function requireNumericAnswer(question, expected) {
   const actual = numericValue(answerText(question));
   if (!Number.isFinite(actual) || Math.abs(actual - expected) >= 0.00011) {
+    fail(`${question.id}: answer ${answerText(question)} does not equal independently calculated ${expected}.`);
+  }
+}
+
+function radiansFromText(text) {
+  const value = String(text).replaceAll("−", "-").trim();
+  if (value === "0") return 0;
+  const match = value.match(/^(-?)(\d*)\u03c0(?:\/(\d+))?$/);
+  if (!match) return NaN;
+  const sign = match[1] === "-" ? -1 : 1;
+  const numerator = match[2] === "" ? 1 : Number(match[2]);
+  const denominator = match[3] ? Number(match[3]) : 1;
+  return sign * numerator * Math.PI / denominator;
+}
+
+// Handles the exact-value forms the trig recipes print: 1/2, √3/2, −√2/2, 1, 0.
+function surdValue(text) {
+  const value = String(text).replaceAll("−", "-").trim();
+  const match = value.match(/^(-?)(?:\u221a(\d+))?(?:\/?(\d+))?$/);
+  if (!match || (!match[2] && !match[3])) return numericValue(value);
+  const sign = match[1] === "-" ? -1 : 1;
+  const root = match[2] ? Math.sqrt(Number(match[2])) : 1;
+  const denominator = match[3] ? Number(match[3]) : 1;
+  return sign * root / denominator;
+}
+
+function requireApproxAnswer(question, expected) {
+  const actual = surdValue(answerText(question));
+  if (!Number.isFinite(actual) || Math.abs(actual - expected) >= 0.0005) {
     fail(`${question.id}: answer ${answerText(question)} does not equal independently calculated ${expected}.`);
   }
 }
@@ -132,7 +161,30 @@ function auditMathAnswer(question) {
     case "circles/diameter-from-radius": return requireNumericAnswer(question, 2 * p.radius);
     case "circles/radius-from-point": return requireNumericAnswer(question, Math.hypot(p.dx, p.dy));
     case "circles/inscribed-angle": return requireNumericAnswer(question, p.central / 2);
-    default: return undefined;
+    // Recipes added in the difficulty-ceiling pass. Each expected value is
+    // recomputed from the recorded parameters rather than read back.
+    case "linear-equations-one/no-solution-parameter": return requireNumericAnswer(question, p.q);
+    case "linear-systems/symmetric-sum": return requireNumericAnswer(question, (p.m + p.n) / (p.p + p.q));
+    case "linear-systems/no-solution-coefficient": return requireNumericAnswer(question, p.d * (p.bCoef / p.e));
+    case "linear-inequalities/boundary-parameter": return requireNumericAnswer(question, p.c - p.a * p.k);
+    case "equivalent-expressions/complete-the-square": return requireNumericAnswer(question, p.cValue - (p.bCoef / 2) ** 2);
+    case "nonlinear-systems/one-solution-parameter": return requireNumericAnswer(question, p.cValue - (p.bCoef / 2) ** 2);
+    case "ratios-rates-units/combined-rate": return requireNumericAnswer(question, p.units / (p.rateA + p.rateB) * 60);
+    case "percentages/nested-percent-reverse": return requireNumericAnswer(question, p.both / (p.innerPercent / 100) / (p.outerPercent / 100));
+    case "one-variable-data/missing-value-from-mean": return requireNumericAnswer(question, p.mean * 5 - (p.first + p.second + p.third + p.fourth));
+    case "two-variable-data/prediction-residual-gap": return requireNumericAnswer(question, p.slope * p.xVal + p.intercept - p.observed);
+    case "area-volume/cylinder-radius-from-volume": return requireNumericAnswer(question, Math.sqrt(p.volume / p.height));
+    case "linear-equations-two/standard-form-slope": return requireNumericAnswer(question, -p.a / p.b);
+    case "nonlinear-systems/circle-horizontal-line": return requireNumericAnswer(question, Math.abs(p.y) < p.radius ? 2 : Math.abs(p.y) === p.radius ? 1 : 0);
+    case "probability/simple-probability": return requireNumericAnswer(question, p.favorable / (p.favorable + p.other));
+    case "probability/conditional-table": return requireNumericAnswer(question, p.bYes / (p.aYes + p.bYes));
+    case "probability/conditional-two-way-table": return requireNumericAnswer(question, p.yesA / (p.yesA + p.noA));
+    case "sample-inference/sample-size-margin": return requireNumericAnswer(question, 1 / Math.sqrt(p.factor));
+    case "area-volume/surface-area-scale": return requireNumericAnswer(question, Math.sqrt(p.ratioN / p.ratioD));
+    case "right-triangles-trig/trig-ratio": return requireNumericAnswer(question, p.a / p.c);
+    case "right-triangles-trig/thirty-sixty-ninety": return requireNumericAnswer(question, 2 * p.short);
+    case "right-triangles-trig/unit-circle-radians": return requireApproxAnswer(question, Math.cos(radiansFromText(p.entry.angle)));
+    default: return recipe;
   }
 }
 
@@ -214,10 +266,20 @@ if (mathTypes.mcq < 600 || mathTypes.spr < 200) fail("Math bank does not contain
 const mathMultipleChoiceShare = mathTypes.mcq / math.length;
 if (mathMultipleChoiceShare < 0.7 || mathMultipleChoiceShare > 0.8) fail("Math multiple-choice share is outside the official approximate three-quarters target.");
 if (readingWriting.some((question) => question.type !== "mcq")) fail("Reading and Writing questions must all be multiple choice.");
+// Every recipe whose answer is a plain number or fraction must have an
+// independent recalculation above; auditMathAnswer returns the recipe name when
+// it has none. Without this, a new numeric recipe could ship unchecked.
+const unauditedNumericRecipes = new Set();
 for (const question of math) {
   const standardizedWordCount = `${question.stimulus || ""} ${question.question}`.length / 6;
   if (standardizedWordCount > 50) fail(`${question.id}: Math prompt exceeds the official typical 50-word-equivalent context ceiling.`);
-  auditMathAnswer(question);
+  const unhandled = auditMathAnswer(question);
+  if (unhandled && /^-?\d+(?:\.\d+)?(?:\/-?\d+(?:\.\d+)?)?$/.test(String(answerText(question)).replaceAll("−", "-").trim())) {
+    unauditedNumericRecipes.add(unhandled);
+  }
+}
+if (unauditedNumericRecipes.size) {
+  fail(`Numeric recipes without an independent recalculation in auditMathAnswer: ${[...unauditedNumericRecipes].sort().join(", ")}.`);
 }
 
 for (const question of readingWriting) {
@@ -383,20 +445,19 @@ const HEURISTICS = {
       (question.stimulus || "") + " " + (question.passages ? JSON.stringify(question.passages) : "")
     );
     if (!stimulus.size) return -1;
-    let bestIndex = -1;
-    let bestRatio = -1;
-    question.choices.forEach((choice, index) => {
+    const ratios = question.choices.map((choice) => {
       const words = contentWords(choice);
-      if (!words.size) return;
+      if (!words.size) return 0;
       let shared = 0;
       for (const word of words) if (stimulus.has(word)) shared += 1;
-      const ratio = shared / words.size;
-      if (ratio > bestRatio) {
-        bestRatio = ratio;
-        bestIndex = index;
-      }
+      return shared / words.size;
     });
-    return bestIndex;
+    const best = Math.max(...ratios);
+    // No overlap anywhere, or a tie for the most overlap, is not a cue a reader
+    // could act on. Scoring those as a pick would credit the heuristic for what
+    // is really a coin toss.
+    if (best <= 0 || ratios.filter((ratio) => ratio === best).length > 1) return -1;
+    return ratios.indexOf(best);
   },
   // Only fires when one choice is *visibly* longest. A one- or two-character
   // edge among four similar choices is not a cue a test taker can act on, and

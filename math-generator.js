@@ -103,6 +103,14 @@
     return `${value < 0 ? "−" : "+"} ${coefficient}${variable}`;
   }
 
+  // A leading coefficient of 1 is not written, and −1 is written as a bare sign.
+  function coefficientText(value) {
+    const text = String(value);
+    if (text === "1") return "";
+    if (text === "-1" || text === "−1") return "−";
+    return text;
+  }
+
   function linearText(a, variable, b) {
     const first = a === 1 ? variable : a === -1 ? `−${variable}` : `${a}${variable}`;
     return b === 0 ? first : `${first} ${signedTerm(b)}`;
@@ -231,6 +239,18 @@
         explanation: `The x-terms cancel. The remaining statement is ${b} = ${rightConstant}, which is ${mode === 0 ? "false for every x" : "true for every x"}; therefore, the equation has ${relation}.`, parameters: { a, b, rightConstant }
       });
     }
+    if (mode === 4) {
+      const q = nonzero(rng, 2, 9);
+      const p = int(rng, -12, 12);
+      const r = p + nonzero(rng, 1, 8);
+      return numeric(ctx, {
+        recipe: "no-solution-parameter",
+        question: `In the equation ax ${signedTerm(p)} = ${q}x ${signedTerm(r)}, a is a constant. If the equation has no solution, what is the value of a?`,
+        correct: q, distractors: [q + 1, r - p, -q],
+        explanation: `Collecting the x-terms gives (a − ${q})x = ${r - p}. Because ${r - p} is not zero, no value of x can satisfy the equation exactly when a − ${q} = 0, so a = ${q}.`,
+        parameters: { q, p, r }
+      });
+    }
     const x = int(rng, -8, 10);
     const a = nonzero(rng, 2, 7);
     const d = nonzero(rng, -8, 8);
@@ -298,6 +318,19 @@
         explanation: `The slope is (${y2} − (${y1}))/(${x2} − (${x1})) = ${m}. Substituting (${x1}, ${y1}) gives the intercept ${b}.`, parameters: { m, b, x1, x2, y1, y2 }
       });
     }
+    if (mode === 4) {
+      const start = int(rng, 12, 40) * 10;
+      const rate = pick(rng, [5, 8, 10, 12, 15, 20]);
+      return conceptual(ctx, {
+        recipe: "model-parameter-meaning",
+        stimulus: `The function P is defined by P(t) = ${start} − ${rate}t, where P(t) is the number of unsold tickets t days after a show goes on sale.`,
+        question: `Which of the following is the best interpretation of ${rate} in this context?`,
+        correct: "The number of tickets sold each day",
+        distractors: ["The number of tickets that were unsold when the show went on sale", "The number of days it takes for every ticket to be sold", "The total number of tickets sold over the whole period"],
+        explanation: `P falls by ${rate} for each increase of 1 in t, so ${rate} is the number of tickets sold per day. The value ${start} is the number unsold when t = 0.`,
+        parameters: { start, rate }
+      });
+    }
     const k = int(rng, -10, 10);
     const leftB = int(rng, -15, 15);
     const rightB = (m - 2) * k + leftB;
@@ -345,6 +378,24 @@
         explanation: `Because y counts the sides of polygon B, ${sideB}y is its perimeter. Thus ${sideB} is the length of each side.`, parameters: { sideA, sideB, total }
       });
     }
+    if (mode === 4) {
+      const slope = nonzero(rng, -4, 5);
+      const x1 = nonzero(rng, -5, 3);
+      const y1 = int(rng, -6, 8);
+      const step = int(rng, 1, 4);
+      const x2 = x1 + step;
+      const y2 = y1 + slope * step;
+      const intercept = y1 - slope * x1;
+      return conceptual(ctx, {
+        recipe: "line-through-two-points",
+        stimulus: `Line k passes through the points (${x1}, ${y1}) and (${x2}, ${y2}) in the xy-plane.`,
+        question: "Which equation represents line k?",
+        correct: `y = ${linearText(slope, "x", intercept)}`,
+        distractors: [`y = ${linearText(-slope, "x", intercept)}`, `y = ${linearText(slope, "x", y1)}`, `y = ${linearText(slope + 1, "x", intercept)}`],
+        explanation: `The slope is (${y2} − (${y1}))/(${x2} − (${x1})) = ${slope}. Substituting (${x1}, ${y1}) gives an intercept of ${intercept}.`,
+        parameters: { slope, x1, y1, x2, y2, intercept }
+      });
+    }
     const m = nonzero(rng, -6, 7);
     const px = nonzero(rng, -5, 6);
     const py = int(rng, -5, 6);
@@ -353,8 +404,8 @@
     const relationship = mode < 3 ? "parallel" : "perpendicular";
     return conceptual(ctx, {
       recipe: `${relationship}-line`, stimulus: `Line ℓ has slope ${m}. Line n passes through (${px}, ${py}) and is ${relationship} to ℓ.`,
-      question: "Which equation represents line n?", correct: `y − (${py}) = ${targetSlope}(x − (${px}))`,
-      distractors: [`y − (${py}) = ${fraction(1, m)}(x − (${px + 1}))`, `y − (${py + 1}) = ${targetSlope}(x − (${px}))`, `y − (${py}) = ${targetSlope}(x + (${px}))`],
+      question: "Which equation represents line n?", correct: `y − (${py}) = ${coefficientText(targetSlope)}(x − (${px}))`,
+      distractors: [`y − (${py}) = ${coefficientText(fraction(1, m))}(x − (${px + 1}))`, `y − (${py + 1}) = ${coefficientText(targetSlope)}(x − (${px}))`, `y − (${py}) = ${coefficientText(targetSlope)}(x + (${px}))`],
       explanation: `A ${relationship} line has slope ${targetSlope}. Point-slope form through (${px}, ${py}) is y − (${py}) = ${targetSlope}(x − (${px})).`, parameters: { m, px, py, targetSlope }
     });
   }
@@ -400,6 +451,38 @@
         recipe: "elimination-system", question: `The system ${a}x ${signedTerm(b, "y")} = ${c} and ${d}x ${signedTerm(e, "y")} = ${f} has solution (x, y). What is x + y?`, correct: x + y,
         distractors: [x - y, x, y],
         explanation: `Eliminating one variable gives x = ${x} and y = ${y}; therefore, x + y = ${x + y}.`, parameters: { a, b, c, d, e, f, x, y }
+      });
+    }
+    if (mode === 4) {
+      const p = int(rng, 2, 5);
+      const q = p + int(rng, 1, 3);
+      const x = int(rng, -6, 8);
+      const y = int(rng, -6, 8);
+      const m = p * x + q * y;
+      const n = q * x + p * y;
+      return numeric(ctx, {
+        recipe: "symmetric-sum",
+        question: `If ${p}x ${signedTerm(q, "y")} = ${m} and ${q}x ${signedTerm(p, "y")} = ${n}, what is the value of x + y?`,
+        correct: x + y, distractors: [x - y, m + n, x],
+        explanation: `Adding the two equations gives ${p + q}x + ${p + q}y = ${m + n}. Dividing by ${p + q} gives x + y = ${x + y}.`,
+        parameters: { p, q, m, n, x, y }
+      });
+    }
+    if (mode === 3) {
+      const d = int(rng, 2, 6);
+      const e = int(rng, 2, 6);
+      const t = int(rng, 2, 4);
+      const bCoef = e * t;
+      const kValue = d * t;
+      const f = nonzero(rng, -12, 12);
+      const c = f * t + nonzero(rng, 1, 4);
+      return numeric(ctx, {
+        recipe: "no-solution-coefficient",
+        stimulus: `In the system kx ${signedTerm(bCoef, "y")} = ${c} and ${d}x ${signedTerm(e, "y")} = ${f}, k is a constant.`,
+        question: "If the system has no solution, what is the value of k?",
+        correct: kValue, distractors: [d, t, -kValue],
+        explanation: `Two lines have no common point when they are parallel and distinct. Matching the coefficient ratios requires k/${d} = ${bCoef}/${e} = ${t}, so k = ${kValue}.`,
+        parameters: { d, e, t, bCoef, kValue, c, f }
       });
     }
     const a = nonzero(rng, 2, 8);
@@ -452,6 +535,38 @@
         question: "What is the greatest number of whole crates the vehicle can carry?", correct: maximum,
         distractors: [Math.ceil((capacity - fixed) / weight), Math.floor(capacity / weight), maximum - 1],
         explanation: `Solve ${fixed} + ${weight}c ≤ ${capacity}. This gives c ≤ ${(capacity - fixed) / weight}; the greatest whole-number value is ${maximum}.`, parameters: { capacity, fixed, weight, maximum }
+      });
+    }
+    if (mode === 4) {
+      const a = int(rng, 2, 8);
+      const k = nonzero(rng, -6, 8);
+      const c = int(rng, -20, 20);
+      const b = c - a * k;
+      return numeric(ctx, {
+        recipe: "boundary-parameter",
+        stimulus: `In the inequality ${a}x + b > ${c}, b is a constant.`,
+        question: `If the solution to the inequality is x > ${k}, what is the value of b?`,
+        correct: b, distractors: [-b, c - k, a * k],
+        explanation: `Solving gives x > (${c} − b)/${a}. Setting (${c} − b)/${a} = ${k} gives b = ${c} − ${a}(${k}) = ${b}.`,
+        parameters: { a, k, c, b }
+      });
+    }
+    if (mode === 3) {
+      const m1 = int(rng, 1, 3);
+      const b1 = int(rng, -6, 2);
+      const m2 = -int(rng, 1, 3);
+      const b2 = b1 + int(rng, 4, 9);
+      const lo = b1;
+      const hi = b2;
+      const y0 = lo + 1 + int(rng, 0, Math.max(0, hi - lo - 2));
+      return conceptual(ctx, {
+        recipe: "system-of-inequalities",
+        stimulus: `A system of inequalities is given by y > ${linearText(m1, "x", b1)} and y < ${linearText(m2, "x", b2)}.`,
+        question: "Which point is a solution to the system?",
+        correct: `(0, ${y0})`,
+        distractors: [`(0, ${lo - 1})`, `(0, ${hi + 1})`, `(0, ${lo})`],
+        explanation: `At x = 0 the system requires y > ${lo} and y < ${hi}. The value ${y0} satisfies both; the other points fall on or outside a boundary.`,
+        parameters: { m1, b1, m2, b2, y0 }
       });
     }
     const boundary = nonzero(rng, -6, 9);
@@ -539,6 +654,20 @@
         recipe: "rational-combination", question: `For x ≠ 0, which expression is equivalent to ${a}/x + ${b}/x²?`, correct: `(${a}x + ${b})/x²`,
         distractors: [`${a + b}/x³`, `(${a} + ${b}x)/x²`, `${a + b}/x²`],
         explanation: `Rewrite ${a}/x as ${a}x/x², then add numerators to obtain (${a}x + ${b})/x².`, parameters: { a, b }
+      });
+    }
+    if (mode === 4) {
+      const h = nonzero(rng, -6, 6);
+      const kValue = nonzero(rng, -20, 20);
+      const bCoef = 2 * h;
+      const cValue = h * h + kValue;
+      return numeric(ctx, {
+        recipe: "complete-the-square",
+        stimulus: `The expression x² ${signedTerm(bCoef, "x")} ${signedTerm(cValue)} can be rewritten in the form (x ${signedTerm(h)})² + k, where k is a constant.`,
+        question: "What is the value of k?",
+        correct: kValue, distractors: [cValue, cValue - bCoef, -kValue],
+        explanation: `Half of ${bCoef} is ${h}, and (x ${signedTerm(h)})² expands to x² ${signedTerm(bCoef, "x")} + ${h * h}. Subtracting ${h * h} from ${cValue} leaves k = ${kValue}.`,
+        parameters: { h, kValue, bCoef, cValue }
       });
     }
     const p = int(rng, 2, 5);
@@ -685,6 +814,20 @@
         explanation: `Substitution gives x² = ${xSquared}, which has the two real solutions x = ±${integerX}.`, parameters: { radius, y, integerX }
       });
     }
+    if (mode === 4) {
+      const h = int(rng, -5, 5);
+      const kValue = int(rng, -10, 10);
+      const bCoef = -2 * h;
+      const cValue = h * h + kValue;
+      return numeric(ctx, {
+        recipe: "one-solution-parameter",
+        stimulus: `In the xy-plane, the graph of y = x² ${signedTerm(bCoef, "x")} ${signedTerm(cValue)} intersects the line y = k at exactly one point.`,
+        question: "What is the value of k?",
+        correct: kValue, distractors: [cValue, -kValue, h],
+        explanation: `Completing the square gives y = (x ${signedTerm(-h)})² + ${kValue}, so the parabola's minimum value is ${kValue}. A horizontal line meets it once only at that minimum, so k = ${kValue}.`,
+        parameters: { h, kValue, bCoef, cValue }
+      });
+    }
     const tangentX = int(rng, -6, 6);
     const vertexY = int(rng, -8, 8);
     return conceptual(ctx, {
@@ -714,7 +857,7 @@
       const k = int(rng, 5, 40);
       const a = -int(rng, 1, 5);
       return numeric(ctx, {
-        recipe: "quadratic-vertex", stimulus: `The function h(t) = ${a}(t − (${h}))² + ${k} models an object's height.`,
+        recipe: "quadratic-vertex", stimulus: `The function h(t) = ${coefficientText(a)}(t − (${h}))² + ${k} models an object's height.`,
         question: "What is the maximum value of the function?", correct: k,
         distractors: [h, a, k + h],
         explanation: `The squared term is never negative, and its coefficient is negative. The maximum occurs when the square is 0, giving h(t) = ${k}.`, parameters: { a, h, k }
@@ -761,7 +904,7 @@
       const k = int(rng, -10, 20);
       const a = nonzero(rng, -4, 4);
       return conceptual(ctx, {
-        recipe: "quadratic-useful-form", question: `Which form of f(x) = ${a}(x − (${h}))² ${signedTerm(k)} most directly displays the vertex of its graph?`,
+        recipe: "quadratic-useful-form", question: `Which form of f(x) = ${coefficientText(a)}(x − (${h}))² ${signedTerm(k)} most directly displays the vertex of its graph?`,
         correct: `The given form; it shows the vertex (${h}, ${k}).`,
         distractors: [`Standard form; it shows the vertex (0, ${k}).`, `Factored form; it shows that both zeros equal ${k}.`, `No algebraic form can display a vertex.`],
         explanation: `Vertex form a(x − h)² + k displays the vertex directly as (h, k), here (${h}, ${k}).`, parameters: { a, h, k }
@@ -823,6 +966,22 @@
         explanation: `Multiply by 3,600 seconds per hour and divide by 1,000 meters per kilometer: ${metersPerSecond} × 3.6 = ${kilometersPerHour}.`, parameters: { metersPerSecond, kilometersPerHour }
       });
     }
+    if (mode === 5) {
+      const rateA = pick(rng, [80, 100, 120, 150]);
+      const rateB = pick(rng, [100, 150, 180, 200]);
+      const combined = rateA + rateB;
+      const hours = pick(rng, [2, 3, 4]);
+      const units = combined * hours;
+      const minutes = hours * 60;
+      return numeric(ctx, {
+        recipe: "combined-rate",
+        stimulus: `Machine A fills ${rateA} bottles per hour, and machine B fills ${rateB} bottles per hour.`,
+        question: `Working at the same time, how many minutes will the two machines take to fill ${units} bottles?`,
+        correct: minutes, distractors: [Math.round(units / rateA * 60), Math.round(units / rateB * 60), combined],
+        explanation: `Together the machines fill ${combined} bottles per hour. Filling ${units} bottles takes ${units}/${combined} = ${hours} hours, which is ${minutes} minutes.`,
+        parameters: { rateA, rateB, units, minutes, hours }
+      });
+    }
     const density = int(rng, 2, 12);
     const volume = int(rng, 15, 80);
     const mass = density * volume;
@@ -860,10 +1019,11 @@
       });
     }
     if (difficulty === "Medium") {
-      const final = int(rng, 6, 25) * 10;
       const percent = pick(rng, [20, 25, 50, 100]);
-      const original = final / (1 + percent / 100);
-      if (Number.isInteger(original)) {
+      const step = percent === 20 ? 5 : percent === 25 ? 4 : percent === 50 ? 2 : 1;
+      const original = int(rng, 4, 30) * step;
+      const final = original * (1 + percent / 100);
+      {
         return numeric(ctx, {
           recipe: "reverse-percent", stimulus: `After increasing by ${percent}%, a quantity is ${final}.`, question: "What was the original quantity?", correct: original,
           distractors: [final * percent / 100, final * (1 - percent / 100), final / (percent / 100)],
@@ -881,6 +1041,21 @@
         correct: `${Math.abs(net)}% ${net >= 0 ? "increase" : "decrease"}`,
         distractors: [`${Math.abs(first - second)}% ${first >= second ? "increase" : "decrease"}`, `${first + second}% increase`, `${second}% decrease`],
         explanation: `Multiply growth factors: (1 + ${first / 100})(1 − ${second / 100}) = ${numberText(factor)}. Relative to 1, this is a ${Math.abs(net)}% ${net >= 0 ? "increase" : "decrease"}.`, parameters: { first, second, factor, net }
+      });
+    }
+    if (mode === 5) {
+      const outerPercent = pick(rng, [20, 25, 50]);
+      const innerPercent = pick(rng, [20, 25, 50]);
+      const total = int(rng, 2, 9) * 200;
+      const inner = total * outerPercent / 100;
+      const both = inner * innerPercent / 100;
+      return numeric(ctx, {
+        recipe: "nested-percent-reverse",
+        stimulus: `At a school, ${outerPercent}% of the students take band, and ${innerPercent}% of the students who take band also take chorus. Exactly ${both} students take both.`,
+        question: "How many students attend the school?",
+        correct: total, distractors: [inner, both * 100 / innerPercent + both, total / 2],
+        explanation: `The number taking band is ${both} ÷ ${innerPercent / 100} = ${inner}. The number of students is ${inner} ÷ ${outerPercent / 100} = ${total}.`,
+        parameters: { outerPercent, innerPercent, both, inner, total }
       });
     }
     const totalPercent = pick(rng, [30, 40, 50, 60, 75, 80]);
@@ -942,6 +1117,23 @@
         explanation: `Both sets are symmetric around ${center}, so both means are ${center}. Set B's values are farther from the mean, so B has the larger standard deviation.`, parameters: { center, tight, wide }
       });
     }
+    if (mode === 5) {
+      let first = int(rng, 10, 28);
+      const second = int(rng, 10, 28);
+      const third = int(rng, 10, 28);
+      const fourth = int(rng, 10, 28);
+      const fifth = int(rng, 8, 40);
+      first += (5 - ((first + second + third + fourth + fifth) % 5)) % 5;
+      const mean = (first + second + third + fourth + fifth) / 5;
+      return numeric(ctx, {
+        recipe: "missing-value-from-mean",
+        stimulus: `The mean of five numbers is ${mean}. Four of the numbers are ${first}, ${second}, ${third}, and ${fourth}.`,
+        question: "What is the fifth number?",
+        correct: fifth, distractors: [mean, first + second + third + fourth, Math.abs(mean - fifth)],
+        explanation: `The five numbers total ${mean} × 5 = ${mean * 5}. The four listed numbers total ${first + second + third + fourth}, so the fifth is ${mean * 5} − ${first + second + third + fourth} = ${fifth}.`,
+        parameters: { first, second, third, fourth, fifth, mean }
+      });
+    }
     const base = [int(rng, 10, 20), int(rng, 21, 30), int(rng, 31, 40), int(rng, 41, 50)];
     const outlier = int(rng, 100, 160);
     return conceptual(ctx, {
@@ -994,6 +1186,22 @@
         question: "Which type of model is most appropriate?", correct: "An exponential model",
         distractors: ["A linear model", "A constant model", "No model, because y changes"],
         explanation: `A roughly constant multiplicative change for equal x-intervals is the defining pattern of exponential growth or decay.`, parameters: { factor }
+      });
+    }
+    if (mode === 5) {
+      const slope = pick(rng, [2, 3, 4]);
+      const intercept = int(rng, 5, 20);
+      const xVal = pick(rng, [8, 10, 12, 15, 20]);
+      const predicted = slope * xVal + intercept;
+      const gap = pick(rng, [3, 4, 5, 6]);
+      const observed = predicted - gap;
+      return numeric(ctx, {
+        recipe: "prediction-residual-gap",
+        stimulus: `The line of best fit for a data set is y = ${slope}x + ${intercept}. For one point in the set, x = ${xVal} and the observed value of y is ${observed}.`,
+        question: "By how much does the predicted value exceed the observed value?",
+        correct: gap, distractors: [predicted, observed, gap + xVal],
+        explanation: `The predicted value is ${slope}(${xVal}) + ${intercept} = ${predicted}. The observed value is ${observed}, so the prediction exceeds it by ${predicted} − ${observed} = ${gap}.`,
+        parameters: { slope, intercept, xVal, predicted, observed, gap }
       });
     }
     const sampleX = [1, 2, 3, 4, 5];
@@ -1059,6 +1267,26 @@
         explanation: `Use P(A or B) = P(A) + P(B) − P(A and B) = ${pA} + ${pB} − ${overlap} = ${union}.`, parameters: { pA, pB, overlap, union }
       });
     }
+    if (mode === 5) {
+      const yesA = int(rng, 2, 9) * 10;
+      const noA = int(rng, 2, 9) * 10;
+      const yesB = int(rng, 2, 9) * 10;
+      const noB = int(rng, 2, 9) * 10;
+      const table = {
+        caption: "Survey responses by group",
+        headers: ["Group", "Yes", "No", "Total"],
+        rows: [["Group A", yesA, noA, yesA + noA], ["Group B", yesB, noB, yesB + noB], ["Total", yesA + yesB, noA + noB, yesA + noA + yesB + noB]]
+      };
+      return mcq(ctx, {
+        recipe: "conditional-two-way-table", table,
+        stimulus: "The table summarizes the responses of everyone who took part in a survey.",
+        question: "If a respondent is selected at random from Group A, what is the probability that the respondent answered Yes?",
+        correct: fraction(yesA, yesA + noA),
+        distractors: [fraction(yesA, yesA + yesB), fraction(yesA, yesA + noA + yesB + noB), fraction(noA, yesA + noA)],
+        explanation: `Restricting to Group A leaves ${yesA + noA} respondents, of whom ${yesA} answered Yes, so the probability is ${yesA}/${yesA + noA} = ${fraction(yesA, yesA + noA)}.`,
+        parameters: { yesA, noA, yesB, noB }
+      });
+    }
     const probability = pick(rng, [0.12, 0.15, 0.2, 0.25, 0.3]);
     const trials = pick(rng, [100, 200, 400, 500]);
     const expected = probability * trials;
@@ -1105,6 +1333,21 @@
         explanation: `Margin of error varies approximately with 1/√n. Sample B is ${factor} times as large, so its margin is 1/√${factor} = ${ratio} as large.`, parameters: { factor, first, second }
       });
     }
+    if (mode === 4) {
+      const center = int(rng, 20, 60);
+      const margin = pick(rng, [2, 3, 4, 5]);
+      const low = center - margin;
+      const high = center + margin;
+      return conceptual(ctx, {
+        recipe: "interval-interpretation",
+        stimulus: `Using a random sample of residents, a study reports a 95% confidence interval of ${low} to ${high} for the mean number of hours residents work each week.`,
+        question: "Which statement is the most appropriate conclusion?",
+        correct: `It is plausible that the mean for all residents is between ${low} and ${high} hours.`,
+        distractors: [`Exactly 95% of the residents surveyed worked between ${low} and ${high} hours.`, `The mean for the residents who were surveyed is below ${low} hours per week.`, `Every random sample of this size would give a mean between ${low} and ${high}.`],
+        explanation: `A confidence interval describes plausible values for the population mean. It does not describe the spread of individual responses, the sample's own mean, or the result of every future sample.`,
+        parameters: { center, margin, low, high }
+      });
+    }
     const percent = int(rng, 35, 79);
     const district = pick(rng, ["North", "Central", "Riverside", "Lakeview", "Westfield"]);
     return conceptual(ctx, {
@@ -1124,7 +1367,7 @@
       return conceptual(ctx, {
         recipe: "random-assignment", stimulus: `Researchers randomly assign ${participants} volunteers either to use a new ${treatment} or to continue their usual routine.`,
         question: "What does random assignment primarily allow the researchers to do?", correct: "Support a cause-and-effect conclusion about the treatment",
-        distractors: ["Generalize automatically to every person", "Guarantee that every participant improves", "Eliminate all measurement error"],
+        distractors: ["Generalize the findings to the wider population of interest", "Remove the need for a comparison group in the analysis", "Ensure the two groups end up with equal average outcomes"],
         explanation: `Random assignment tends to balance preexisting differences between treatment groups, allowing a causal comparison. It does not ensure population representativeness.`, parameters: { treatment, participants }
       });
     }
@@ -1134,7 +1377,7 @@
       return conceptual(ctx, {
         recipe: "random-sampling-versus-assignment", stimulus: `A random sample of ${sampleSize} ${city} residents is surveyed about transit. No treatment is imposed.`,
         question: "Which conclusion is best supported?", correct: "The results may be generalized to the city's residents, but they cannot establish causation.",
-        distractors: ["The results establish that transit preferences cause commuting behavior.", "The results apply only to the sampled residents.", "The results prove every city resident has the majority preference."],
+        distractors: ["The results establish that transit preferences cause the observed commuting behavior.", "The results describe only the residents sampled and cannot extend beyond them.", "The results identify which transit improvement residents would benefit from most."],
         explanation: `Random sampling supports generalization to the sampled population. Without a randomly assigned treatment, the study cannot establish a causal effect.`, parameters: { city, sampleSize }
       });
     }
@@ -1149,7 +1392,7 @@
       return conceptual(ctx, {
         recipe: "observational-confounding", stimulus: `In an observational study of ${observations} cases, researchers find that ${pair[0]} tend to ${pair[1]}.`,
         question: `Why does this result not by itself establish that ${pair[2]} causes a change in ${pair[3]}?`, correct: `Other variables may be related to both ${pair[2]} and ${pair[3]}.`,
-        distractors: ["Associations can never be measured.", "The response cannot be recorded as data.", "An observational study must have exactly two groups."],
+        distractors: [`The study recorded ${pair[3]} after ${pair[2]} rather than before it.`, "The observed cases were not divided evenly between the two categories.", `The measured association between ${pair[2]} and ${pair[3]} was fairly modest.`],
         explanation: `Because ${pair[2]} was observed rather than randomly assigned, confounding variables could help explain the association.`, parameters: { pair, observations }
       });
     }
@@ -1160,17 +1403,29 @@
       const [program, outcome] = pick(rng, options);
       return conceptual(ctx, {
         recipe: "matched-control", stimulus: `To test a ${program} program, researchers let participants choose whether to enroll and then compare ${outcome}.`,
-        question: "What is the most serious threat to a causal conclusion?", correct: "Participants who choose the program may differ initially from those who do not.",
-        distractors: ["The response variable is numerical.", "The study contains more than one participant.", "A comparison group is never useful."],
+        question: "What is the most serious threat to a causal conclusion?", correct: `Participants who choose to enroll may differ from those who decline in ways that affect ${outcome}.`,
+        distractors: [`Researchers compare ${outcome} for participants who enroll without measuring it beforehand.`, `Participants who enroll in the program report ${outcome} more often than those who decline.`, `Researchers let participants choose, so the program enrolled more participants than expected.`],
         explanation: `Self-selection can create systematic preexisting differences between groups. Random assignment would better isolate the program's effect.`, parameters: { program, outcome }
+      });
+    }
+    if (mode === 5) {
+      const [factor, result] = pick(rng, [["daily walking", "lower blood pressure"], ["morning study sessions", "higher exam scores"], ["regular shared meals", "stronger reported wellbeing"], ["earlier bedtimes", "faster reaction times"]]);
+      return conceptual(ctx, {
+        recipe: "observational-limit",
+        stimulus: `In a large observational study, adults who reported ${factor} also showed ${result}. Participants chose their own routines, and the sample was drawn at random from the population.`,
+        question: "Which conclusion does the study best support?",
+        correct: `There is an association between ${factor} and ${result} among adults in this population.`,
+        distractors: [`Adults who took up ${factor} in this study were caused to show ${result} by doing so.`, `Some routine other than ${factor} is what produced ${result} in the adults studied.`, `The link between ${factor} and ${result} would appear in any population that was studied.`],
+        explanation: `Random sampling supports generalizing an association to the population sampled. Without random assignment the study cannot establish that ${factor} causes ${result}, and it cannot rule that possibility out either.`,
+        parameters: { factor, result }
       });
     }
     const intervention = pick(rng, ["vocabulary app", "memory game", "reading strategy", "practice schedule", "note-taking tool"]);
     const outcome = pick(rng, ["vocabulary scores", "recall scores", "reading scores", "quiz scores"]);
     return conceptual(ctx, {
       recipe: "experiment-design", stimulus: `A researcher wants to test whether a new ${intervention} improves ${outcome}.`,
-      question: "Which design best supports a causal conclusion?", correct: "Randomly assign participants to use the intervention or a comparison method, then compare score changes.",
-      distractors: ["Ask participants whether they think they improved.", "Compare volunteers who already use the intervention with people who do not.", "Give the intervention to everyone and record only their final scores."],
+      question: "Which design best supports a causal conclusion?", correct: "Randomly assign participants to the intervention or a comparison method, then compare gains.",
+      distractors: ["Compare volunteers who already use the intervention with people who have never tried it.", "Give the intervention to everyone and record their scores at the end of the study.", "Ask participants afterward whether they believe the intervention improved their scores."],
       explanation: `Random assignment and a comparison group isolate the intervention as the systematic difference between groups, making a causal conclusion most defensible.`, parameters: { intervention, outcome }
     });
   }
@@ -1247,6 +1502,19 @@
         question: "What is the smaller volume?", correct: smallVolume,
         distractors: [largeVolume * linearNumerator / linearDenominator, largeVolume * linearNumerator ** 2 / linearDenominator ** 2, largeVolume - smallVolume],
         explanation: `Volumes scale by the cube of the linear factor: ${largeVolume}(${linearNumerator}/${linearDenominator})³ = ${smallVolume}.`, parameters: { linearNumerator, linearDenominator, largeVolume, smallVolume }
+      });
+    }
+    if (mode === 5) {
+      const radius = int(rng, 2, 9);
+      const height = int(rng, 2, 12);
+      const volume = radius * radius * height;
+      return numeric(ctx, {
+        recipe: "cylinder-radius-from-volume",
+        stimulus: `A right circular cylinder has a volume of ${volume}π cubic centimeters and a height of ${height} centimeters.`,
+        question: "What is the radius of the cylinder, in centimeters?",
+        correct: radius, distractors: [radius * radius, radius + 1, height],
+        explanation: `The volume of a cylinder is πr²h, so ${volume}π = πr²(${height}). Dividing gives r² = ${radius * radius}, and therefore r = ${radius}.`,
+        parameters: { radius, height, volume }
       });
     }
     const ratioN = pick(rng, [4, 9, 16, 25]);
