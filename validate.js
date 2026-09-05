@@ -7,7 +7,7 @@ require("./rw-generator.js");
 require("./test-engine.js");
 
 const BASELINE_SEED = "baseline-v2";
-const EXPECTED_RECIPES = 167;
+const EXPECTED_RECIPES = 168;
 const STRESS_SEED_COUNT = 100;
 const EXPECTED_SKILLS = {
   "Reading and Writing": [
