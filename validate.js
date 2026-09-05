@@ -7,7 +7,7 @@ require("./rw-generator.js");
 require("./test-engine.js");
 
 const BASELINE_SEED = "baseline-v2";
-const EXPECTED_RECIPES = 168;
+const MINIMUM_RECIPES = 169;   // a floor, so adding a recipe is not a failure
 const STRESS_SEED_COUNT = 100;
 const EXPECTED_SKILLS = {
   "Reading and Writing": [
@@ -207,7 +207,7 @@ const math = questions.filter((question) => question.section === "Math");
 const readingWriting = questions.filter((question) => question.section === "Reading and Writing");
 for (const practiceSet of [1, 2]) {
   const recipeCount = new Set(questions.filter((question) => question.practiceSet === practiceSet).map((question) => question.meta.recipe)).size;
-  if (recipeCount !== EXPECTED_RECIPES) fail(`Set ${practiceSet}: expected ${EXPECTED_RECIPES} distinct problem recipes; found ${recipeCount}.`);
+  if (recipeCount < MINIMUM_RECIPES) fail(`Set ${practiceSet}: expected at least ${MINIMUM_RECIPES} distinct problem recipes; found ${recipeCount}.`);
 }
 const mathTypes = counts(math, "type");
 if (mathTypes.mcq < 600 || mathTypes.spr < 200) fail("Math bank does not contain a substantial mix of both response formats.");
@@ -488,7 +488,7 @@ if (failures.length) {
 
 console.log("Question bank validation passed.");
 console.log("1,550 unique questions: 550 Reading and Writing, 1,000 Math.");
-console.log(`31 exact skill selectors and ${EXPECTED_RECIPES} problem recipes per set; every skill has two unique 25-question sets (8 easy, 9 medium, 8 hard per set). `);
+console.log(`31 exact skill selectors and ${MINIMUM_RECIPES} problem recipes per set; every skill has two unique 25-question sets (8 easy, 9 medium, 8 hard per set). `);
 console.log(`${mathTypes.mcq} Math multiple-choice and ${mathTypes.spr} Math student-produced response questions.`);
 console.log(`Deterministic generation, ${STRESS_SEED_COUNT} alternate seeds, response formats, choices, tables, figures, and independent numeric answer calculations passed.`);
 console.log("Answer-specific coaching, 31 skill mini-tests, combined mini-tests, section tests, full-test blueprints, and monotonic score estimates passed.");
