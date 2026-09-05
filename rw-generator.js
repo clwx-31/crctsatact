@@ -330,36 +330,142 @@
     });
   }
 
+  // Real measurement contexts rather than "Material A/B/C". Arithmetic in the
+  // options is computed from the table, so a figure cannot drift from the data.
+  // At least two options in every item cite the full set of values, so the
+  // choice that echoes the most of the table is no longer the key.
+  const QUANT_SIMPLE = [
+    { difficulty: "Easy", context: "A regional weather service compared total rainfall at three upland stations over the same year.", unit: "Rainfall (mm)", caption: "Annual rainfall by station", rows: [["Glen Aber", 1120], ["Cairn Moss", 1480], ["Redhollow", 890]] },
+    { difficulty: "Easy", context: "An engineering group measured how much capacity three cell chemistries retained after one thousand charge cycles.", unit: "Capacity retained (%)", caption: "Capacity retained after 1,000 cycles", rows: [["Chemistry A", 71], ["Chemistry B", 88], ["Chemistry C", 64]] },
+    { difficulty: "Easy", context: "A horticulturist sowed one seed batch in three soil types and recorded the share of seeds that germinated.", unit: "Germination (%)", caption: "Germination rate by soil type", rows: [["Sandy", 42], ["Loam", 67], ["Clay", 55]] },
+    { difficulty: "Easy", context: "A museum service recorded total attendance at each of its three branches across a single year in which all three kept the same opening hours.", unit: "Visitors", caption: "Annual attendance by branch", rows: [["Riverside", 41200], ["Old Town", 68500], ["Northgate", 23900]] },
+    { difficulty: "Easy", context: "Surveyors counted breeding pairs of one warbler species in three habitats within a single reserve.", unit: "Breeding pairs", caption: "Breeding pairs by habitat", rows: [["Reedbed", 34], ["Hedgerow", 58], ["Woodland", 47]] },
+    { difficulty: "Easy", context: "A materials laboratory measured the yield strength of three candidate alloys under identical conditions.", unit: "Yield strength (MPa)", caption: "Yield strength by alloy", rows: [["Alloy P", 310], ["Alloy Q", 275], ["Alloy R", 392]] },
+    { difficulty: "Easy", context: "A district reported mean reading scores at three schools that administered the same assessment.", unit: "Mean score", caption: "Mean reading score by school", rows: [["Ashfield", 412], ["Brookvale", 468], ["Carsden", 389]] },
+    { difficulty: "Easy", context: "An agricultural station grew three wheat varieties on adjacent plots and recorded the yield of each.", unit: "Yield (t/ha)", caption: "Wheat yield by variety", rows: [["Variety 1", 52], ["Variety 2", 68], ["Variety 3", 41]] },
+
+    { difficulty: "Medium", context: "A fisheries team recorded the mean length of one species at four sampling depths during the same season.", unit: "Mean length (cm)", caption: "Mean length by sampling depth", rows: [["0–20 m", 184], ["20–40 m", 241], ["40–60 m", 317], ["60–80 m", 293]] },
+    { difficulty: "Medium", context: "A transport authority counted average weekday boardings at four stations on the same suburban line during a period when no timetable changes were in effect.", unit: "Boardings", caption: "Average weekday boardings by station", rows: [["Kilbride", 3400], ["Marsh Lane", 7250], ["Verity Street", 5100], ["Ashgrove", 2870]] },
+    { difficulty: "Medium", context: "A conservation trust recorded the area of wetland restored in each of four counties over a decade.", unit: "Area (hectares)", caption: "Wetland restored by county", rows: [["Ardenne", 640], ["Bramley", 1275], ["Coldwell", 890], ["Dunmore", 415]] },
+    { difficulty: "Medium", context: "An observatory compared four candidate sites by logging the number of nights at each that were clear enough for imaging over a single year.", unit: "Clear nights", caption: "Clear nights by observing site", rows: [["Cerro Pardo", 268], ["Mount Iyu", 191], ["Halden Ridge", 224], ["Skarv", 143]] },
+    { difficulty: "Medium", context: "A public health unit recorded the mean waiting time between arrival and first consultation at four clinics during the same month of the year.", unit: "Waiting time (minutes)", caption: "Mean waiting time by clinic", rows: [["Eastgate", 47], ["Harbourview", 22], ["Linfield", 63], ["Newbank", 35]] },
+    { difficulty: "Medium", context: "A brewery measured the sugar remaining after fermentation in four batches held at different temperatures.", unit: "Residual sugar (g/L)", caption: "Residual sugar by batch", rows: [["Batch W", 118], ["Batch X", 64], ["Batch Y", 92], ["Batch Z", 47]] },
+    { difficulty: "Medium", context: "A university press recorded how many new titles it issued in each of four subject areas over the same five-year period.", unit: "Titles issued", caption: "New titles by subject area", rows: [["Archaeology", 87], ["Economics", 214], ["Linguistics", 156], ["Philosophy", 63]] },
+    { difficulty: "Medium", context: "A soil laboratory measured organic carbon in samples from four fields under different management.", unit: "Organic carbon (g/kg)", caption: "Organic carbon by field", rows: [["Continuous tillage", 121], ["No-till", 236], ["Cover-cropped", 189], ["Bare fallow", 94]] },
+    { difficulty: "Medium", context: "A translation team recorded how many terms each of four glossaries defined for the same technical field.", unit: "Terms defined", caption: "Terms defined by glossary", rows: [["Glossary I", 1420], ["Glossary II", 780], ["Glossary III", 2310], ["Glossary IV", 1150]] }
+  ];
+
+  // Two-column tables where the largest count is not the largest rate.
+  const QUANT_RATE = [
+    { difficulty: "Hard", context: "A hospital network recorded how many patients in each region were readmitted within a month, alongside the number discharged.", caption: "Readmissions and discharges by region", unit: "Readmissions", totalUnit: "Discharges", rows: [["Northern", 168, 2400], ["Central", 210, 3500], ["Western", 96, 1200]] },
+    { difficulty: "Hard", context: "An education authority recorded how many students at each school passed a qualifying examination, alongside the number who sat it.", caption: "Passes and candidates by school", unit: "Passes", totalUnit: "Candidates", rows: [["Fenwick", 245, 700], ["Gorsehill", 168, 400], ["Harlow Vale", 312, 1200]] },
+    { difficulty: "Hard", context: "A wildlife trust recorded how many nests at each site produced fledglings, alongside the number of nests monitored.", caption: "Successful nests by site", unit: "Successful nests", totalUnit: "Nests monitored", rows: [["Saltmarsh", 84, 240], ["Dunes", 45, 100], ["Shingle", 132, 550]] },
+    { difficulty: "Hard", context: "A manufacturer recorded how many units from each line failed inspection, alongside the number of units produced.", caption: "Failures by production line", unit: "Failed units", totalUnit: "Units produced", rows: [["Line 1", 156, 5200], ["Line 2", 92, 1150], ["Line 3", 204, 8500]] },
+    { difficulty: "Hard", context: "A library system recorded how many borrowed titles were returned late, alongside the number of loans made.", caption: "Late returns by branch", unit: "Late returns", totalUnit: "Loans", rows: [["Central", 640, 16000], ["Eastfield", 288, 3600], ["Woodside", 405, 13500]] },
+    { difficulty: "Hard", context: "An agronomist recorded how many plots at each site showed disease, alongside the number of plots inspected.", caption: "Diseased plots by site", unit: "Diseased plots", totalUnit: "Plots inspected", rows: [["Upper Farm", 42, 350], ["Mill Field", 27, 150], ["Long Acre", 63, 900]] },
+    { difficulty: "Hard", context: "A transit operator recorded how many scheduled services on each route arrived late, alongside services scheduled.", caption: "Late services by route", unit: "Late services", totalUnit: "Services scheduled", rows: [["Route 4", 312, 5200], ["Route 9", 189, 1800], ["Route 15", 448, 11200]] },
+    { difficulty: "Hard", context: "A grant body recorded how many applications from each category were funded, alongside applications received.", caption: "Funded applications by category", unit: "Funded", totalUnit: "Received", rows: [["Fellowships", 96, 1200], ["Equipment", 84, 350], ["Travel", 150, 2500]] }
+  ];
+
+  function quantDecimalize(scenario, value) {
+    return scenario.unit.includes("t/ha") || scenario.unit.includes("cm") || scenario.unit.includes("g/kg") || scenario.unit.includes("g/L")
+      ? (value / 10).toFixed(1)
+      : value.toLocaleString("en-US");
+  }
+
+  const QUANT_CASES = [
+    ...QUANT_SIMPLE.flatMap((scenario) => [
+      { difficulty: scenario.difficulty, recipe: "support-comparison", scenario, form: "comparison" },
+      { difficulty: scenario.difficulty, recipe: "quantify-difference", scenario, form: "difference" }
+    ]),
+    ...QUANT_RATE.flatMap((scenario) => [
+      { difficulty: scenario.difficulty, recipe: "proportion-claim", scenario, form: "rate" },
+      { difficulty: scenario.difficulty, recipe: "quantify-difference", scenario, form: "rateDifference" }
+    ])
+  ];
+
   function commandEvidenceQuantitative(ctx) {
-    const names = pick(ctx.rng, [
-      ["Material A", "Material B", "Material C"],
-      ["Site North", "Site Central", "Site South"],
-      ["Method K", "Method L", "Method M"],
-      ["Species R", "Species S", "Species T"]
-    ]);
-    const first = int(ctx.rng, 35, 60);
-    const second = first + int(ctx.rng, 6, 15);
-    const third = second + int(ctx.rng, 5, 15);
-    const values = [first, second, third];
-    const unit = pick(ctx.rng, ["survival rate (%)", "mean score", "retention (%)", "observed count"]);
-    const table = { caption: `${unit[0].toUpperCase()}${unit.slice(1)} by group`, headers: ["Group", unit], rows: names.map((name, index) => [name, values[index]]) };
-    const context = `A research team applied the same measurement procedure to three groups and recorded the results in the table. The team then compared the groups rather than treating any single value in isolation.`;
-    if (ctx.index % 2 === 0) {
+    const entry = tieredCase(ctx, QUANT_CASES);
+    const s = entry.scenario;
+
+    if (entry.form === "comparison" || entry.form === "difference") {
+      const table = { caption: s.caption, headers: ["Group", s.unit], rows: s.rows.map(([label, value]) => [label, Number(quantDecimalize(s, value).replace(/,/g, ""))]) };
+      const sorted = [...s.rows].sort((a, b) => b[1] - a[1]);
+      const [topLabel, topValue] = sorted[0];
+      const [midLabel, midValue] = sorted[1];
+      const [lowLabel, lowValue] = sorted[sorted.length - 1];
+      const v = (value) => quantDecimalize(s, value);
+      const all = sorted.map(([label, value]) => `${label} ${v(value)}`).join(", ");
+      if (entry.form === "comparison") {
+        return item(ctx, {
+          recipe: "support-comparison", table,
+          stimulus: `${s.context} A researcher claims that ${topLabel} recorded the highest value of any group shown.`,
+          question: "Which choice most effectively uses data from the table to support the claim?",
+          correct: `The recorded values were ${all}, so ${topLabel} was the highest of those shown.`,
+          distractors: [
+            `The recorded values were ${all}, so ${midLabel} was the highest of those shown.`,
+            `${midLabel} recorded ${v(midValue)} and ${lowLabel} recorded ${v(lowValue)}, which together exceed the ${v(topValue)} recorded by ${topLabel}.`,
+            `${topLabel} recorded ${v(topValue)}, above the ${v(midValue)} recorded by ${midLabel}; no value was reported for ${lowLabel}.`
+          ],
+          explanation: `The claim is a comparison across every group, so the supporting choice has to cite every value and rank them correctly. ${topLabel}'s ${v(topValue)} is the greatest of the figures shown.`,
+          parameters: {}
+        });
+      }
+      const gap = topValue - lowValue;
+      const wrongGap = topValue - midValue;
       return item(ctx, {
-        recipe: "support-comparison", stimulus: `${context} A researcher claims that ${names[2]} had a higher value than either of the other groups.`, table,
-        question: "Which choice most effectively uses data from the table to support the claim?",
-        correct: `${names[2]}'s ${unit} was ${third}, compared with ${second} for ${names[1]} and ${first} for ${names[0]}.`,
-        distractors: [`${names[2]}'s ${unit} was ${third}, which was ${third - second} higher than ${names[1]}'s; the table therefore gives no basis for comparing ${names[2]} with ${names[0]}.`, `${names[1]}'s ${unit} was ${second}, compared with ${first} for ${names[0]}, so ${names[1]} had the highest value shown.`, `${names[0]}'s ${unit} was ${first}, which was ${third - first} lower than ${names[2]}'s, but ${names[1]}'s value was not reported.`],
-        explanation: `The correct choice accurately cites all three values and directly establishes that ${third} is the greatest.`, parameters: { names, values, unit }
+        recipe: "quantify-difference", table,
+        stimulus: `${s.context} A student claims that ${topLabel} exceeded ${lowLabel} by ${v(gap)}.`,
+        question: "Which choice most effectively uses data from the table to support the student's claim?",
+        correct: `${topLabel} recorded ${v(topValue)} and ${lowLabel} recorded ${v(lowValue)}, a difference of ${v(gap)}.`,
+        distractors: [
+          `${topLabel} recorded ${v(topValue)} and ${lowLabel} recorded ${v(lowValue)}, a difference of ${v(wrongGap)}.`,
+          `${lowLabel} recorded ${v(lowValue)} and ${topLabel} recorded ${v(topValue)}, so ${lowLabel} exceeded ${topLabel} by ${v(gap)}.`,
+          `${midLabel} recorded ${v(midValue)} and ${lowLabel} recorded ${v(lowValue)}, a difference of ${v(midValue - lowValue)}.`
+        ],
+        explanation: `Subtracting ${lowLabel}'s ${v(lowValue)} from ${topLabel}'s ${v(topValue)} gives ${v(gap)}. The other choices subtract the wrong pair, reverse the direction of the comparison, or misreport the result.`,
+        parameters: {}
       });
     }
-    const difference = third - first;
+
+    const table = { caption: s.caption, headers: ["Group", s.unit, s.totalUnit], rows: s.rows.map(([label, count, total]) => [label, count, total]) };
+    const withRate = s.rows.map(([label, count, total]) => ({ label, count, total, rate: count / total }));
+    const byRate = [...withRate].sort((a, b) => b.rate - a.rate);
+    const byCount = [...withRate].sort((a, b) => b.count - a.count);
+    const pct = (entryValue) => `${(entryValue.rate * 100).toFixed(1)}%`;
+    const topRate = byRate[0];
+    const lowRate = byRate[byRate.length - 1];
+    const topCount = byCount[0];
+
+    if (entry.form === "rate") {
+      return item(ctx, {
+        recipe: "proportion-claim", table,
+        stimulus: `${s.context} An analyst claims that ${topRate.label} had the highest rate of any group shown, even though it did not record the largest number.`,
+        question: "Which choice most effectively uses data from the table to support the analyst's claim?",
+        correct: `${topRate.label}'s ${topRate.count.toLocaleString("en-US")} of ${topRate.total.toLocaleString("en-US")} is ${pct(topRate)}, above every other group's share.`,
+        distractors: [
+          `${topCount.label}'s ${topCount.count.toLocaleString("en-US")} of ${topCount.total.toLocaleString("en-US")} is the largest number recorded by any group shown.`,
+          `${topRate.label} recorded ${topRate.count.toLocaleString("en-US")} and ${topCount.label} recorded ${topCount.count.toLocaleString("en-US")}, so ${topRate.label} had the higher rate.`,
+          `${lowRate.label}'s ${lowRate.count.toLocaleString("en-US")} of ${lowRate.total.toLocaleString("en-US")} is ${pct(lowRate)}, the highest share of any group shown.`
+        ],
+        explanation: `A claim about rate has to divide each count by its own total. ${topRate.label} is ${pct(topRate)} while ${topCount.label}, which has the largest raw count, is ${pct(topCount)}.`,
+        parameters: {}
+      });
+    }
+
+    const spread = (topRate.rate - lowRate.rate) * 100;
     return item(ctx, {
-      recipe: "quantify-difference", stimulus: `${context} A student claims that the outcome for ${names[2]} exceeded the outcome for ${names[0]}.`, table,
-      question: "Which choice most effectively uses data from the table to support the student's claim?",
-      correct: `${names[2]}'s value was ${third}, which was ${difference} greater than ${names[0]}'s value of ${first}.`,
-      distractors: [`${names[0]}'s value was ${first}, which was ${difference} greater than ${names[2]}'s value of ${third}.`, `${names[2]}'s value was ${third}, which was ${third - second} greater than ${names[0]}'s value of ${first}.`, `${names[1]}'s value was ${second}, which was ${second - first} greater than ${names[0]}'s; therefore, ${names[2]} and ${names[0]} differed by ${second - first}.`],
-      explanation: `${third} − ${first} = ${difference}, so the correct choice reports both values and their difference accurately.`, parameters: { names, values, unit }
+      recipe: "quantify-difference", table,
+      stimulus: `${s.context} A reviewer claims that the rate for ${topRate.label} exceeded the rate for ${lowRate.label} by about ${spread.toFixed(1)} percentage points.`,
+      question: "Which choice most effectively uses data from the table to support the reviewer's claim?",
+      correct: `${topRate.label} is at ${pct(topRate)} and ${lowRate.label} at ${pct(lowRate)}, a gap of about ${spread.toFixed(1)} percentage points.`,
+      distractors: [
+        `${topRate.label} recorded ${topRate.count.toLocaleString("en-US")} and ${lowRate.label} ${lowRate.count.toLocaleString("en-US")}, a gap of ${Math.abs(topRate.count - lowRate.count).toLocaleString("en-US")} percentage points.`,
+        `${lowRate.label} is at ${pct(lowRate)} and ${topRate.label} at ${pct(topRate)}, so ${lowRate.label} leads by about ${spread.toFixed(1)} percentage points.`,
+        `${topRate.label} is at ${pct(topRate)} and ${topCount.label} at ${pct(topCount)}, a gap of about ${((topRate.rate - topCount.rate) * 100).toFixed(1)} percentage points.`
+      ],
+      explanation: `Each rate is its own count divided by its own total: ${pct(topRate)} against ${pct(lowRate)}, a gap of about ${spread.toFixed(1)} points. Raw counts cannot be subtracted to give percentage points.`,
+      parameters: {}
     });
   }
 
