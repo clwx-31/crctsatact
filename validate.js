@@ -348,6 +348,7 @@ for (let correctCount = 0; correctCount <= fullQuestions.length; correctCount +=
 const HEURISTIC_CEILING = 0.4;      // chance is 0.25 on a 4-choice item
 const RW_DISTINCT_FLOOR = 50;       // every R&W item in a skill must be distinct
 const MATH_HARD_TEMPLATE_FLOOR = 3; // 8 hard questions may not come from 1-2 molds
+const VISIBLY_LONGER_CHARS = 12;   // a length edge smaller than this is not a usable cue
 
 const HEURISTIC_STOPWORDS = new Set(
   ("the a an and or but of to in for on with that this these those from as at by is are was were be been " +
@@ -397,12 +398,13 @@ const HEURISTICS = {
     });
     return bestIndex;
   },
+  // Only fires when one choice is *visibly* longest. A one- or two-character
+  // edge among four similar choices is not a cue a test taker can act on, and
+  // treating it as one would push authors to pad text to defeat the metric.
   "longest choice": (question) => {
-    let bestIndex = 0;
-    question.choices.forEach((choice, index) => {
-      if (choice.length > question.choices[bestIndex].length) bestIndex = index;
-    });
-    return bestIndex;
+    const ordered = [...question.choices].sort((left, right) => right.length - left.length);
+    if (ordered[0].length - ordered[1].length < VISIBLY_LONGER_CHARS) return -1;
+    return question.choices.indexOf(ordered[0]);
   },
   "eliminate absolutes": (question) => {
     const surviving = question.choices

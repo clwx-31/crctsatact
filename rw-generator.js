@@ -391,32 +391,160 @@
     });
   }
 
+  // Twenty-five passages, each supporting an overall-purpose question and a
+  // sentence-function question. The purposes vary (a puzzle left open, a method
+  // and its rationale, a revised consensus, a character study, a qualified
+  // finding) so no single phrasing is the answer to every item.
+  const TEXT_STRUCTURE_PASSAGES = [
+    { difficulty: "Easy",
+      text: "For decades the tiny bones in the cave floor were catalogued as rodent remains and left unstudied. When a student re-examined them in 2019, the jaw fragments proved to belong to a bat known only from an island four hundred kilometers away. How the animals reached the cave is still unclear.",
+      purpose: { correct: "To describe an unexpected identification of archived material and note that its explanation remains open.", distractors: ["To argue that the cave deposit was catalogued carelessly by the researchers who first examined it.", "To explain the mechanism by which storms carry bats between distant islands and mainland caves.", "To compare the bone fragments recovered from the cave with rodent remains from other regional sites."] },
+      fn: { ordinal: "third", correct: "It concedes that the finding reported in the previous sentence has not yet been explained.", distractors: ["It supplies the evidence that established the identification reported in the previous sentence.", "It restates the original claim that the bones belonged to rodents that lived in the cave.", "It explains why the bones were catalogued as rodent remains for so many decades."] } },
+
+    { difficulty: "Easy",
+      text: "Ivo had rehearsed the request all week, and by Thursday he could deliver it without stumbling. At the door of the office he found himself asking instead about the weather, the new carpet, the manager's holiday. He left with the question still folded in his pocket, promising himself Friday.",
+      purpose: { correct: "To depict a character whose careful preparation deserts him at the moment he means to act.", distractors: ["To explain the reasons the character's request was eventually granted by his manager.", "To describe the office where the character works and the colleagues he encounters there.", "To contrast the character's confidence on Thursday with his confidence a week later."] },
+      fn: { ordinal: "second", correct: "It shows the character abandoning the plan that the previous sentence established.", distractors: ["It explains the reason the character had rehearsed his request throughout the week.", "It introduces the manager as the person who would ultimately decide the request.", "It summarizes the outcome of the conversation that the character had planned to have."] } },
+
+    { difficulty: "Easy",
+      text: "To measure how far the seeds travel, the team could not simply follow them. Instead they coated each batch with a harmless fluorescent powder, a different color for each parent tree, and returned after the autumn rains with ultraviolet lamps. The colors let them assign almost every recovered seed to its source.",
+      purpose: { correct: "To explain a technique the researchers adopted and what that technique allowed them to determine.", distractors: ["To argue that the fluorescent powder used in the study was harmful to the seeds it coated.", "To compare seed dispersal distances that were measured at several different study sites.", "To describe the autumn rains that made the team's seed survey possible that year."] },
+      fn: { ordinal: "first", correct: "It states the obstacle that made the approach described afterward necessary.", distractors: ["It summarizes the results the team obtained once the autumn rains had ended.", "It identifies the fluorescent powder that was used to mark each batch of seeds.", "It explains why the team assigned a different color to each of the parent trees."] } },
+
+    { difficulty: "Easy",
+      text: "Nineteenth-century editors printed the poems in the order they found them and assumed the sequence was the poet's own. The discovery of her sewn packets in 1981 showed the order was her first publisher's work. Modern editions reproduce the packets, and several poems read differently in their restored position.",
+      purpose: { correct: "To trace how a discovery overturned a long-held assumption about the arrangement of a poet's work.", distractors: ["To argue that nineteenth-century editors deliberately misrepresented the poet's stated intentions.", "To describe the physical construction of the sewn packets that were discovered in 1981.", "To compare the poems the poet wrote early in her career with those she wrote later."] },
+      fn: { ordinal: "third", correct: "It reports the consequence that the discovery in the previous sentence has had for editing.", distractors: ["It provides the evidence establishing that the sewn packets were assembled by the poet.", "It explains the reasons nineteenth-century editors printed the poems in the order they did.", "It questions whether the restored order should change how the poems are now read."] } },
+
+    { difficulty: "Easy",
+      text: "The alloy was developed for turbine blades, where it performed no better than the material already in use. A machinist who was given the offcuts noticed that it held a cutting edge far longer than tool steel. Nearly all of it is now sold for cutting tools rather than for turbines.",
+      purpose: { correct: "To recount how a material found its use in an application other than the one intended.", distractors: ["To argue that the alloy should never have been developed for use in turbine blades.", "To explain the metallurgical reasons the alloy holds a cutting edge longer than steel.", "To compare the cost of manufacturing turbine blades with the cost of cutting tools."] },
+      fn: { ordinal: "second", correct: "It identifies the observation that redirected the material toward a different purpose.", distractors: ["It explains why the alloy performed no better than existing turbine materials.", "It summarizes the volume of the alloy that is now sold for use in cutting tools.", "It describes the process by which the offcuts were produced during manufacturing."] } },
+
+    { difficulty: "Easy",
+      text: "Most accounts of the flood describe it as a single night's disaster. The parish registers tell a slower story: burials rise three weeks before the recorded date and stay high for two months afterward. The water may have arrived in one night, but the emergency plainly did not.",
+      purpose: { correct: "To use one kind of record to complicate the accepted timeline of a historical event.", distractors: ["To establish that the flood described in the accounts never actually took place.", "To describe the system by which parish registers of burials were kept and stored.", "To argue that the recorded date of the flood was written down incorrectly."] },
+      fn: { ordinal: "third", correct: "It draws from the register evidence a conclusion that revises the accounts described first.", distractors: ["It introduces the parish registers as a source that had not been consulted before.", "It restates the accounts' claim that the flood occurred over the course of one night.", "It concedes that the burial figures cannot be reconciled with the recorded date."] } },
+
+    { difficulty: "Easy",
+      text: "Wu's first canvases were painted entirely in the studio from sketches. After 1962 she began working outdoors, finishing each painting in a single session. Critics who prefer the later work praise its immediacy; those who prefer the earlier work point to its far more deliberate construction.",
+      purpose: { correct: "To describe a shift in an artist's practice and the divided critical response to it.", distractors: ["To argue that the artist's later outdoor paintings are superior to her studio work.", "To explain the technical difficulties of finishing an oil painting in a single session.", "To trace the influence of other painters on the artist's decision to work outdoors."] },
+      fn: { ordinal: "third", correct: "It presents the two opposing assessments prompted by the change described earlier.", distractors: ["It explains the reason the artist began working outdoors after the year 1962.", "It establishes that the artist's later paintings were completed in a single session.", "It summarizes the sketches from which the artist's earliest canvases were painted."] } },
+
+    { difficulty: "Easy",
+      text: "The species was declared extinct in 1953 after twenty years without a confirmed sighting. In 2021 a recording made by an automated sensor captured its distinctive call in a valley that had never been surveyed. The bird had not vanished; the search had simply been looking in settled country.",
+      purpose: { correct: "To explain how a rediscovery revealed a flaw in the search that preceded the declaration.", distractors: ["To argue that automated sensors should replace human observers in all bird surveys.", "To describe the distinctive call by which the species can be reliably identified.", "To compare the valley where the recording was made with other unsurveyed regions."] },
+      fn: { ordinal: "third", correct: "It offers an interpretation that reconciles the two preceding sentences.", distractors: ["It supplies the evidence that the species was recorded in an unsurveyed valley.", "It repeats the claim that the species had been formally declared extinct in 1953.", "It questions whether the automated recording captured the species' call at all."] } },
+
+    { difficulty: "Medium",
+      text: "The standard account holds that the technique spread outward from a single workshop. Chemical analysis of glazes from six sites now shows three distinct recipes appearing within the same decade. A single origin cannot easily accommodate three recipes, though the workshops may still have influenced one another.",
+      purpose: { correct: "To present evidence that strains a standard account without wholly discarding it.", distractors: ["To demonstrate that the three glaze recipes were developed in complete isolation.", "To describe the chemical procedures used to analyze glazes recovered from six sites.", "To argue that the standard account of the technique's spread has been confirmed."] },
+      fn: { ordinal: "third", correct: "It weighs the preceding evidence against the account and preserves part of it.", distractors: ["It introduces the chemical analysis that produced the three distinct recipes.", "It restates the standard account of how the technique spread from one workshop.", "It concludes that the workshops could not have influenced one another at all."] } },
+
+    { difficulty: "Medium",
+      text: "Kestrels hunting over motorway verges catch more prey per hour than kestrels over farmland. The verges are not richer in voles; they are simply mown, and a mown strip leaves nothing for a vole to hide under. What looks like a better habitat is really a worse one for the prey.",
+      purpose: { correct: "To explain why an apparent advantage for one species reflects a disadvantage for another.", distractors: ["To argue that motorway verges should be mown more frequently to support kestrels.", "To compare the number of voles living on motorway verges and on nearby farmland.", "To describe the hunting technique that kestrels use when flying over open ground."] },
+      fn: { ordinal: "second", correct: "It rules out one explanation for the first sentence's finding and supplies another.", distractors: ["It provides the measurements showing that kestrels catch more prey over verges.", "It concludes that motorway verges are a better habitat than farmland for kestrels.", "It describes the vegetation that grows along motorway verges after they are mown."] } },
+
+    { difficulty: "Medium",
+      text: "Okonkwo's proposal was rejected twice by the committee before it was funded. Both rejections cited the same objection, and both times he answered it by adding data rather than by changing the design. The third submission was identical in method to the first and differed only in the weight of its evidence.",
+      purpose: { correct: "To describe how a researcher responded to criticism without altering his underlying approach.", distractors: ["To argue that the committee was wrong to reject the proposal on either occasion.", "To explain the methodological objection that the committee raised against the proposal.", "To compare the funding decisions the committee reached across several different years."] },
+      fn: { ordinal: "third", correct: "It specifies what did and did not change across the successive submissions.", distractors: ["It states the objection that the committee cited in both of its rejections.", "It explains why the committee eventually agreed to fund the third submission.", "It introduces the design that the researcher had proposed in his first attempt."] } },
+
+    { difficulty: "Medium",
+      text: "Readers have long taken the narrator's precision about dates as a sign of reliability. Yet the two dates that can be checked against the historical record are both wrong, and wrong in the direction that flatters him. The novel's most confident voice may be its least trustworthy.",
+      purpose: { correct: "To question an interpretive habit by testing the detail on which it rests.", distractors: ["To establish the historical record against which the novel's dates were checked.", "To argue that the narrator is deliberately lying about every event he describes.", "To describe the narrator's characteristic manner of referring to particular dates."] },
+      fn: { ordinal: "second", correct: "It presents the evidence that undermines the assumption described in the first sentence.", distractors: ["It restates the long-standing reading of the narrator's precision about dates.", "It concludes that the novel's most confident voice is its least trustworthy one.", "It explains why only two of the narrator's dates can be checked at all."] } },
+
+    { difficulty: "Medium",
+      text: "The engineers had assumed the vibration came from the rotor. Isolating the rotor changed nothing, and the frequency turned out to match the building's ventilation fans, three floors below. The instrument had been recording the laboratory rather than the experiment.",
+      purpose: { correct: "To recount how the source of an interfering signal was traced to an unexpected origin.", distractors: ["To argue that the laboratory's ventilation fans should have been switched off.", "To explain the procedure by which the rotor was isolated from the instrument.", "To compare the vibration frequencies produced by rotors and by ventilation fans."] },
+      fn: { ordinal: "third", correct: "It states the general implication of the identification made in the previous sentence.", distractors: ["It describes the test that ruled out the rotor as the source of the vibration.", "It introduces the ventilation fans that were operating three floors below.", "It restates the engineers' original assumption about where the vibration began."] } },
+
+    { difficulty: "Medium",
+      text: "Adding the enzyme doubled the reaction rate at room temperature. Above forty degrees, however, it began to unfold, and by sixty degrees the treated sample reacted more slowly than the untreated one. The enzyme is an accelerant in one range of conditions and an obstacle in another.",
+      purpose: { correct: "To show that a substance's effect reverses across the range of conditions tested.", distractors: ["To argue that the enzyme should never be used at any laboratory temperature.", "To describe the molecular structure that causes the enzyme to unfold when heated.", "To compare reaction rates measured in treated and untreated samples at room temperature."] },
+      fn: { ordinal: "third", correct: "It generalizes the contrast that the first two sentences establish.", distractors: ["It reports the temperature above which the enzyme was observed to unfold.", "It restates the finding that the enzyme doubled the reaction rate when added.", "It explains why the treated sample reacted more slowly at sixty degrees."] } },
+
+    { difficulty: "Medium",
+      text: "The city's oldest photographs were catalogued by the street they showed. Because the numbering changed twice in the nineteenth century, roughly a third of the collection is filed under addresses that no longer correspond to the buildings pictured. Locating an image now requires reconstructing which numbering was in force.",
+      purpose: { correct: "To explain how an obsolete convention has made an archive difficult to search.", distractors: ["To argue that the city's photographs should be recatalogued by their subject matter.", "To describe the two changes made to the city's street numbering in the nineteenth century.", "To compare the oldest photographs in the collection with those taken more recently."] },
+      fn: { ordinal: "second", correct: "It gives the reason the cataloguing described first now produces errors.", distractors: ["It states the method by which the city's oldest photographs were catalogued.", "It concludes that locating an image requires reconstructing the old numbering.", "It estimates the proportion of the collection that has been correctly filed."] } },
+
+    { difficulty: "Medium",
+      text: "Ferns returned to the burned slope within two years, well ahead of any other plant. Their spores are light enough to arrive on the wind from unburned ground, and they need no partner fungus to establish. Neither advantage has anything to do with tolerating fire.",
+      purpose: { correct: "To explain that a species' early return after a disturbance owes nothing to fire tolerance.", distractors: ["To argue that ferns are more tolerant of fire than the other plants on the slope.", "To describe the partner fungi that most other plants require in order to establish.", "To compare the rate at which different plant species recolonized the burned slope."] },
+      fn: { ordinal: "third", correct: "It denies that the traits just described amount to the quality one might assume.", distractors: ["It lists the two advantages that allow ferns to arrive on burned ground quickly.", "It establishes that ferns returned to the burned slope within two years.", "It explains why fern spores are light enough to travel on the wind."] } },
+
+    { difficulty: "Medium",
+      text: "Every biography repeats that she taught herself Latin from a borrowed grammar. The claim traces to a single sentence in her brother's memoir, written forty years after the fact. No letter, no ledger, and no school record mentions the grammar at all.",
+      purpose: { correct: "To trace a widely repeated biographical claim to a thin and late source.", distractors: ["To establish that the subject of the biographies never learned any Latin.", "To describe the Latin grammar that the subject is said to have borrowed.", "To compare the brother's memoir with other memoirs written in the period."] },
+      fn: { ordinal: "third", correct: "It reinforces the doubt raised by the previous sentence by noting what is absent.", distractors: ["It identifies the memoir in which the claim about the grammar first appeared.", "It repeats the assertion that the subject taught herself Latin from a grammar.", "It concedes that some school records from the period have not survived."] } },
+
+    { difficulty: "Hard",
+      text: "The trial reported that the supplement reduced fatigue. Fatigue was assessed by asking participants how tired they felt, and participants knew which group they were in. The finding is not fabricated; it is simply not evidence about fatigue independent of expectation.",
+      purpose: { correct: "To distinguish between a result being dishonest and a result being uninformative.", distractors: ["To argue that the researchers conducting the supplement trial fabricated their data.", "To describe the questionnaire by which participants' fatigue levels were assessed.", "To establish that the supplement has no physiological effect on fatigue at all."] },
+      fn: { ordinal: "third", correct: "It draws a distinction that limits the first sentence's claim without rejecting it.", distractors: ["It identifies the method by which the trial measured participants' fatigue.", "It concedes that participants were aware of the group they had been assigned to.", "It restates the trial's reported finding that the supplement reduced fatigue."] } },
+
+    { difficulty: "Hard",
+      text: "Wages in the two towns diverged sharply after 1974. The obvious explanation is the mill closure, but wages had already begun to separate in 1971, when the mill was running at capacity. Whatever the closure did, it did not start the divergence it is usually credited with starting.",
+      purpose: { correct: "To argue that the timing of an event disqualifies it as the origin of a trend.", distractors: ["To establish that the mill closure had no economic consequences whatsoever.", "To describe the wage levels recorded in the two towns before the year 1971.", "To compare the mill's output in 1971 with its output at the time of closure."] },
+      fn: { ordinal: "third", correct: "It states the limited conclusion that the preceding chronology supports.", distractors: ["It supplies the date on which wages in the two towns began to separate.", "It identifies the mill closure as the obvious explanation for the divergence.", "It concedes that the closure may have had no effect on wages at all."] } },
+
+    { difficulty: "Hard",
+      text: "The manuscript's margins are crowded with a second hand correcting the first. Because the corrections regularize spelling that was already acceptable in the period, they are unlikely to be authorial. They are more plausibly the work of a later reader imposing the conventions of his own century.",
+      purpose: { correct: "To infer the origin of a set of annotations from the kind of changes they make.", distractors: ["To argue that the manuscript's original spelling was incorrect for its period.", "To describe the physical arrangement of the annotations in the manuscript's margins.", "To establish that the author of the manuscript corrected his own spelling."] },
+      fn: { ordinal: "second", correct: "It supplies the reasoning that rules out one candidate for the annotator's identity.", distractors: ["It describes the second hand that crowds the margins of the manuscript.", "It proposes that a later reader imposed the conventions of his own century.", "It establishes that the spelling in the manuscript was acceptable at the time."] } },
+
+    { difficulty: "Hard",
+      text: "Larger brains among these birds are usually explained by the demands of social living. Yet the solitary species in the same family have brains of comparable size, and they cache food in hundreds of separate sites. Sociality and caching both make memory demands, and the anatomy cannot distinguish them.",
+      purpose: { correct: "To show that two competing explanations are equally consistent with the same evidence.", distractors: ["To argue that food caching rather than social living explains the birds' brain size.", "To describe the caching behavior of the solitary species within the same family.", "To establish that solitary and social species have brains of comparable size."] },
+      fn: { ordinal: "third", correct: "It names the difficulty that the preceding comparison exposes.", distractors: ["It reports that the solitary species cache food in hundreds of separate sites.", "It restates the usual explanation for the larger brains found among these birds.", "It concludes that social living makes no memory demands on the birds at all."] } },
+
+    { difficulty: "Hard",
+      text: "Critics read the closing paragraph as reconciliation because the two brothers shake hands. The gesture, however, is described in exactly the words used for their first meeting, when neither man knew the other's name. The novel ends where it began, with a formality that settles nothing.",
+      purpose: { correct: "To challenge a standard reading by attending to a repetition the reading overlooks.", distractors: ["To describe the closing paragraph in which the two brothers shake hands.", "To argue that the two brothers had never actually met before the novel's end.", "To compare the novel's opening paragraph with the openings of similar works."] },
+      fn: { ordinal: "second", correct: "It introduces the textual detail on which the passage's reinterpretation depends.", distractors: ["It reports the reconciliation that critics find in the novel's closing paragraph.", "It concludes that the novel's ending settles nothing between the two brothers.", "It explains why neither of the two men knew the other's name when they met."] } },
+
+    { difficulty: "Hard",
+      text: "The model reproduces the last century of temperatures almost exactly. It was also tuned against those temperatures, with eleven free parameters adjusted until the fit was close. Agreement with the data it was fitted to is the one thing the model was guaranteed to achieve.",
+      purpose: { correct: "To explain why a model's apparent success does not test the model.", distractors: ["To argue that the model's eleven free parameters were adjusted incorrectly.", "To describe the century of temperature records that the model reproduces.", "To establish that the model will fail to predict future temperatures accurately."] },
+      fn: { ordinal: "third", correct: "It states the implication of the tuning described in the previous sentence.", distractors: ["It reports the number of free parameters that were adjusted during tuning.", "It repeats the observation that the model reproduces the last century closely.", "It concedes that some agreement between model and data is to be expected."] } },
+
+    { difficulty: "Hard",
+      text: "Only three of the workshop's forty surviving pots bear the potter's stamp. It does not follow that she made only three: stamps were applied to pieces leaving for export, and the other thirty-seven were found within a day's walk of the kiln. The stamp records a destination, not an author.",
+      purpose: { correct: "To correct an inference by identifying what a piece of evidence actually records.", distractors: ["To argue that the potter produced only three of the forty surviving pots.", "To describe the locations at which the thirty-seven unstamped pots were found.", "To compare the workshop's export trade with the trade of neighboring kilns."] },
+      fn: { ordinal: "third", correct: "It states in general terms the correction the previous sentence has argued for.", distractors: ["It reports that thirty-seven pots were found within a day's walk of the kiln.", "It establishes that only three of the surviving pots bear the potter's stamp.", "It concedes that the potter's output cannot now be estimated with confidence."] } },
+
+    { difficulty: "Hard",
+      text: "Enrollment in the elective rose every year that it was taught by Reyes. It also rose in the two years after she left, and in the department's three other electives over the same period. A trend that continues without the person credited for it was probably never theirs.",
+      purpose: { correct: "To use a broader pattern to undercut the attribution of a trend to one cause.", distractors: ["To argue that the instructor's teaching had no merit of any kind.", "To describe the three other electives offered by the same department.", "To establish that enrollment in the elective rose while Reyes taught it."] },
+      fn: { ordinal: "third", correct: "It converts the comparison in the previous sentence into a general principle.", distractors: ["It reports that enrollment rose in the department's three other electives.", "It restates the observation that enrollment rose during the instructor's tenure.", "It concedes that the instructor may have contributed to the rise after all."] } }
+  ];
+
+  const TEXT_STRUCTURE_CASES = TEXT_STRUCTURE_PASSAGES.flatMap((passage) => [
+    { difficulty: passage.difficulty, recipe: "overall-purpose", passage, form: "purpose" },
+    { difficulty: passage.difficulty, recipe: "sentence-function", passage, form: "function" }
+  ]);
+
   function textStructurePurpose(ctx) {
-    const mode = ctx.index % 5;
-    const year = ctx.practiceSet === 2 ? 1975 + (ctx.index - 25) : 2000 + ctx.index;
-    const caseData = pick(ctx.rng, [
-      { subject: "restored wetland", benefit: "reduced flooding in initial simulations", limitation: "the simulations modeled only one type of storm" },
-      { subject: "translation method", benefit: "preserved technical terms more accurately than the comparison method did", limitation: "the test included documents from only one field" },
-      { subject: "solar-cell coating", benefit: "reduced measured energy loss", limitation: "the trial lasted only six weeks" },
-      { subject: "searchable archive of letters", benefit: "expanded access for researchers unable to visit in person", limitation: "many handwritten pages have not yet been transcribed" },
-      { subject: "community garden program", benefit: "increased participation in its first season", limitation: "the participants came from only one neighborhood" }
-    ]);
-    const { subject, benefit, limitation } = caseData;
-    if (mode < 3) {
-      const stimulus = `A ${year} evaluation found that a new ${subject} ${benefit}. However, ${limitation}. Researchers therefore describe the result as promising but preliminary.`;
+    const entry = tieredCase(ctx, TEXT_STRUCTURE_CASES);
+    const { passage } = entry;
+    if (entry.form === "purpose") {
       return item(ctx, {
-        recipe: "sentence-function", stimulus, question: "Which choice best describes the function of the second sentence in the text as a whole?",
-        correct: "It identifies a limitation that qualifies the encouraging result in the first sentence.",
-        distractors: ["It describes the procedure that produced the encouraging result in the first sentence.", "It offers a second example that broadens the first sentence's result to another setting.", "It rejects the first sentence's result by identifying evidence that the result did not occur."],
-        explanation: `Introduced by “However,” the second sentence limits the scope or strength of the positive first-sentence result.`, parameters: { caseData, year }
+        recipe: "overall-purpose", stimulus: passage.text,
+        question: "Which choice best states the main purpose of the text?",
+        correct: passage.purpose.correct, distractors: passage.purpose.distractors,
+        explanation: "The correct choice covers what the whole text does. The other choices name something the text mentions in passing, reverse its position, or describe a purpose the text never takes up.",
+        parameters: {}
       });
     }
-    const stimulus = `Researchers once assumed that a ${subject} would have little practical value. A ${year} evaluation found that it ${benefit}. The tests do not settle every question because ${limitation}, but they challenge the earlier assumption.`;
     return item(ctx, {
-      recipe: "overall-purpose", stimulus, question: "Which choice best describes the overall purpose of the text?",
-      correct: "To describe evidence that challenges an earlier view while acknowledging a limitation of that evidence",
-      distractors: ["To explain why an earlier view remains more convincing than the evidence presented against it", "To compare two procedures and recommend the one that produced the more encouraging result", "To argue that the limitation identified by researchers prevents the evidence from having any value"],
-      explanation: `The text contrasts an earlier assumption with new evidence and then qualifies that evidence; the correct choice captures all three moves.`, parameters: { caseData, year }
+      recipe: "sentence-function", stimulus: passage.text,
+      question: `Which choice best describes the function of the ${passage.fn.ordinal} sentence in the text as a whole?`,
+      correct: passage.fn.correct, distractors: passage.fn.distractors,
+      explanation: "The correct choice states what that sentence does for the passage. The other choices describe a different sentence's work or restate content rather than naming a function.",
+      parameters: {}
     });
   }
 
