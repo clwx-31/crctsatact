@@ -179,6 +179,11 @@ function auditMathAnswer(question) {
     case "probability/simple-probability": return requireNumericAnswer(question, p.favorable / (p.favorable + p.other));
     case "probability/conditional-table": return requireNumericAnswer(question, p.bYes / (p.aYes + p.bYes));
     case "probability/conditional-two-way-table": return requireNumericAnswer(question, p.yesA / (p.yesA + p.noA));
+    case "probability/complement-probability": return requireNumericAnswer(question, p.other / (p.favorable + p.other));
+    case "probability/probability-from-frequency-table": return requireNumericAnswer(question, p.third / (p.favorable + p.other + p.third));
+    case "probability/union-of-categories": return requireNumericAnswer(question, (p.favorable + p.other) / (p.favorable + p.other + p.third));
+    case "probability/joint-from-table": return requireNumericAnswer(question, p.aNo / (p.aYes + p.aNo + p.bYes + p.bNo));
+    case "probability/without-replacement-pair": return requireNumericAnswer(question, p.favorable * (p.favorable - 1) / ((p.favorable + p.other) * (p.favorable + p.other - 1)));
     case "sample-inference/sample-size-margin": return requireNumericAnswer(question, 1 / Math.sqrt(p.factor));
     case "area-volume/surface-area-scale": return requireNumericAnswer(question, Math.sqrt(p.ratioN / p.ratioD));
     case "right-triangles-trig/trig-ratio": return requireNumericAnswer(question, p.a / p.c);

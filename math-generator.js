@@ -1214,23 +1214,80 @@
     });
   }
 
+  // Five draw settings and five survey tables, so the easy and medium tiles are
+  // not one bag of blue and red tiles with the counts rewritten.
+  const DRAW_SETTINGS = [
+    { container: "bag", item: "tile", plural: "tiles", target: "blue", other: "red", third: "white" },
+    { container: "jar", item: "marble", plural: "marbles", target: "green", other: "yellow", third: "clear" },
+    { container: "drawer", item: "pen", plural: "pens", target: "black", other: "silver", third: "purple" },
+    { container: "box", item: "card", plural: "cards", target: "starred", other: "unmarked", third: "numbered" },
+    { container: "basket", item: "ribbon", plural: "ribbons", target: "wide", other: "narrow", third: "striped" }
+  ];
+
+  const SURVEY_TABLES = [
+    { caption: "Club membership by grade", rowLabel: "Grade", yes: "Member", no: "Not a member", first: "Junior", second: "Senior", noun: "member" },
+    { caption: "Season pass by age group", rowLabel: "Age group", yes: "Has a pass", no: "No pass", first: "Adult", second: "Youth", noun: "pass holder" },
+    { caption: "Bicycle ownership by household", rowLabel: "Household", yes: "Owns a bicycle", no: "Owns none", first: "Downtown", second: "Suburban", noun: "bicycle owner" },
+    { caption: "Volunteer status by department", rowLabel: "Department", yes: "Volunteers", no: "Does not volunteer", first: "Records", second: "Outreach", noun: "volunteer" },
+    { caption: "Language study by campus", rowLabel: "Campus", yes: "Studies a language", no: "Does not", first: "North", second: "River", noun: "language student" }
+  ];
+
   function probability(ctx) {
     const { rng, difficulty, index } = ctx;
     const mode = index % 6;
+    const tierMode = index % 4;
     if (difficulty === "Easy") {
+      const setting = pick(rng, DRAW_SETTINGS);
       const favorable = int(rng, 2, 9);
       let other = int(rng, 3, 12);
       while (other === favorable) other = int(rng, 3, 12);
       const total = favorable + other;
-      const correct = fraction(favorable, total);
+      if (tierMode === 0) {
+        const correct = fraction(favorable, total);
+        return conceptual(ctx, {
+          recipe: "simple-probability", stimulus: `A ${setting.container} contains ${favorable} ${setting.target} ${setting.plural} and ${other} ${setting.other} ${setting.plural}. One ${setting.item} is chosen at random.`,
+          question: `What is the probability of choosing a ${setting.target} ${setting.item}?`, correct,
+          distractors: [fraction(favorable, total - 1), fraction(favorable, total + 1), fraction(other, total)],
+          explanation: `There are ${favorable} favorable outcomes among ${total} equally likely ${setting.plural}, so the probability is ${favorable}/${total} = ${correct}.`,
+          parameters: { setting, favorable, other }
+        });
+      }
+      if (tierMode === 1) {
+        const correct = fraction(other, total);
+        return conceptual(ctx, {
+          recipe: "complement-probability", stimulus: `A ${setting.container} contains ${favorable} ${setting.target} ${setting.plural} and ${other} ${setting.other} ${setting.plural}. One ${setting.item} is chosen at random.`,
+          question: `What is the probability that the ${setting.item} chosen is not ${setting.target}?`, correct,
+          distractors: [fraction(favorable, total), fraction(other, favorable), fraction(other, total + 1)],
+          explanation: `Every ${setting.item} that is not ${setting.target} is one of the ${other} ${setting.other} ${setting.plural}, so the probability is ${other}/${total} = ${correct}. Subtracting from 1 gives the same value.`,
+          parameters: { setting, favorable, other }
+        });
+      }
+      if (tierMode === 2) {
+        const third = int(rng, 4, 14);
+        const tableTotal = favorable + other + third;
+        const correct = fraction(third, tableTotal);
+        return conceptual(ctx, {
+          recipe: "probability-from-frequency-table",
+          table: { caption: `${setting.plural[0].toUpperCase()}${setting.plural.slice(1)} in the ${setting.container}`, headers: ["Type", "Number"], rows: [[setting.target, favorable], [setting.other, other], [setting.third, third]] },
+          question: `One ${setting.item} is chosen at random. What is the probability that it is ${setting.third}?`, correct,
+          distractors: [fraction(third, favorable + other), fraction(favorable, tableTotal), fraction(third, tableTotal - third)],
+          explanation: `The ${setting.container} holds ${tableTotal} ${setting.plural} in all, and ${third} of them are ${setting.third}, so the probability is ${third}/${tableTotal} = ${correct}.`,
+          parameters: { setting, favorable, other, third }
+        });
+      }
+      const third = int(rng, 4, 14);
+      const unionTotal = favorable + other + third;
+      const correct = fraction(favorable + other, unionTotal);
       return conceptual(ctx, {
-        recipe: "simple-probability", stimulus: `A bag contains ${favorable} blue tiles and ${other} red tiles. One tile is chosen at random.`,
-        question: "What is the probability of choosing a blue tile?", correct,
-        distractors: [fraction(favorable, total - 1), fraction(favorable, total + 1), fraction(favorable, total + 2)],
-        explanation: `There are ${favorable} favorable outcomes among ${total} equally likely tiles, so the probability is ${favorable}/${total} = ${correct}.`, parameters: { favorable, other }
+        recipe: "union-of-categories", stimulus: `A ${setting.container} contains ${favorable} ${setting.target} ${setting.plural}, ${other} ${setting.other} ${setting.plural}, and ${third} ${setting.third} ${setting.plural}. One ${setting.item} is chosen at random.`,
+        question: `What is the probability that the ${setting.item} is ${setting.target} or ${setting.other}?`, correct,
+        distractors: [fraction(favorable, unionTotal), fraction(third, unionTotal), fraction(favorable + other, favorable + other + 1)],
+        explanation: `The two categories do not overlap, so add them: ${favorable} + ${other} = ${favorable + other} favorable outcomes among ${unionTotal} ${setting.plural}, giving ${correct}.`,
+        parameters: { setting, favorable, other, third }
       });
     }
-    if (difficulty === "Medium" && mode < 3) {
+    if (difficulty === "Medium" && tierMode === 0) {
+      const survey = pick(rng, SURVEY_TABLES);
       const aYes = int(rng, 12, 30);
       const aNo = int(rng, 5, 15);
       let bYes = int(rng, 10, 25);
@@ -1238,13 +1295,14 @@
       const bNo = int(rng, 4, 15);
       const correct = fraction(bYes, aYes + bYes);
       return conceptual(ctx, {
-        recipe: "conditional-table", table: { caption: "Membership by grade", headers: ["Grade", "Member", "Not a member"], rows: [["Junior", aYes, aNo], ["Senior", bYes, bNo]] },
-        question: "If a member is selected at random, what is the probability that the member is a senior?", correct,
+        recipe: "conditional-table", table: { caption: survey.caption, headers: [survey.rowLabel, survey.yes, survey.no], rows: [[survey.first, aYes, aNo], [survey.second, bYes, bNo]] },
+        question: `If a ${survey.noun} is selected at random, what is the probability that the ${survey.noun} is in the ${survey.second} row?`, correct,
         distractors: [fraction(bYes, aYes + aNo + bYes + bNo), fraction(bYes, aYes + bYes - 1), fraction(bYes, aYes + bYes + 1)],
-        explanation: `Condition on members only. There are ${aYes + bYes} members, of whom ${bYes} are seniors, so the probability is ${correct}.`, parameters: { aYes, aNo, bYes, bNo }
+        explanation: `Condition on the ${survey.yes.toLowerCase()} column only. It holds ${aYes + bYes} people, of whom ${bYes} are ${survey.second}, so the probability is ${correct}.`,
+        parameters: { survey, aYes, aNo, bYes, bNo }
       });
     }
-    if (difficulty === "Medium") {
+    if (difficulty === "Medium" && tierMode === 1) {
       const pA = pick(rng, [0.2, 0.3, 0.4, 0.5]);
       const pB = pick(rng, [0.2, 0.25, 0.5]);
       const intersection = pA * pB;
@@ -1253,6 +1311,36 @@
         question: "What is P(A and B)?", correct: numberText(intersection), accepted: [numberText(intersection), fraction(Math.round(intersection * 100), 100)],
         distractors: [numberText(pA + pB), numberText(pA - intersection), numberText(1 - intersection)],
         explanation: `For independent events, P(A and B) = P(A)P(B) = ${pA}(${pB}) = ${intersection}.`, parameters: { pA, pB, intersection }
+      });
+    }
+    if (difficulty === "Medium" && tierMode === 2) {
+      const survey = pick(rng, SURVEY_TABLES);
+      const aYes = int(rng, 12, 30);
+      const aNo = int(rng, 5, 15);
+      const bYes = int(rng, 10, 25);
+      const bNo = int(rng, 4, 15);
+      const grandTotal = aYes + aNo + bYes + bNo;
+      const correct = fraction(aNo, grandTotal);
+      return conceptual(ctx, {
+        recipe: "joint-from-table", table: { caption: survey.caption, headers: [survey.rowLabel, survey.yes, survey.no], rows: [[survey.first, aYes, aNo], [survey.second, bYes, bNo]] },
+        question: `If one person is selected at random from all of those listed, what is the probability of selecting someone in the ${survey.first} row and the "${survey.no}" column?`, correct,
+        distractors: [fraction(aNo, aYes + aNo), fraction(aNo, aNo + bNo), fraction(aYes, grandTotal)],
+        explanation: `A joint probability uses the whole table as its denominator: ${aNo} of the ${grandTotal} people are ${survey.first} and in the "${survey.no}" column, so the probability is ${correct}.`,
+        parameters: { survey, aYes, aNo, bYes, bNo }
+      });
+    }
+    if (difficulty === "Medium") {
+      const setting = pick(rng, DRAW_SETTINGS);
+      const favorable = int(rng, 3, 8);
+      const other = int(rng, 3, 9);
+      const total = favorable + other;
+      const correct = fraction(favorable * (favorable - 1), total * (total - 1));
+      return conceptual(ctx, {
+        recipe: "without-replacement-pair", stimulus: `A ${setting.container} contains ${favorable} ${setting.target} ${setting.plural} and ${other} ${setting.other} ${setting.plural}. Two ${setting.plural} are drawn at random, the first not replaced before the second.`,
+        question: `What is the probability that both ${setting.plural} are ${setting.target}?`, correct,
+        distractors: [fraction(favorable * favorable, total * total), fraction(favorable, total), fraction(favorable * (favorable - 1), total * total)],
+        explanation: `The first draw is ${favorable}/${total}. One ${setting.target} ${setting.item} and one ${setting.item} overall are then gone, so the second is ${favorable - 1}/${total - 1}. Multiplying gives ${correct}.`,
+        parameters: { setting, favorable, other }
       });
     }
     if (mode < 3) {
