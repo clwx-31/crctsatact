@@ -502,7 +502,8 @@
   function linearInequalities(ctx) {
     const { rng, difficulty, index } = ctx;
     const mode = index % 5;
-    if (difficulty === "Easy") {
+    const tierMode = index % 4;
+    if (difficulty === "Easy" && tierMode === 0) {
       const boundary = nonzero(rng, -8, 12);
       const a = int(rng, 2, 8);
       const b = int(rng, -12, 12);
@@ -511,6 +512,46 @@
         recipe: "solve-one-variable", question: `Which inequality is equivalent to ${linearText(a, "x", b)} > ${c}?`, correct: `x > ${boundary}`,
         distractors: [`x < ${boundary}`, `x > ${c - b}`, `x < ${c - b}`],
         explanation: `Subtract ${b} and divide by the positive number ${a}, which preserves the inequality direction: x > ${boundary}.`, parameters: { a, b, c, boundary }
+      });
+    }
+    if (difficulty === "Easy" && tierMode === 1) {
+      const boundary = int(rng, -6, 12);
+      const a = int(rng, 2, 6);
+      const b = int(rng, -12, 12);
+      const c = a * boundary + b;
+      return numeric(ctx, {
+        recipe: "least-integer-solution", stimulus: `Consider the inequality ${linearText(a, "x", b)} > ${c}.`,
+        question: "What is the least integer value of x that satisfies the inequality?", correct: boundary + 1,
+        distractors: [boundary, boundary + 2, c - b],
+        explanation: `Subtract ${b} and divide by ${a} to get x > ${boundary}. Because the inequality is strict, x = ${boundary} does not satisfy it, so the least integer that does is ${boundary + 1}.`,
+        parameters: { a, b, c, boundary }
+      });
+    }
+    if (difficulty === "Easy" && tierMode === 2) {
+      const a = int(rng, 2, 6);
+      const b = int(rng, -8, 8);
+      const boundary = int(rng, 3, 12);
+      const c = a * boundary + b;
+      const offset = int(rng, 1, 3);
+      const satisfying = boundary - offset;
+      return numeric(ctx, {
+        recipe: "test-value", stimulus: `Consider the inequality ${linearText(a, "x", b)} ≤ ${c}.`,
+        question: "Which value of x satisfies the inequality?", correct: satisfying, spr: false,
+        distractors: [boundary + 1, boundary + 2, boundary + 3],
+        explanation: `Solving gives x ≤ ${boundary}. Of the choices, only ${satisfying} is at most ${boundary}; substituting it gives ${a}(${satisfying}) ${signedTerm(b)} = ${a * satisfying + b}, which is at most ${c}.`,
+        parameters: { a, b, c, boundary, offset, satisfying }
+      });
+    }
+    if (difficulty === "Easy") {
+      const price = pick(rng, [4, 5, 6, 8, 12]);
+      const budget = price * int(rng, 6, 20);
+      const goods = pick(rng, ["shirts", "posters", "tickets", "planters", "trophies"]);
+      return conceptual(ctx, {
+        recipe: "translate-context", stimulus: `A club has $${budget} to spend on ${goods} that cost $${price} each and cannot spend more than it has.`,
+        question: `Which inequality represents the possible numbers n of ${goods} the club can buy?`, correct: `${price}n ≤ ${budget}`,
+        distractors: [`${price}n ≥ ${budget}`, `n + ${price} ≤ ${budget}`, `${budget}n ≤ ${price}`],
+        explanation: `Each of the n ${goods} costs $${price}, so the club spends ${price}n dollars, and that total can be at most the $${budget} available: ${price}n ≤ ${budget}.`,
+        parameters: { price, budget, goods }
       });
     }
     if (difficulty === "Medium" && mode < 3) {
@@ -683,22 +724,44 @@
   function nonlinearEquations(ctx) {
     const { rng, difficulty, index } = ctx;
     const mode = index % 7;
+    const tierMode = index % 4;
     if (difficulty === "Easy") {
       const root = int(rng, 2, 12);
       const square = root * root;
-      if (mode % 2 === 0) {
+      if (tierMode === 0) {
         return conceptual(ctx, {
           recipe: "difference-of-squares", question: `Which values of x satisfy x² − ${square} = 0?`, correct: `x = −${root} and x = ${root}`,
           distractors: [`x = ${root} only`, `x = ${square} only`, `x = −${square} and x = ${square}`],
           explanation: `x² = ${square}, so x can be either square root: x = ±${root}.`, parameters: { root }
         });
       }
-      const shift = int(rng, 1, 10);
-      const x = square - shift;
+      if (tierMode === 1) {
+        const shift = int(rng, 1, 10);
+        const x = square - shift;
+        return numeric(ctx, {
+          recipe: "radical-basic", question: `If √(x + ${shift}) = ${root}, what is x?`, correct: x,
+          distractors: [root - shift, square + shift, root + shift],
+          explanation: `Square both sides to get x + ${shift} = ${square}; therefore, x = ${x}.`, parameters: { root, shift, x }
+        });
+      }
+      if (tierMode === 2) {
+        const first = int(rng, 2, 9);
+        const second = int(rng, 2, 9);
+        return conceptual(ctx, {
+          recipe: "factored-form-roots", question: `Which values of x satisfy (x − ${first})(x + ${second}) = 0?`,
+          correct: `x = ${first} and x = −${second}`,
+          distractors: [`x = −${first} and x = ${second}`, `x = ${first} and x = ${second}`, `x = ${first * second} only`],
+          explanation: `A product is zero when a factor is zero. x − ${first} = 0 gives x = ${first}, and x + ${second} = 0 gives x = −${second}; each root has the opposite sign of the number in its factor.`,
+          parameters: { first, second }
+        });
+      }
+      const cubeRoot = int(rng, 2, 6);
+      const cube = cubeRoot ** 3;
       return numeric(ctx, {
-        recipe: "radical-basic", question: `If √(x + ${shift}) = ${root}, what is x?`, correct: x,
-        distractors: [root - shift, square + shift, root + shift],
-        explanation: `Square both sides to get x + ${shift} = ${square}; therefore, x = ${x}.`, parameters: { root, shift, x }
+        recipe: "cube-root-equation", question: `If x³ = ${cube}, what is the value of x?`, correct: cubeRoot,
+        distractors: [cube / 3, cubeRoot * 3, cube - cubeRoot],
+        explanation: `Take the cube root of both sides: x = ∛${cube} = ${cubeRoot}, because ${cubeRoot} × ${cubeRoot} × ${cubeRoot} = ${cube}. Dividing by 3 instead would give ${cube / 3}.`,
+        parameters: { cubeRoot, cube }
       });
     }
     if (difficulty === "Medium" && mode < 3) {
@@ -785,13 +848,54 @@
     const r2 = int(rng, 2, 8);
     const slope = r1 + r2;
     const intercept = -r1 * r2;
-    if (difficulty === "Easy") {
+    const tierMode = index % 4;
+    if (difficulty === "Easy" && tierMode === 0) {
       const x = pick(rng, [-9, -8, -7, -6, -5, -4, -3, -2, 2, 3, 4, 5, 6, 7, 8, 9]);
       const y = x * x;
       return conceptual(ctx, {
         recipe: "verify-solution", question: `Which point is a solution to both y = x² and y = ${linearText(x, "x", 0)}?`, correct: `(${x}, ${y})`,
         distractors: [`(${y}, ${x})`, `(${-x}, ${y})`, `(${x}, ${-y})`],
         explanation: `At x = ${x}, both equations give y = ${x}² = ${y}.`, parameters: { x, y }
+      });
+    }
+    if (difficulty === "Easy" && tierMode === 1) {
+      const level = pick(rng, [-16, -9, -4, 0, 4, 9, 16, 25]);
+      const solutions = level > 0 ? 2 : level === 0 ? 1 : 0;
+      return numeric(ctx, {
+        recipe: "intersection-count-horizontal", stimulus: `Consider the system of equations y = x² and y = ${level}.`,
+        question: "How many solutions does the system have?", correct: solutions, spr: false,
+        distractors: [solutions === 2 ? 1 : 2, solutions === 0 ? 1 : 0, 4],
+        explanation: `The graph of y = x² has its lowest point at y = 0, so a horizontal line at y = ${level} ${level > 0 ? "crosses it twice" : level === 0 ? "touches it exactly once, at the vertex" : "never meets it"}.`,
+        parameters: { level, solutions }
+      });
+    }
+    if (difficulty === "Easy" && tierMode === 2) {
+      const root = int(rng, 2, 10);
+      const square = root * root;
+      return conceptual(ctx, {
+        recipe: "parabola-horizontal-roots", stimulus: `The system y = x² and y = ${square} has two solutions.`,
+        question: "What are the x-coordinates of those solutions?", correct: `x = −${root} and x = ${root}`,
+        distractors: [`x = ${root} only`, `x = ${square} and x = −${square}`, `x = ${square / 2} and x = −${square / 2}`],
+        explanation: `Setting the two expressions equal gives x² = ${square}, so x = ±${root}. Both points, (−${root}, ${square}) and (${root}, ${square}), lie on each graph.`,
+        parameters: { root, square }
+      });
+    }
+    if (difficulty === "Easy") {
+      const shift = int(rng, 2, 14);
+      const below = int(rng, 2, 12);
+      const above = int(rng, 2, 12);
+      return conceptual(ctx, {
+        recipe: "no-real-solution-identify",
+        stimulus: `Each system below pairs the equation y = x² ${signedTerm(shift)} with a second equation.`,
+        question: "Which system has no real solution?",
+        correct: `y = x² ${signedTerm(shift)} and y = ${shift - below}`,
+        distractors: [
+          `y = x² ${signedTerm(shift)} and y = ${shift + above}`,
+          `y = x² ${signedTerm(shift)} and y = ${shift}`,
+          `y = x² ${signedTerm(shift)} and y = x + ${shift}`
+        ],
+        explanation: `Because x² is never negative, the smallest value y = x² ${signedTerm(shift)} takes is ${shift}. A horizontal line at ${shift - below} passes below the whole graph, so that system has no solution; y = ${shift + above} crosses twice, y = ${shift} touches the vertex, and y = x + ${shift} meets the curve where x² = x.`,
+        parameters: { shift, below, above }
       });
     }
     if (difficulty === "Medium") {

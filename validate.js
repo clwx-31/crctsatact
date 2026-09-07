@@ -198,6 +198,10 @@ function auditMathAnswer(question) {
     case "linear-systems/symmetric-sum": return requireNumericAnswer(question, (p.m + p.n) / (p.p + p.q));
     case "linear-systems/no-solution-coefficient": return requireNumericAnswer(question, p.d * (p.bCoef / p.e));
     case "linear-inequalities/boundary-parameter": return requireNumericAnswer(question, p.c - p.a * p.k);
+    case "linear-inequalities/least-integer-solution": return requireNumericAnswer(question, Math.floor((p.c - p.b) / p.a) + 1);
+    case "linear-inequalities/test-value": return requireNumericAnswer(question, Math.floor((p.c - p.b) / p.a) - p.offset);
+    case "nonlinear-equations/cube-root-equation": return requireNumericAnswer(question, Math.cbrt(p.cube));
+    case "nonlinear-systems/intersection-count-horizontal": return requireNumericAnswer(question, p.level > 0 ? 2 : p.level === 0 ? 1 : 0);
     case "equivalent-expressions/complete-the-square": return requireNumericAnswer(question, p.cValue - (p.bCoef / 2) ** 2);
     case "nonlinear-systems/one-solution-parameter": return requireNumericAnswer(question, p.cValue - (p.bCoef / 2) ** 2);
     case "ratios-rates-units/combined-rate": return requireNumericAnswer(question, p.units / (p.rateA + p.rateB) * 60);
