@@ -129,7 +129,13 @@ function auditMathAnswer(question) {
     case "ratios-rates-units/convert-time-rate": return requireNumericAnswer(question, p.speed * p.minutes / 60);
     case "ratios-rates-units/compound-unit-conversion": return requireNumericAnswer(question, p.metersPerSecond * 3.6);
     case "ratios-rates-units/derived-unit-density": return requireNumericAnswer(question, p.mass / p.volume);
+    case "ratios-rates-units/proportion-scale": return requireNumericAnswer(question, p.cups * (p.targetServings / p.servings));
+    case "ratios-rates-units/unit-conversion": return requireNumericAnswer(question, p.wholes * p.conversion.per + p.extra);
+    case "ratios-rates-units/ratio-part-from-total": return requireNumericAnswer(question, p.total * p.first / (p.first + p.second));
     case "percentages/percent-of": return requireNumericAnswer(question, p.original * p.percent / 100);
+    case "percentages/what-percent": return requireNumericAnswer(question, p.part / p.whole * 100);
+    case "percentages/whole-from-part": return requireNumericAnswer(question, p.part / (p.percent / 100));
+    case "percentages/increase-new-value": return requireNumericAnswer(question, p.original * (1 + p.percent / 100));
     case "percentages/discount": return requireNumericAnswer(question, p.original * (1 - p.percent / 100));
     case "percentages/reverse-percent": return requireNumericAnswer(question, p.final / (1 + p.percent / 100));
     case "percentages/percent-of-subgroup": return requireNumericAnswer(question, p.totalPercent * p.subgroupPercent / 100);

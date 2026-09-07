@@ -925,14 +925,64 @@
   function ratiosRatesUnits(ctx) {
     const { rng, difficulty, index } = ctx;
     const mode = index % 6;
-    if (difficulty === "Easy") {
+    const tierMode = index % 4;
+    if (difficulty === "Easy" && tierMode === 0) {
+      const goods = pick(rng, ["notebooks", "tickets", "seedlings", "batteries", "wall tiles"]);
       const unitRate = int(rng, 3, 18);
       const quantity = int(rng, 4, 15);
       const total = unitRate * quantity;
       return numeric(ctx, {
-        recipe: "unit-rate", stimulus: `${quantity} identical items cost $${total}.`, question: "What is the cost, in dollars, per item?", correct: unitRate,
+        recipe: "unit-rate", stimulus: `${quantity} identical ${goods} cost $${total}.`, question: `What is the cost, in dollars, of one of the ${goods}?`, correct: unitRate,
         distractors: [total - quantity, quantity / total, total + quantity],
-        explanation: `Divide total cost by item count: ${total}/${quantity} = ${unitRate} dollars per item.`, parameters: { unitRate, quantity, total }
+        explanation: `Divide total cost by count: ${total}/${quantity} = ${unitRate} dollars per item.`, parameters: { unitRate, quantity, total }
+      });
+    }
+    if (difficulty === "Easy" && tierMode === 1) {
+      const servings = pick(rng, [4, 5, 6, 8]);
+      const cups = int(rng, 2, 9);
+      const factor = int(rng, 2, 5);
+      const targetServings = servings * factor;
+      const targetCups = cups * factor;
+      return numeric(ctx, {
+        recipe: "proportion-scale", stimulus: `A recipe that makes ${servings} servings uses ${cups} cups of flour.`,
+        question: `At the same rate, how many cups of flour are needed for ${targetServings} servings?`, correct: targetCups,
+        distractors: [cups + factor, targetServings - servings, cups * targetServings],
+        explanation: `${targetServings} servings is ${factor} times ${servings} servings, so the flour scales by the same factor: ${cups} × ${factor} = ${targetCups} cups.`,
+        parameters: { servings, cups, factor, targetServings, targetCups }
+      });
+    }
+    if (difficulty === "Easy" && tierMode === 2) {
+      const conversion = pick(rng, [
+        { large: "foot", plural: "feet", small: "inches", per: 12 },
+        { large: "hour", plural: "hours", small: "minutes", per: 60 },
+        { large: "minute", plural: "minutes", small: "seconds", per: 60 },
+        { large: "yard", plural: "yards", small: "feet", per: 3 },
+        { large: "kilogram", plural: "kilograms", small: "grams", per: 1000 }
+      ]);
+      const wholes = int(rng, 3, 9);
+      const extra = int(rng, 1, conversion.per - 1);
+      const totalSmall = wholes * conversion.per + extra;
+      return numeric(ctx, {
+        recipe: "unit-conversion", stimulus: `There are ${conversion.per} ${conversion.small} in 1 ${conversion.large}.`,
+        question: `How many ${conversion.small} are in ${wholes} ${conversion.plural} and ${extra} ${conversion.small}?`, correct: totalSmall,
+        distractors: [wholes * conversion.per, wholes + extra, (wholes + extra) * conversion.per],
+        explanation: `Convert the whole ${conversion.plural} first: ${wholes} × ${conversion.per} = ${wholes * conversion.per} ${conversion.small}. Adding the remaining ${extra} gives ${totalSmall}.`,
+        parameters: { conversion, wholes, extra, totalSmall }
+      });
+    }
+    if (difficulty === "Easy") {
+      const first = int(rng, 2, 7);
+      const second = int(rng, 2, 7);
+      const groups = int(rng, 4, 12);
+      const total = (first + second) * groups;
+      const firstCount = first * groups;
+      const colors = pick(rng, [["red", "blue"], ["oak", "pine"], ["short", "long"], ["ripe", "unripe"], ["glazed", "plain"]]);
+      return numeric(ctx, {
+        recipe: "ratio-part-from-total", stimulus: `A collection of ${total} items contains only ${colors[0]} and ${colors[1]} items, in the ratio ${first} to ${second}.`,
+        question: `How many of the items are ${colors[0]}?`, correct: firstCount,
+        distractors: [first, total - first, second * groups + 1],
+        explanation: `The ratio splits the collection into ${first} + ${second} = ${first + second} equal parts, so each part holds ${total} ÷ ${first + second} = ${groups} items. The ${colors[0]} items make up ${first} parts: ${first} × ${groups} = ${firstCount}.`,
+        parameters: { first, second, groups, total, firstCount }
       });
     }
     if (difficulty === "Medium" && mode < 3) {
@@ -996,7 +1046,8 @@
   function percentages(ctx) {
     const { rng, difficulty, index } = ctx;
     const mode = index % 6;
-    if (difficulty === "Easy") {
+    const tierMode = index % 4;
+    if (difficulty === "Easy" && tierMode === 0) {
       const original = int(rng, 4, 20) * 10;
       const percent = pick(rng, [10, 20, 25, 30, 40, 50]);
       const amount = original * percent / 100;
@@ -1004,6 +1055,42 @@
         recipe: "percent-of", question: `What is ${percent}% of ${original}?`, correct: numberText(amount),
         distractors: [numberText(original - amount), numberText(original + amount), numberText(original / percent)],
         explanation: `${percent}% = ${percent / 100}. Multiplying ${original} by ${percent / 100} gives ${amount}.`, parameters: { original, percent, amount }
+      });
+    }
+    if (difficulty === "Easy" && tierMode === 1) {
+      const percent = pick(rng, [10, 20, 25, 40, 50, 60, 75]);
+      const whole = int(rng, 4, 20) * 10;
+      const part = whole * percent / 100;
+      return numeric(ctx, {
+        recipe: "what-percent", stimulus: `A survey of ${whole} people found that ${part} of them own a library card.`,
+        question: "What percent of the people surveyed own a library card?", correct: numberText(percent),
+        distractors: [numberText(whole - part), numberText(part), numberText(whole / part)],
+        explanation: `Divide the part by the whole and convert: ${part} ÷ ${whole} = ${numberText(part / whole)}, which is ${percent}%.`,
+        parameters: { whole, part, percent }
+      });
+    }
+    if (difficulty === "Easy" && tierMode === 2) {
+      const percent = pick(rng, [10, 20, 25, 40, 50]);
+      const whole = int(rng, 4, 20) * 10;
+      const part = whole * percent / 100;
+      return numeric(ctx, {
+        recipe: "whole-from-part", question: `${numberText(part)} is ${percent}% of what number?`, correct: numberText(whole),
+        distractors: [numberText(part * percent / 100), numberText(part + percent), numberText(part * percent)],
+        explanation: `If ${percent}% of a number is ${numberText(part)}, then the number is ${numberText(part)} ÷ ${percent / 100} = ${numberText(whole)}.`,
+        parameters: { whole, part, percent }
+      });
+    }
+    if (difficulty === "Easy") {
+      const original = int(rng, 4, 20) * 10;
+      const percent = pick(rng, [10, 20, 25, 50]);
+      const increase = original * percent / 100;
+      const final = original + increase;
+      return numeric(ctx, {
+        recipe: "increase-new-value", stimulus: `A ticket that costs $${original} increases in price by ${percent}%.`,
+        question: "What is the new price, in dollars?", correct: numberText(final),
+        distractors: [numberText(increase), numberText(original - increase), numberText(original + percent)],
+        explanation: `The increase is ${percent}% of ${original}, or ${numberText(increase)}. The new price is ${original} + ${numberText(increase)} = ${numberText(final)}, which is also ${original} × ${numberText(1 + percent / 100)}.`,
+        parameters: { original, percent, increase, final }
       });
     }
     if (difficulty === "Medium" && mode < 3) {
