@@ -1069,22 +1069,67 @@
     });
   }
 
+  // Five one-variable settings, so a list of numbers is not always unlabeled.
+  const ONE_VARIABLE_CONTEXTS = [
+    { noun: "books each student read last month", unit: "books", caption: "Books read last month" },
+    { noun: "daily high temperatures, in degrees", unit: "degrees", caption: "Daily high temperature" },
+    { noun: "minutes each member practiced", unit: "minutes", caption: "Minutes practiced" },
+    { noun: "packages delivered each day", unit: "packages", caption: "Packages delivered" },
+    { noun: "points the team scored each game", unit: "points", caption: "Points scored per game" }
+  ];
+
   function oneVariableData(ctx) {
     const { rng, difficulty, index } = ctx;
     const mode = index % 6;
-    if (difficulty === "Easy") {
+    const tierMode = index % 4;
+    const context = pick(rng, ONE_VARIABLE_CONTEXTS);
+    if (difficulty === "Easy" && tierMode === 0) {
       const values = Array.from({ length: 5 }, () => int(rng, 5, 20));
       const sum = values.reduce((total, value) => total + value, 0);
       const adjusted = sum % 5;
       values[4] += adjusted ? 5 - adjusted : 0;
       const mean = values.reduce((total, value) => total + value, 0) / 5;
       return numeric(ctx, {
-        recipe: "mean", question: `What is the mean of ${values.join(", ")}?`, correct: mean,
-        distractors: [values.sort((a, b) => a - b)[2], Math.max(...values) - Math.min(...values), mean + 1],
+        recipe: "mean", stimulus: `A record lists the ${context.noun}: ${values.join(", ")}.`, question: "What is the mean of these values?", correct: mean,
+        distractors: [[...values].sort((a, b) => a - b)[2], Math.max(...values) - Math.min(...values), mean + 1],
         explanation: `The values sum to ${mean * 5}. Divide by 5 to get a mean of ${mean}.`, parameters: { values, mean }
       });
     }
-    if (difficulty === "Medium" && mode < 3) {
+    if (difficulty === "Easy" && tierMode === 1) {
+      const median = int(rng, 10, 30);
+      const values = [median - int(rng, 4, 8), median - 1, median, median + 2, median + int(rng, 5, 10)].sort((a, b) => a - b);
+      return numeric(ctx, {
+        recipe: "median", stimulus: `A record lists the ${context.noun}: ${values.join(", ")}.`, question: "What is the median of these values?", correct: median,
+        distractors: [values.reduce((a, b) => a + b, 0) / values.length, Math.max(...values) - Math.min(...values), values[1]],
+        explanation: `The data are already ordered and contain five values, so the median is the third value, ${median}.`, parameters: { values, median }
+      });
+    }
+    if (difficulty === "Easy" && tierMode === 2) {
+      const low = int(rng, 4, 15);
+      const spread = int(rng, 6, 24);
+      const high = low + spread;
+      const values = [low, low + int(rng, 1, 3), low + int(rng, 4, 6), high - int(rng, 1, 3), high];
+      return numeric(ctx, {
+        recipe: "range", stimulus: `A record lists the ${context.noun}: ${values.join(", ")}.`, question: "What is the range of these values?", correct: spread,
+        distractors: [high, low, values.reduce((a, b) => a + b, 0) / values.length],
+        explanation: `The range is the largest value minus the smallest: ${high} − ${low} = ${spread}.`, parameters: { values, low, high, spread }
+      });
+    }
+    if (difficulty === "Easy") {
+      const target = int(rng, 3, 9);
+      const rare = [target + 1, target + 2, target - 1];
+      const topFrequency = int(rng, 7, 12);
+      const rows = [[target, topFrequency], [rare[0], int(rng, 2, 5)], [rare[1], int(rng, 2, 5)], [rare[2], int(rng, 2, 5)]];
+      return numeric(ctx, {
+        recipe: "mode-from-frequency-table",
+        table: { caption: context.caption, headers: ["Value", "Frequency"], rows },
+        question: "Which value occurs most often in the data set?", correct: target,
+        distractors: [topFrequency, rare[0], rows.reduce((total, row) => total + row[1], 0)],
+        explanation: `The Frequency column counts how many times each value appears. The largest frequency is ${topFrequency}, which belongs to the value ${target}.`,
+        parameters: { rows, target, topFrequency }
+      });
+    }
+    if (difficulty === "Medium" && tierMode === 0) {
       const oldCount = int(rng, 4, 9);
       const oldMean = int(rng, 60, 80);
       const meanChange = pick(rng, [-2, -1, 1, 2]);
@@ -1097,16 +1142,47 @@
         explanation: `The original sum is ${oldCount}(${oldMean}) = ${oldCount * oldMean}. Add ${newValue} and divide by ${oldCount + 1}, giving ${numberText(newMean)}.`, parameters: { oldCount, oldMean, meanChange, newValue, newMean }
       });
     }
-    if (difficulty === "Medium") {
-      const median = int(rng, 10, 30);
-      const values = [median - int(rng, 4, 8), median - 1, median, median + 2, median + int(rng, 5, 10)].sort((a, b) => a - b);
+    if (difficulty === "Medium" && tierMode === 1) {
+      const lowMiddle = int(rng, 12, 30);
+      const highMiddle = lowMiddle + 2 * int(rng, 1, 4);
+      const values = [lowMiddle - int(rng, 5, 9), lowMiddle - int(rng, 1, 4), lowMiddle, highMiddle, highMiddle + int(rng, 1, 4), highMiddle + int(rng, 5, 9)].sort((a, b) => a - b);
+      const median = (lowMiddle + highMiddle) / 2;
       return numeric(ctx, {
-        recipe: "median", question: `What is the median of ${values.join(", ")}?`, correct: median,
-        distractors: [values.reduce((a, b) => a + b, 0) / values.length, Math.max(...values) - Math.min(...values), values[1]],
-        explanation: `The data are ordered and contain five values, so the median is the third value, ${median}.`, parameters: { values, median }
+        recipe: "median-even-count", stimulus: `A record lists the ${context.noun}: ${values.join(", ")}.`,
+        question: "What is the median of these values?", correct: numberText(median),
+        distractors: [numberText(lowMiddle), numberText(highMiddle), numberText(values.reduce((a, b) => a + b, 0) / values.length)],
+        explanation: `Six values leave no single middle value, so average the third and fourth: (${lowMiddle} + ${highMiddle}) ÷ 2 = ${numberText(median)}.`,
+        parameters: { values, lowMiddle, highMiddle, median }
       });
     }
-    if (mode < 3) {
+    if (difficulty === "Medium" && tierMode === 2) {
+      const rows = [[int(rng, 2, 4), int(rng, 2, 5)], [int(rng, 5, 7), int(rng, 2, 5)], [int(rng, 8, 10), int(rng, 2, 5)]];
+      const count = rows.reduce((total, row) => total + row[1], 0);
+      const total = rows.reduce((sum, row) => sum + row[0] * row[1], 0);
+      const mean = total / count;
+      return numeric(ctx, {
+        recipe: "mean-from-frequency-table",
+        table: { caption: context.caption, headers: ["Value", "Frequency"], rows },
+        question: "What is the mean of the values in the data set?", correct: numberText(mean),
+        distractors: [numberText(rows.reduce((sum, row) => sum + row[0], 0) / rows.length), numberText(total), numberText(count)],
+        explanation: `Weight each value by its frequency: the ${count} values total ${total}, so the mean is ${total} ÷ ${count} = ${numberText(mean)}. Averaging only the three listed values ignores how often each occurs.`,
+        parameters: { rows, count, total, mean }
+      });
+    }
+    if (difficulty === "Medium") {
+      const target = int(rng, 4, 9);
+      const rows = [[target - 1, 3], [target, int(rng, 6, 9)], [target + 1, 3], [target + 2, 2]];
+      const count = rows.reduce((sum, row) => sum + row[1], 0);
+      return numeric(ctx, {
+        recipe: "median-from-frequency-table",
+        table: { caption: context.caption, headers: ["Value", "Frequency"], rows },
+        question: "What is the median of the values in the data set?", correct: target,
+        distractors: [rows[1][1], count, target + 1],
+        explanation: `The table lists ${count} values in increasing order. Counting up the frequencies, the middle values both fall in the row for ${target}, so the median is ${target}.`,
+        parameters: { rows, target, count }
+      });
+    }
+    if (tierMode === 0) {
       const center = int(rng, 20, 80);
       const tight = [center - 2, center - 1, center, center + 1, center + 2];
       const wide = [center - 10, center - 5, center, center + 5, center + 10];
@@ -1117,7 +1193,7 @@
         explanation: `Both sets are symmetric around ${center}, so both means are ${center}. Set B's values are farther from the mean, so B has the larger standard deviation.`, parameters: { center, tight, wide }
       });
     }
-    if (mode === 5) {
+    if (tierMode === 1) {
       let first = int(rng, 10, 28);
       const second = int(rng, 10, 28);
       const third = int(rng, 10, 28);
@@ -1132,6 +1208,21 @@
         correct: fifth, distractors: [mean, first + second + third + fourth, Math.abs(mean - fifth)],
         explanation: `The five numbers total ${mean} × 5 = ${mean * 5}. The four listed numbers total ${first + second + third + fourth}, so the fifth is ${mean * 5} − ${first + second + third + fourth} = ${fifth}.`,
         parameters: { first, second, third, fourth, fifth, mean }
+      });
+    }
+    if (tierMode === 2) {
+      const groupOneCount = int(rng, 8, 16);
+      const groupTwoCount = int(rng, 4, 12);
+      const groupOneMean = int(rng, 60, 75);
+      const groupTwoMean = groupOneMean + pick(rng, [5, 10, 15]);
+      const combined = (groupOneCount * groupOneMean + groupTwoCount * groupTwoMean) / (groupOneCount + groupTwoCount);
+      return numeric(ctx, {
+        recipe: "combined-mean-two-groups",
+        stimulus: `One group of ${groupOneCount} scores has a mean of ${groupOneMean}, and a second group of ${groupTwoCount} scores has a mean of ${groupTwoMean}.`,
+        question: "What is the mean of all the scores combined?", correct: numberText(combined),
+        distractors: [numberText((groupOneMean + groupTwoMean) / 2), numberText(groupOneMean + groupTwoMean), numberText(groupTwoMean - groupOneMean)],
+        explanation: `Combine the totals, not the means: ${groupOneCount}(${groupOneMean}) + ${groupTwoCount}(${groupTwoMean}) = ${groupOneCount * groupOneMean + groupTwoCount * groupTwoMean} across ${groupOneCount + groupTwoCount} scores, giving ${numberText(combined)}. Averaging the two means would ignore the different group sizes.`,
+        parameters: { groupOneCount, groupTwoCount, groupOneMean, groupTwoMean, combined }
       });
     }
     const base = [int(rng, 10, 20), int(rng, 21, 30), int(rng, 31, 40), int(rng, 41, 50)];

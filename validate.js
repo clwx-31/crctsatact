@@ -135,6 +135,29 @@ function auditMathAnswer(question) {
     case "percentages/percent-of-subgroup": return requireNumericAnswer(question, p.totalPercent * p.subgroupPercent / 100);
     case "one-variable-data/mean": return requireNumericAnswer(question, p.values.reduce((sum, value) => sum + value, 0) / p.values.length);
     case "one-variable-data/updated-mean": return requireNumericAnswer(question, (p.oldCount * p.oldMean + p.newValue) / (p.oldCount + 1));
+    case "one-variable-data/range": return requireNumericAnswer(question, Math.max(...p.values) - Math.min(...p.values));
+    case "one-variable-data/mode-from-frequency-table":
+      return requireNumericAnswer(question, p.rows.reduce((best, row) => (row[1] > best[1] ? row : best))[0]);
+    case "one-variable-data/median-even-count": {
+      const ordered = [...p.values].sort((left, right) => left - right);
+      return requireNumericAnswer(question, (ordered[2] + ordered[3]) / 2);
+    }
+    case "one-variable-data/mean-from-frequency-table":
+      return requireNumericAnswer(
+        question,
+        p.rows.reduce((sum, row) => sum + row[0] * row[1], 0) / p.rows.reduce((sum, row) => sum + row[1], 0)
+      );
+    case "one-variable-data/median-from-frequency-table": {
+      const expanded = p.rows.flatMap((row) => Array.from({ length: row[1] }, () => row[0])).sort((left, right) => left - right);
+      const middle = expanded.length / 2;
+      const median = expanded.length % 2 ? expanded[Math.floor(middle)] : (expanded[middle - 1] + expanded[middle]) / 2;
+      return requireNumericAnswer(question, median);
+    }
+    case "one-variable-data/combined-mean-two-groups":
+      return requireNumericAnswer(
+        question,
+        (p.groupOneCount * p.groupOneMean + p.groupTwoCount * p.groupTwoMean) / (p.groupOneCount + p.groupTwoCount)
+      );
     case "one-variable-data/median": {
       const values = [...p.values].sort((a, b) => a - b);
       return requireNumericAnswer(question, values[Math.floor(values.length / 2)]);
