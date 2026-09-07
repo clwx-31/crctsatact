@@ -6,7 +6,7 @@ require("./math-generator.js");
 require("./rw-generator.js");
 require("./test-engine.js");
 
-const BASELINE_SEED = "baseline-v3";
+const BASELINE_SEED = "baseline-v4";
 const MINIMUM_RECIPES = 200;   // a floor, so adding a recipe is not a failure
 const STRESS_SEED_COUNT = 100;
 const EXPECTED_SKILLS = {
@@ -104,6 +104,9 @@ function auditMathAnswer(question) {
     case "linear-equations-one/context-create-solve":
     case "linear-equations-one/variables-both-sides": return requireNumericAnswer(question, p.x ?? p.hours);
     case "linear-functions/evaluate": return requireNumericAnswer(question, p.y);
+    case "linear-functions/solve-for-input": return requireNumericAnswer(question, (p.value - p.b) / p.m);
+    case "linear-equations-one/solve-then-evaluate": return requireNumericAnswer(question, (p.c - p.b) / p.a + p.shift);
+    case "linear-equations-one/context-one-step": return requireNumericAnswer(question, (p.total - p.fixed) / p.perUnit);
     case "linear-functions/slope-intercept":
     case "linear-functions/slope-from-points": return requireNumericAnswer(question, p.m);
     case "linear-functions/intersect-linear-rules": return requireNumericAnswer(question, p.k);
@@ -111,6 +114,12 @@ function auditMathAnswer(question) {
     case "linear-systems/add-subtract-system": return requireNumericAnswer(question, p.x);
     case "linear-systems/context-system": return requireNumericAnswer(question, p.adults);
     case "linear-systems/elimination-system": return requireNumericAnswer(question, p.x + p.y);
+    case "linear-systems/substitution-known-y": return requireNumericAnswer(question, (p.known - p.b) / p.m);
+    case "linear-systems/one-variable-known": return requireNumericAnswer(question, (p.total - p.b * p.y) / p.a);
+    case "circles/radius-from-equation": return requireNumericAnswer(question, Math.sqrt(p.radiusSquared));
+    case "right-triangles-trig/cofunction-in-triangle":
+      return requireNumericAnswer(question, (p.asked === "cos" ? p.legA : p.legB) / p.hypotenuse);
+    case "sample-inference/sample-size-for-margin": return requireNumericAnswer(question, p.shrink ** 2);
     case "linear-inequalities/context-maximum": return requireNumericAnswer(question, Math.floor((p.capacity - p.fixed) / p.weight));
     case "nonlinear-equations/radical-basic": return requireNumericAnswer(question, p.root * p.root - p.shift);
     case "nonlinear-equations/quadratic-root-sum": return requireNumericAnswer(question, p.r1 + p.r2);
@@ -240,7 +249,7 @@ for (const question of questions) {
   for (const field of ["id", "section", "domain", "skill", "difficulty", "type", "question", "explanation", "meta"]) {
     if (!question[field]) fail(`${question.id || "Unknown question"} is missing ${field}.`);
   }
-  if (!question.meta?.recipe || question.meta.generationVersion !== "construct-validity-v3" || question.meta.seed !== BASELINE_SEED || !question.meta.parameters || ![1, 2].includes(question.meta.practiceSet) || question.practiceSet !== question.meta.practiceSet) fail(`${question.id} has incomplete generation provenance.`);
+  if (!question.meta?.recipe || question.meta.generationVersion !== "construct-validity-v4" || question.meta.seed !== BASELINE_SEED || !question.meta.parameters || ![1, 2].includes(question.meta.practiceSet) || question.practiceSet !== question.meta.practiceSet) fail(`${question.id} has incomplete generation provenance.`);
   if (!["Easy", "Medium", "Hard"].includes(question.difficulty)) fail(`${question.id} has an invalid difficulty.`);
   if (question.type === "mcq") {
     if (!Array.isArray(question.choices) || question.choices.length !== 4) fail(`${question.id} must have four choices.`);
@@ -349,6 +358,41 @@ for (const question of questions) {
 if (JSON.stringify(math) !== JSON.stringify(window.buildSATMathQuestionSets(BASELINE_SEED))) fail("Math generation is not deterministic for a fixed seed.");
 if (JSON.stringify(readingWriting) !== JSON.stringify(window.buildSATRWQuestionSets(BASELINE_SEED))) fail("Reading and Writing generation is not deterministic for a fixed seed.");
 
+// Collapse digits so index-derived years and week counts cannot pass as variation.
+function contentSignature(question) {
+  const strip = (text) => String(text || "").replace(/\d+/g, "#").replace(/\s+/g, " ").trim();
+  return [
+    strip(question.stimulus),
+    question.passages ? strip(JSON.stringify(question.passages)) : "",
+    strip(question.question),
+    (question.choices || []).map(strip).sort().join("~")
+  ].join("|");
+}
+
+const TIER_SHAPE_FLOOR = 4;         // distinct item shapes within one skill's tier in one set
+
+// A student working one tier of one skill must not meet the same item shape over
+// and over. Counted with digits normalized, so a rewritten sample size or growth
+// factor does not register as a second shape.
+function checkTierShapes(items, label) {
+  for (const skill of new Set(items.map((question) => question.skill))) {
+    const skillItems = items.filter((question) => question.skill === skill);
+    for (const difficulty of ["Easy", "Medium", "Hard"]) {
+      for (const practiceSet of [1, 2]) {
+        const tier = skillItems.filter((question) => question.difficulty === difficulty && question.practiceSet === practiceSet);
+        if (!tier.length) continue;
+        const shapes = new Set(tier.map(contentSignature)).size;
+        if (shapes < TIER_SHAPE_FLOOR) {
+          fail(
+            `${label}${skill} (${difficulty.toLowerCase()}, set ${practiceSet}): its ${tier.length} questions take only ` +
+            `${shapes} distinct shape(s) once decorative digits are normalized; the floor is ${TIER_SHAPE_FLOOR}.`
+          );
+        }
+      }
+    }
+  }
+}
+
 for (let index = 0; index < STRESS_SEED_COUNT; index += 1) {
   const seed = `stress-${index}`;
   const generatedSets = [["Math", window.buildSATMathQuestionSets(seed), 1000], ["Reading and Writing", window.buildSATRWQuestionSets(seed), 550]];
@@ -359,6 +403,7 @@ for (let index = 0; index < STRESS_SEED_COUNT; index += 1) {
     if (items.some((question) => /NaN|Infinity|undefined/.test(JSON.stringify(question)))) fail(`${label} stress seed ${seed}: nonfinite or undefined output.`);
     const signatures = items.map((question) => `${question.stimulus}|${question.question}|${JSON.stringify(question.table || null)}|${JSON.stringify(question.figure || null)}`);
     if (new Set(signatures).size !== items.length) fail(`${label} stress seed ${seed}: duplicate content across question sets.`);
+    checkTierShapes(items, `stress seed ${seed}: `);
     if (label === "Math") {
       for (const question of items) {
         if (`${question.stimulus || ""} ${question.question}`.length / 6 > 50) fail(`${question.id}: alternate-seed Math prompt exceeds 50 word equivalents.`);
@@ -461,7 +506,6 @@ const HEURISTIC_CEILING = 0.4;      // chance is 0.25 on a 4-choice item
 // guessing is worth about 30% against a 25% baseline on the current bank.
 const RW_DISTINCT_FLOOR = 50;       // every R&W item in a skill must be distinct
 const MATH_HARD_TEMPLATE_FLOOR = 3; // 8 hard questions may not come from 1-2 molds
-const TIER_SHAPE_FLOOR = 4;         // distinct item shapes within one skill's tier in one set
 const VISIBLY_LONGER_CHARS = 12;   // a length edge smaller than this is not a usable cue
 
 const HEURISTIC_STOPWORDS = new Set(
@@ -475,17 +519,6 @@ function contentWords(text) {
     String(text || "").toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/)
       .filter((word) => word.length > 3 && !HEURISTIC_STOPWORDS.has(word))
   );
-}
-
-// Collapse digits so index-derived years and week counts cannot pass as variation.
-function contentSignature(question) {
-  const strip = (text) => String(text || "").replace(/\d+/g, "#").replace(/\s+/g, " ").trim();
-  return [
-    strip(question.stimulus),
-    question.passages ? strip(JSON.stringify(question.passages)) : "",
-    strip(question.question),
-    (question.choices || []).map(strip).sort().join("~")
-  ].join("|");
 }
 
 const ABSOLUTE_PATTERN = /\b(every|all|always|never|must|entirely|completely|only|any|guarantees|cannot|none)\b/i;
@@ -581,24 +614,7 @@ for (const skill of skillNames) {
   }
 }
 
-// A student working one tier of one skill must not meet the same item shape over
-// and over. Counted with digits normalized, so a rewritten sample size or growth
-// factor does not register as a second shape.
-for (const skill of skillNames) {
-  const items = questions.filter((question) => question.skill === skill);
-  for (const difficulty of ["Easy", "Medium", "Hard"]) {
-    for (const set of [1, 2]) {
-      const tier = items.filter((question) => question.difficulty === difficulty && question.practiceSet === set);
-      const shapes = new Set(tier.map(contentSignature)).size;
-      if (shapes < TIER_SHAPE_FLOOR) {
-        fail(
-          `${skill} (${difficulty.toLowerCase()}, set ${set}): its ${tier.length} questions take only ${shapes} ` +
-          `distinct shape(s) once decorative digits are normalized; the floor is ${TIER_SHAPE_FLOOR}.`
-        );
-      }
-    }
-  }
-}
+checkTierShapes(questions, "");
 
 // A difficulty tier built from one or two molds cannot vary its own difficulty.
 for (const skill of skillNames) {

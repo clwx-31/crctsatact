@@ -6,7 +6,7 @@
     ...Array(9).fill("Medium"),
     ...Array(8).fill("Hard")
   ];
-  const GENERATOR_VERSION = "construct-validity-v3";
+  const GENERATOR_VERSION = "construct-validity-v4";
 
   const SKILLS = [
     { slug: "linear-equations-one", domain: "Algebra", name: "Linear equations in one variable", description: "Solve, create, and interpret linear equations in one variable." },
@@ -193,6 +193,34 @@
   function linearEquationsOne(ctx) {
     const { rng, difficulty, index } = ctx;
     const mode = index % 5;
+    const tierMode = index % 3;
+    if (difficulty === "Easy" && tierMode === 1) {
+      const x = int(rng, -8, 12);
+      const a = nonzero(rng, 2, 9);
+      const b = int(rng, -12, 12);
+      const c = a * x + b;
+      return numeric(ctx, {
+        recipe: "solve-then-evaluate", stimulus: `In the equation ${linearText(a, "x", b)} = ${c}, x has one value.`,
+        question: `What is the value of x + ${Math.abs(b) + 1}?`, correct: x + Math.abs(b) + 1,
+        distractors: [x, c, a + b],
+        explanation: `Solving ${linearText(a, "x", b)} = ${c} gives x = ${x}. Adding ${Math.abs(b) + 1} gives ${x + Math.abs(b) + 1}; stopping at x = ${x} answers a question that was not asked.`,
+        parameters: { a, b, c, x, shift: Math.abs(b) + 1 }
+      });
+    }
+    if (difficulty === "Easy" && tierMode === 2) {
+      const x = int(rng, 2, 14);
+      const perUnit = int(rng, 3, 12);
+      const fixed = int(rng, 5, 40);
+      const total = perUnit * x + fixed;
+      const goods = pick(rng, ["boxes", "tickets", "gallons", "lessons", "panels"]);
+      return numeric(ctx, {
+        recipe: "context-one-step", stimulus: `An order costs a flat $${fixed} plus $${perUnit} for each of the ${goods} purchased, and the total is $${total}.`,
+        question: `How many ${goods} were purchased?`, correct: x,
+        distractors: [total - fixed, total, fixed],
+        explanation: `Subtract the flat charge: ${total} − ${fixed} = ${total - fixed} is spent on the ${goods}. Dividing by the $${perUnit} each gives ${x}.`,
+        parameters: { perUnit, fixed, total, x }
+      });
+    }
     if (difficulty === "Easy") {
       const x = int(rng, -9, 12);
       const a = nonzero(rng, 2, 9);
@@ -289,6 +317,19 @@
         question: "What is the slope of the graph of y = f(x)?", correct: m,
         distractors: [y2 - y1, fraction(step, y2 - y1), m + b],
         explanation: `Slope is change in output divided by change in input: (${y2} − (${y1}))/(${x2} − (${x1})) = ${m}.`, parameters: { m, b, x1, x2, y1, y2 }
+      });
+    }
+    if (difficulty === "Medium" && mode === 3) {
+      const m = nonzero(rng, 2, 7);
+      const b = int(rng, -10, 10);
+      const x = int(rng, -6, 9);
+      const value = m * x + b;
+      return numeric(ctx, {
+        recipe: "solve-for-input", stimulus: `The linear function f is defined by f(x) = ${linearText(m, "x", b)}.`,
+        question: `For what value of x does f(x) = ${value}?`, correct: x,
+        distractors: [value, value - b, m + b],
+        explanation: `Set ${linearText(m, "x", b)} equal to ${value}. Subtracting ${b} gives ${m}x = ${value - b}, so x = ${x}.`,
+        parameters: { m, b, x, value }
       });
     }
     if (difficulty === "Medium") {
@@ -413,7 +454,8 @@
   function linearSystems(ctx) {
     const { rng, difficulty, index } = ctx;
     const mode = index % 5;
-    if (difficulty === "Easy") {
+    const tierMode = index % 4;
+    if (difficulty === "Easy" && tierMode === 0) {
       const x = int(rng, -5, 9);
       const y = int(rng, -5, 9);
       const sum = x + y;
@@ -422,6 +464,46 @@
         recipe: "add-subtract-system", question: `The solution to the system x + y = ${sum} and x − y = ${difference} is (x, y). What is x?`, correct: x,
         distractors: [y, sum + difference, fraction(sum - difference, 2)],
         explanation: `Adding the equations gives 2x = ${sum + difference}, so x = ${x}.`, parameters: { x, y, sum, difference }
+      });
+    }
+    if (difficulty === "Easy" && tierMode === 1) {
+      const x = int(rng, -4, 8);
+      const y = int(rng, -4, 8);
+      const a = nonzero(rng, 2, 5);
+      const b = nonzero(rng, 2, 5);
+      return conceptual(ctx, {
+        recipe: "verify-ordered-pair",
+        stimulus: `Consider the system x + y = ${x + y} and ${a}x ${signedTerm(b, "y")} = ${a * x + b * y}.`,
+        question: "Which ordered pair is the solution to the system?", correct: `(${x}, ${y})`,
+        distractors: [`(${y}, ${x})`, `(${x + 1}, ${y - 1})`, `(${-x}, ${-y})`],
+        explanation: `Substituting x = ${x} and y = ${y} satisfies both equations: ${x} + ${y} = ${x + y}, and ${a}(${x}) ${signedTerm(b)}(${y}) = ${a * x + b * y}. The reversed pair (${y}, ${x}) fails the second equation unless the coefficients happen to match.`,
+        parameters: { x, y, a, b }
+      });
+    }
+    if (difficulty === "Easy" && tierMode === 2) {
+      const m = nonzero(rng, 2, 6);
+      const b = int(rng, -9, 9);
+      const x = int(rng, -5, 8);
+      const known = m * x + b;
+      return numeric(ctx, {
+        recipe: "substitution-known-y", question: `The system y = ${linearText(m, "x", b)} and y = ${known} has one solution. What is the value of x?`, correct: x,
+        distractors: [known, known - b, m + b],
+        explanation: `Both equations give y, so ${linearText(m, "x", b)} = ${known}. Subtracting ${b} and dividing by ${m} gives x = ${x}.`,
+        parameters: { m, b, x, known }
+      });
+    }
+    if (difficulty === "Easy") {
+      const a = nonzero(rng, 2, 6);
+      const b = nonzero(rng, 2, 6);
+      const x = int(rng, -6, 8);
+      const y = int(rng, -6, 8);
+      const total = a * x + b * y;
+      return numeric(ctx, {
+        recipe: "one-variable-known", stimulus: `In a system of equations, ${a}x ${signedTerm(b, "y")} = ${total} and y = ${y}.`,
+        question: "What is the value of x?", correct: x,
+        distractors: [y, total - b * y, total],
+        explanation: `Substitute y = ${y} into the first equation: ${a}x ${signedTerm(b * y)} = ${total}, so ${a}x = ${total - b * y} and x = ${x}.`,
+        parameters: { a, b, x, y, total }
       });
     }
     if (difficulty === "Medium" && mode < 3) {
@@ -667,7 +749,36 @@
         explanation: `The constants ${p} and ${q} add to ${sum} and multiply to ${product}, so the expression factors as (x + (${p}))(x + (${q})).`, parameters: { p, q }
       });
     }
-    if (difficulty === "Medium" && mode < 3) {
+    if (difficulty === "Medium" && mode === 0) {
+      const p = int(rng, 4, 9);
+      const q = int(rng, 2, 3);
+      const coefficient = int(rng, 2, 6);
+      return conceptual(ctx, {
+        recipe: "exponent-product", question: `Which expression is equivalent to (${coefficient}x^${p})(x^${q})?`, correct: `${coefficient}x^${p + q}`,
+        distractors: [`${coefficient}x^${p * q}`, `${coefficient}x^${p - q}`, `${coefficient * coefficient}x^${p + q}`],
+        explanation: `Multiplying powers of the same base adds the exponents: x^${p} · x^${q} = x^${p + q}. The coefficient ${coefficient} is multiplied by 1, so it is unchanged.`,
+        parameters: { coefficient, p, q }
+      });
+    }
+    if (difficulty === "Medium" && mode === 1) {
+      const outer = int(rng, 2, 6);
+      const inner = int(rng, 2, 8);
+      const constant = int(rng, 2, 9);
+      const subtracted = int(rng, 2, 8);
+      return conceptual(ctx, {
+        recipe: "distribute-and-combine",
+        question: `Which expression is equivalent to ${outer}(${inner}x + ${constant}) − ${subtracted}x?`,
+        correct: linearText(outer * inner - subtracted, "x", outer * constant),
+        distractors: [
+          linearText(outer * inner + subtracted, "x", outer * constant),
+          linearText(outer * inner - subtracted, "x", constant),
+          linearText(inner - subtracted, "x", outer * constant)
+        ],
+        explanation: `Distribute first: ${outer}(${inner}x + ${constant}) = ${outer * inner}x + ${outer * constant}. Subtracting ${subtracted}x leaves ${linearText(outer * inner - subtracted, "x", outer * constant)}; the constant is multiplied by ${outer} as well.`,
+        parameters: { outer, inner, constant, subtracted }
+      });
+    }
+    if (difficulty === "Medium" && mode < 4) {
       const a = int(rng, 2, 7);
       const b = nonzero(rng, -8, 8);
       const c = nonzero(rng, -7, 7);
@@ -1895,6 +2006,18 @@
         parameters: { setting, firstEstimate, secondEstimate, gap, spread }
       });
     }
+    if (mode === 2) {
+      const setting = pick(rng, SAMPLE_SETTINGS);
+      const shrink = pick(rng, [2, 3, 4, 5]);
+      return numeric(ctx, {
+        recipe: "sample-size-for-margin",
+        stimulus: `A survey of ${setting.group} has a margin of error inversely proportional to the square root of its sample size.`,
+        question: `To reduce that margin of error to 1/${shrink} of its current value, by what factor must the sample size be multiplied?`,
+        correct: shrink * shrink, distractors: [shrink, shrink * 2, shrink + 1],
+        explanation: `Margin of error varies with 1/√n, so dividing it by ${shrink} requires √n to grow by a factor of ${shrink}, which means n grows by ${shrink}² = ${shrink * shrink}.`,
+        parameters: { setting, shrink }
+      });
+    }
     if (mode < 3) {
       const factor = pick(rng, [4, 9, 16]);
       const ratio = fraction(1, Math.sqrt(factor));
@@ -1939,14 +2062,56 @@
   function statisticalClaims(ctx) {
     const { rng, difficulty, index } = ctx;
     const mode = index % 6;
-    if (difficulty === "Easy") {
-      const treatment = pick(rng, ["study routine", "exercise program", "fertilizer", "sleep schedule"]);
-      const participants = int(rng, 80, 480);
+    const tierMode = index % 4;
+    const treatment = pick(rng, ["study routine", "exercise program", "fertilizer", "sleep schedule", "tutoring format", "irrigation schedule"]);
+    const participants = int(rng, 80, 480);
+    if (difficulty === "Easy" && tierMode === 0) {
       return conceptual(ctx, {
         recipe: "random-assignment", stimulus: `Researchers randomly assign ${participants} volunteers either to use a new ${treatment} or to continue their usual routine.`,
         question: "What does random assignment primarily allow the researchers to do?", correct: "Support a cause-and-effect conclusion about the treatment",
         distractors: ["Generalize the findings to the wider population of interest", "Remove the need for a comparison group in the analysis", "Ensure the two groups end up with equal average outcomes"],
         explanation: `Random assignment tends to balance preexisting differences between treatment groups, allowing a causal comparison. It does not ensure population representativeness.`, parameters: { treatment, participants }
+      });
+    }
+    if (difficulty === "Easy" && tierMode === 1) {
+      const group = pick(rng, ["registered voters", "hospital nurses", "season ticket holders", "licensed drivers", "third-year apprentices"]);
+      return conceptual(ctx, {
+        recipe: "random-selection-role", stimulus: `A researcher surveys ${participants} ${group} chosen at random from a complete list of all ${group} in the region.`,
+        question: "What does selecting the sample at random primarily allow the researcher to do?", correct: `Extend the findings to the region's ${group}`,
+        distractors: [
+          `Conclude that being surveyed changed how the ${group} responded`,
+          `Establish which factor causes the pattern seen among the ${group}`,
+          `Guarantee that the sample percentage matches the regional percentage`
+        ],
+        explanation: `Random selection from the full list makes the sample likely to represent the region's ${group}, which supports generalization. Causal claims require a randomly assigned treatment, which this survey does not have.`,
+        parameters: { group, participants }
+      });
+    }
+    if (difficulty === "Easy" && tierMode === 2) {
+      return conceptual(ctx, {
+        recipe: "control-group-purpose", stimulus: `In a study of a new ${treatment}, one randomly assigned group uses it while a second randomly assigned group continues as before.`,
+        question: "Why does the study include the second group?", correct: "To show what would have happened without the new treatment",
+        distractors: [
+          "To increase the number of participants who receive the new treatment",
+          "To let participants pick the condition they would rather be in",
+          "To make the study's results apply to the whole population"
+        ],
+        explanation: `The comparison group establishes a baseline. Without it, any change among the treated participants could be explained by time, practice, or other influences rather than the ${treatment}.`,
+        parameters: { treatment, participants }
+      });
+    }
+    if (difficulty === "Easy") {
+      const habit = pick(rng, ["cycle to work", "keep a garden", "join a choir", "walk after dinner", "read before bed"]);
+      return conceptual(ctx, {
+        recipe: "study-type-identification", stimulus: `Researchers record which of ${participants} adults already ${habit} and compare the two groups' reported energy levels. No one is told what to do.`,
+        question: "Which best describes this study?", correct: "An observational study, because the researchers did not assign the behavior",
+        distractors: [
+          "An experiment, because two groups are compared against each other",
+          "An experiment, because the researchers chose which measurements to record",
+          "An observational study, because the researchers surveyed fewer than 500 adults"
+        ],
+        explanation: `What makes a study an experiment is the researcher assigning the condition. Here the adults already ${habit} or did not, so the study only observes; comparing groups and choosing measurements happen in both kinds of study.`,
+        parameters: { habit, participants }
       });
     }
     if (difficulty === "Medium" && mode < 3) {
@@ -1957,6 +2122,23 @@
         question: "Which conclusion is best supported?", correct: "The results may be generalized to the city's residents, but they cannot establish causation.",
         distractors: ["The results establish that transit preferences cause the observed commuting behavior.", "The results describe only the residents sampled and cannot extend beyond them.", "The results identify which transit improvement residents would benefit from most."],
         explanation: `Random sampling supports generalization to the sampled population. Without a randomly assigned treatment, the study cannot establish a causal effect.`, parameters: { city, sampleSize }
+      });
+    }
+    if (difficulty === "Medium" && mode === 3) {
+      const site = pick(rng, ["a single gym", "one online forum", "a weekend farmers market", "one commuter platform", "a university mailing list"]);
+      const responses = int(rng, 120, 900);
+      return conceptual(ctx, {
+        recipe: "convenience-sample-limit",
+        stimulus: `To estimate a citywide opinion, a researcher collects ${responses} responses from volunteers recruited at ${site}.`,
+        question: "What is the main limitation of this study?",
+        correct: "The volunteers may differ systematically from the city's residents",
+        distractors: [
+          `Collecting ${responses} responses is too few to describe a city`,
+          "The researcher recorded opinions rather than assigning a treatment",
+          "The volunteers were not told the purpose of the study in advance"
+        ],
+        explanation: `People who volunteer at ${site} are not a random sample of the city, so the estimate can be biased no matter how many responses are gathered. Sample size does not repair a sample drawn from the wrong group.`,
+        parameters: { site, responses }
       });
     }
     if (difficulty === "Medium") {
@@ -2279,6 +2461,20 @@
         parameters: { a, b, c, triple, opposite }
       });
     }
+    if (mode === 2) {
+      const [legA, legB, hypotenuse] = pick(rng, [[3, 4, 5], [5, 12, 13], [8, 15, 17], [7, 24, 25]]);
+      const asked = pick(rng, ["cos", "sin"]);
+      return conceptual(ctx, {
+        recipe: "cofunction-in-triangle",
+        stimulus: `In right triangle ABC, the right angle is at C and sin A = ${fraction(legA, hypotenuse)}.`,
+        question: `What is the value of ${asked} B?`, correct: asked === "cos" ? fraction(legA, hypotenuse) : fraction(legB, hypotenuse),
+        distractors: [fraction(legA, legB), fraction(legB, legA), fraction(hypotenuse, legA), fraction(asked === "cos" ? legB : legA, hypotenuse)],
+        explanation: asked === "cos"
+          ? `Angles A and B are complementary, and the side opposite A is the side adjacent to B, so cos B = sin A = ${fraction(legA, hypotenuse)}.`
+          : `Angles A and B are complementary, so sin B = cos A. With sin A = ${fraction(legA, hypotenuse)}, the remaining leg gives cos A = ${fraction(legB, hypotenuse)}.`,
+        parameters: { legA, legB, hypotenuse, asked }
+      });
+    }
     if (mode < 3) {
       const angle = pick(rng, ctx.practiceSet === 2 ? [10, 15, 45, 50, 55, 60, 65, 70] : [20, 25, 30, 35, 40]);
       return conceptual(ctx, {
@@ -2343,6 +2539,29 @@
         recipe: "circumference", stimulus: `A circle has radius ${radius}.`, question: "What is its circumference?", correct: `${2 * radius}π`,
         distractors: [`${radius * radius}π`, `${radius}π`, `${2 * radius + 2}π`],
         explanation: `C = 2πr = 2π(${radius}) = ${2 * radius}π.`, parameters: { radius }
+      });
+    }
+    if (difficulty === "Medium" && mode === 3) {
+      const radius = int(rng, 3, 12);
+      const h = int(rng, -6, 6);
+      const k = int(rng, -6, 6);
+      return numeric(ctx, {
+        recipe: "radius-from-equation",
+        stimulus: `A circle in the xy-plane has equation (x ${signedTerm(-h)})² + (y ${signedTerm(-k)})² = ${radius * radius}.`,
+        question: "What is the radius of the circle?", correct: radius,
+        distractors: [radius * radius, 2 * radius, Math.abs(h) + Math.abs(k)],
+        explanation: `In the form (x − h)² + (y − k)² = r², the right side is r², not r. Here r² = ${radius * radius}, so r = ${radius}.`,
+        parameters: { radius, radiusSquared: radius * radius, h, k }
+      });
+    }
+    if (difficulty === "Medium" && mode === 4) {
+      const radius = int(rng, 2, 9);
+      return conceptual(ctx, {
+        recipe: "area-from-circumference", stimulus: `A circle has circumference ${2 * radius}π.`,
+        question: "What is the area of the circle?", correct: `${radius * radius}π`,
+        distractors: [`${2 * radius}π`, `${4 * radius * radius}π`, `${radius}π`],
+        explanation: `Circumference is 2πr, so 2πr = ${2 * radius}π gives r = ${radius}. The area is πr² = ${radius * radius}π.`,
+        parameters: { radius }
       });
     }
     if (difficulty === "Medium" && mode < 3) {
@@ -2436,8 +2655,8 @@
     circles
   };
 
-  function buildSATMathQuestions(seed = "baseline-v3", options = {}) {
-    const normalizedSeed = String(seed).trim() || "baseline-v3";
+  function buildSATMathQuestions(seed = "baseline-v4", options = {}) {
+    const normalizedSeed = String(seed).trim() || "baseline-v4";
     const setId = hash(`${GENERATOR_VERSION}/${normalizedSeed}`).toString(36);
     const practiceSet = Number(options.practiceSet) === 2 ? 2 : 1;
     const variantOffset = practiceSet === 2 ? 25 : 0;

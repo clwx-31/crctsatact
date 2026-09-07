@@ -16,18 +16,18 @@
   const topTabs = [...document.querySelectorAll("[data-top-view]")];
   const letters = ["A", "B", "C", "D"];
 
-  let mathSeed = localStorage.getItem(MATH_SEED_KEY) || "baseline-v3";
-  let rwSeed = localStorage.getItem(RW_SEED_KEY) || "baseline-v3";
+  let mathSeed = localStorage.getItem(MATH_SEED_KEY) || "baseline-v4";
+  let rwSeed = localStorage.getItem(RW_SEED_KEY) || "baseline-v4";
   // Move returning visitors off superseded baselines. Their saved answers are
   // keyed by IDs that embed the generator version, so old progress is orphaned
   // rather than scored against questions that have since changed.
-  const SUPERSEDED_SEEDS = ["baseline-v1", "baseline-v2"];
+  const SUPERSEDED_SEEDS = ["baseline-v1", "baseline-v2", "baseline-v3"];
   if (SUPERSEDED_SEEDS.includes(mathSeed)) {
-    mathSeed = "baseline-v3";
+    mathSeed = "baseline-v4";
     localStorage.setItem(MATH_SEED_KEY, mathSeed);
   }
   if (SUPERSEDED_SEEDS.includes(rwSeed)) {
-    rwSeed = "baseline-v3";
+    rwSeed = "baseline-v4";
     localStorage.setItem(RW_SEED_KEY, rwSeed);
   }
   const practiceSets = {
