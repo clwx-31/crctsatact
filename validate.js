@@ -186,7 +186,11 @@ function auditMathAnswer(question) {
     case "probability/without-replacement-pair": return requireNumericAnswer(question, p.favorable * (p.favorable - 1) / ((p.favorable + p.other) * (p.favorable + p.other - 1)));
     case "sample-inference/sample-size-margin": return requireNumericAnswer(question, 1 / Math.sqrt(p.factor));
     case "area-volume/surface-area-scale": return requireNumericAnswer(question, Math.sqrt(p.ratioN / p.ratioD));
-    case "right-triangles-trig/trig-ratio": return requireNumericAnswer(question, p.a / p.c);
+    case "right-triangles-trig/trig-ratio": return requireNumericAnswer(question, p.kind === "cos" ? p.b / p.c : p.kind === "tan" ? p.a / p.b : p.a / p.c);
+    case "right-triangles-trig/pythagorean-leg": return requireNumericAnswer(question, Math.sqrt(p.c * p.c - p.b * p.b));
+    case "right-triangles-trig/right-triangle-area": return requireNumericAnswer(question, p.a * p.b / 2);
+    case "right-triangles-trig/identify-trig-ratio": return requireNumericAnswer(question, p.a / p.b);
+    case "right-triangles-trig/side-from-sine": return requireNumericAnswer(question, p.c * (p.triple[0] / p.triple[2]));
     case "right-triangles-trig/thirty-sixty-ninety": return requireNumericAnswer(question, 2 * p.short);
     case "right-triangles-trig/unit-circle-radians": return requireApproxAnswer(question, Math.cos(radiansFromText(p.entry.angle)));
     default: return recipe;

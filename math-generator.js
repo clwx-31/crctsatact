@@ -1826,29 +1826,81 @@
     const triple = pick(rng, triples);
     const scale = ctx.practiceSet === 2 ? int(rng, 3, 6) : int(rng, 1, difficulty === "Hard" ? 4 : 2);
     const [a, b, c] = triple.map((value) => value * scale);
-    if (difficulty === "Easy") {
+    const tierMode = index % 4;
+    if (difficulty === "Easy" && tierMode === 0) {
       return numeric(ctx, {
         recipe: "pythagorean-hypotenuse", stimulus: `A right triangle has leg lengths ${a} and ${b}.`, question: "What is the hypotenuse length?", correct: c,
         distractors: [a + b, Math.abs(b - a), a * b],
         explanation: `By the Pythagorean theorem, c = √(${a}² + ${b}²) = ${c}.`, parameters: { a, b, c }
       });
     }
-    if (difficulty === "Medium" && mode < 3) {
-      const ratio = fraction(a, c);
-      return conceptual(ctx, {
-        recipe: "trig-ratio", stimulus: `In a right triangle, relative to acute angle θ, the opposite side is ${a} and the hypotenuse is ${c}.`,
-        question: "What is sin θ?", correct: ratio,
-        distractors: [fraction(b, c), fraction(a, b), fraction(c, a)],
-        explanation: `sin θ = opposite/hypotenuse = ${a}/${c} = ${ratio}.`, parameters: { a, b, c }
+    if (difficulty === "Easy" && tierMode === 1) {
+      return numeric(ctx, {
+        recipe: "pythagorean-leg", stimulus: `A right triangle has hypotenuse length ${c} and one leg of length ${b}.`, question: "What is the length of the other leg?", correct: a,
+        distractors: [c - b, c + b, Math.abs(b - a) || b],
+        explanation: `Rearrange the Pythagorean theorem: the missing leg is √(${c}² − ${b}²) = √${c * c - b * b} = ${a}. Subtracting the lengths instead would give ${c - b}.`,
+        parameters: { a, b, c }
       });
     }
-    if (difficulty === "Medium") {
+    if (difficulty === "Easy" && tierMode === 2) {
+      const area = a * b / 2;
+      return numeric(ctx, {
+        recipe: "right-triangle-area", stimulus: `A right triangle has legs of length ${a} and ${b} and hypotenuse ${c}.`, question: "What is the area of the triangle?", correct: area,
+        distractors: [a * b, a + b + c, c * Math.min(a, b) / 2],
+        explanation: `The two legs are perpendicular, so they serve as base and height: area = (${a})(${b}) ÷ 2 = ${area}. The hypotenuse is not used.`,
+        parameters: { a, b, c, area }
+      });
+    }
+    if (difficulty === "Easy") {
+      return conceptual(ctx, {
+        recipe: "identify-trig-ratio", stimulus: `In a right triangle, acute angle θ has an opposite side of length ${a}, an adjacent side of length ${b}, and a hypotenuse of length ${c}.`,
+        question: "What is tan θ?", correct: fraction(a, b),
+        distractors: [fraction(a, c), fraction(b, c), fraction(b, a)],
+        explanation: `Tangent is opposite over adjacent: ${a}/${b} = ${fraction(a, b)}. Dividing by the hypotenuse ${c} instead would give the sine or the cosine.`,
+        parameters: { a, b, c }
+      });
+    }
+    if (difficulty === "Medium" && tierMode === 0) {
+      const kind = pick(rng, ["sin", "cos", "tan"]);
+      const ratio = kind === "sin" ? fraction(a, c) : kind === "cos" ? fraction(b, c) : fraction(a, b);
+      const definition = kind === "sin" ? "opposite/hypotenuse" : kind === "cos" ? "adjacent/hypotenuse" : "opposite/adjacent";
+      const numeratorValue = kind === "cos" ? b : a;
+      const denominatorValue = kind === "tan" ? b : c;
+      return conceptual(ctx, {
+        recipe: "trig-ratio", stimulus: `In a right triangle, relative to acute angle θ, the opposite side is ${a}, the adjacent side is ${b}, and the hypotenuse is ${c}.`,
+        question: `What is ${kind} θ?`, correct: ratio,
+        distractors: [fraction(a, c), fraction(b, c), fraction(a, b), fraction(c, a)].filter((value) => value !== ratio),
+        explanation: `${kind} θ = ${definition} = ${numeratorValue}/${denominatorValue} = ${ratio}.`,
+        parameters: { a, b, c, kind }
+      });
+    }
+    if (difficulty === "Medium" && tierMode === 1) {
       const short = ctx.practiceSet === 2 ? int(rng, 11, 20) : int(rng, 2, 10);
       return conceptual(ctx, {
         recipe: "thirty-sixty-ninety", stimulus: `A 30°-60°-90° triangle has shorter leg length ${short}.`,
         question: "What is its hypotenuse length?", correct: String(2 * short),
         distractors: [`${short}√2`, `${short}√3`, String(short * 3)],
         explanation: `In a 30°-60°-90° triangle, the side ratio is 1:√3:2. The hypotenuse is twice the shorter leg: ${2 * short}.`, parameters: { short }
+      });
+    }
+    if (difficulty === "Medium" && tierMode === 2) {
+      const leg = ctx.practiceSet === 2 ? int(rng, 11, 20) : int(rng, 2, 10);
+      return conceptual(ctx, {
+        recipe: "forty-five-forty-five-ninety", stimulus: `An isosceles right triangle has legs of length ${leg}.`,
+        question: "What is its hypotenuse length?", correct: `${leg}√2`,
+        distractors: [`${leg}√3`, String(2 * leg), `${leg}/√2`],
+        explanation: `The two legs are equal, so the side ratio is 1:1:√2 and the hypotenuse is ${leg}√2. Doubling the leg would apply the 30°-60°-90° relationship instead.`,
+        parameters: { leg }
+      });
+    }
+    if (difficulty === "Medium") {
+      const opposite = a;
+      return numeric(ctx, {
+        recipe: "side-from-sine", stimulus: `In right triangle ABC, the right angle is at C, sin A = ${fraction(triple[0], triple[2])}, and the hypotenuse AB has length ${c}.`,
+        question: "What is the length of side BC, which is opposite angle A?", correct: opposite,
+        distractors: [b, c - a, triple[0]],
+        explanation: `sin A is the ratio of the opposite side to the hypotenuse, so BC = ${fraction(triple[0], triple[2])} × ${c} = ${opposite}.`,
+        parameters: { a, b, c, triple, opposite }
       });
     }
     if (mode < 3) {
