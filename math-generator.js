@@ -1298,27 +1298,137 @@
     });
   }
 
+  // Five survey settings so the easy and medium tiers are not one context with
+  // the sample size rewritten.
+  const SAMPLE_SETTINGS = [
+    { group: "city residents", verb: "support", subject: "a transit proposal" },
+    { group: "high school seniors", verb: "prefer", subject: "a later start time" },
+    { group: "county farmers", verb: "use", subject: "a drip irrigation system" },
+    { group: "museum visitors", verb: "finish", subject: "the audio tour" },
+    { group: "clinic patients", verb: "schedule", subject: "an evening appointment" }
+  ];
+
   function sampleInference(ctx) {
     const { rng, difficulty, index } = ctx;
     const mode = index % 5;
+    const tierMode = index % 4;
     if (difficulty === "Easy") {
+      const setting = pick(rng, SAMPLE_SETTINGS);
       const sample = int(rng, 80, 300);
       const percent = pick(rng, [30, 40, 45, 50, 55, 60, 70]);
+      if (tierMode === 0) {
+        return conceptual(ctx, {
+          recipe: "sample-statistic", stimulus: `In a random sample of ${sample} ${setting.group}, ${percent}% ${setting.verb} ${setting.subject}.`,
+          question: "Which quantity is a sample statistic?", correct: `The ${percent}% of the sampled ${setting.group} who ${setting.verb} ${setting.subject}`,
+          distractors: [
+            `The ${percent}% of all ${setting.group} who ${setting.verb} ${setting.subject}`,
+            `The count of ${setting.group} in the surrounding population`,
+            `The percentage every later sample of ${setting.group} would report`
+          ],
+          explanation: `A sample statistic describes the group that was actually observed. Applying the same ${percent}% to all ${setting.group} would instead be an estimate of a population parameter.`,
+          parameters: { setting, sample, percent }
+        });
+      }
+      if (tierMode === 1) {
+        const margin = int(rng, 2, 6);
+        return conceptual(ctx, {
+          recipe: "margin-meaning", stimulus: `A random sample of ${sample} ${setting.group} gives an estimate of ${percent}%, with a margin of error of ${margin} percentage points.`,
+          question: "What does the margin of error indicate?", correct: "How far the true value for the whole group is likely to lie from the reported result",
+          distractors: [
+            `How many of the sampled ${setting.group} answered the survey question incorrectly`,
+            `The share of the ${sample} ${setting.group} that the researcher was unable to reach`,
+            `The gap between the largest and smallest percentages any ${setting.group.replace(/s$/, "")} reported`
+          ],
+          explanation: `The margin of error describes the precision of the estimate: the population percentage is likely to lie within ${margin} percentage points of ${percent}%. It does not measure response errors or nonresponse.`,
+          parameters: { setting, sample, percent, margin }
+        });
+      }
+      if (tierMode === 2) {
+        const first = pick(rng, [120, 150, 200, 250]);
+        const second = first * pick(rng, [3, 4, 5]);
+        return conceptual(ctx, {
+          recipe: "sample-size-direction", stimulus: `Two random samples of ${setting.group} are drawn from the same population by the same method. Sample A has ${first} people and Sample B has ${second}.`,
+          question: "Which sample is expected to give the smaller margin of error, and why?", correct: "Sample B, because a larger random sample estimates the population more precisely",
+          distractors: [
+            "Sample A, because a smaller group of people can be surveyed completely",
+            "Sample B, because a larger random sample removes bias from the estimate",
+            "Neither, because the two samples were drawn by the same sampling method"
+          ],
+          explanation: `Margin of error shrinks as sample size grows, so Sample B's ${second} observations give the more precise estimate. Sample size affects precision, not bias, which is controlled by how the sample is drawn.`,
+          parameters: { setting, first, second }
+        });
+      }
       return conceptual(ctx, {
-        recipe: "sample-statistic", stimulus: `In a random sample of ${sample} city residents, ${percent}% support a proposal.`,
-        question: "Which quantity is a sample statistic?", correct: `${percent}% of the sampled residents support the proposal.`,
-        distractors: [`${percent}% of all city residents support the proposal.`, `The city has ${sample} residents.`, "Every future sample will have the same percentage."],
-        explanation: `A sample statistic describes the observed sample. Using it to describe all residents would be an estimate of a population parameter.`, parameters: { sample, percent }
+        recipe: "random-selection-purpose", stimulus: `To estimate the percentage of ${setting.group} who ${setting.verb} ${setting.subject}, a researcher surveys ${sample} ${setting.group} chosen at random from that population.`,
+        question: "Why did the researcher choose the sample at random?", correct: "So the surveyed group is likely to resemble the larger one it came from",
+        distractors: [
+          `So the percentage of surveyed ${setting.group} who ${setting.verb} ${setting.subject} equals the population percentage`,
+          `So the ${sample} surveyed ${setting.group} can each be reached a second time`,
+          `So every ${setting.group.replace(/s$/, "")} in the population ${setting.verb}s ${setting.subject} at the same rate`
+        ],
+        explanation: `Random selection makes the sample likely to resemble the population, which is what allows the estimate to be generalized. It does not force the sample percentage to match the population exactly or eliminate the margin of error.`,
+        parameters: { setting, sample }
       });
     }
     if (difficulty === "Medium") {
-      const estimate = int(rng, 35, 70);
-      const margin = int(rng, 2, 6);
+      const setting = pick(rng, SAMPLE_SETTINGS);
+      if (tierMode === 0) {
+        const estimate = int(rng, 35, 70);
+        const margin = int(rng, 2, 6);
+        return conceptual(ctx, {
+          recipe: "margin-interval", stimulus: `A random-sample estimate of the percentage of ${setting.group} who ${setting.verb} ${setting.subject} is ${estimate}%, with a margin of error of ${margin} percentage points.`,
+          question: "Which interval is the corresponding plausible range for the population percentage?", correct: `${estimate - margin}% to ${estimate + margin}%`,
+          distractors: [`${estimate}% to ${estimate + margin}%`, `${estimate - 2 * margin}% to ${estimate + 2 * margin}%`, `${margin}% to ${estimate}%`],
+          explanation: `Subtract and add the margin of error: ${estimate} − ${margin} = ${estimate - margin} and ${estimate} + ${margin} = ${estimate + margin}.`,
+          parameters: { setting, estimate, margin }
+        });
+      }
+      if (tierMode === 1) {
+        const center = int(rng, 35, 70);
+        const margin = int(rng, 2, 6);
+        const low = center - margin;
+        const high = center + margin;
+        return conceptual(ctx, {
+          recipe: "interval-to-estimate", stimulus: `A study of ${setting.group} reports a plausible range of ${low}% to ${high}% for the percentage who ${setting.verb} ${setting.subject}.`,
+          question: "What estimate and margin of error produced this range?", correct: `${center}%, with a margin of error of ${margin} percentage points`,
+          distractors: [
+            `${center}%, with a margin of error of ${high - low} percentage points`,
+            `${low}%, with a margin of error of ${high - low} percentage points`,
+            `${high}%, with a margin of error of ${margin} percentage points`
+          ],
+          explanation: `The estimate sits at the center of the range: (${low} + ${high}) ÷ 2 = ${center}. The margin of error is the distance to either endpoint, ${high} − ${center} = ${margin}, not the full width of ${high - low}.`,
+          parameters: { setting, center, margin, low, high }
+        });
+      }
+      if (tierMode === 2) {
+        const estimate = int(rng, 38, 66);
+        const margin = int(rng, 3, 6);
+        const inside = estimate + pick(rng, [-1, 0, 1]) * (margin - 1);
+        const outside = [estimate + margin + int(rng, 2, 7), estimate - margin - int(rng, 2, 7), estimate + margin + int(rng, 9, 15)];
+        return conceptual(ctx, {
+          recipe: "plausible-population-value", stimulus: `A random sample of ${setting.group} gives an estimate of ${estimate}% who ${setting.verb} ${setting.subject}, with a margin of error of ${margin} percentage points.`,
+          question: "Which value for the population percentage is most plausible according to this result?", correct: `${inside}%`,
+          distractors: outside.map((value) => `${value}%`),
+          explanation: `The result makes population percentages between ${estimate - margin}% and ${estimate + margin}% plausible. Only ${inside}% falls in that range.`,
+          parameters: { setting, estimate, margin, inside, outside }
+        });
+      }
+      const firstEstimate = int(rng, 40, 55);
+      const gap = int(rng, 1, 3);
+      const secondEstimate = firstEstimate + gap;
+      const spread = gap + int(rng, 2, 4);
       return conceptual(ctx, {
-        recipe: "margin-interval", stimulus: `A random-sample estimate is ${estimate}% with a margin of error of ${margin} percentage points.`,
-        question: "Which interval is the corresponding plausible range for the population percentage?", correct: `${estimate - margin}% to ${estimate + margin}%`,
-        distractors: [`${estimate}% to ${estimate + margin}%`, `${estimate - 2 * margin}% to ${estimate + 2 * margin}%`, `${margin}% to ${estimate}%`],
-        explanation: `Subtract and add the margin of error: ${estimate} − ${margin} = ${estimate - margin} and ${estimate} + ${margin} = ${estimate + margin}.`, parameters: { estimate, margin }
+        recipe: "overlapping-intervals",
+        stimulus: `In two random samples of ${setting.group}, the estimated percentage who ${setting.verb} ${setting.subject} is ${firstEstimate}% in the first group and ${secondEstimate}% in the second. Each estimate has a margin of error of ${spread} percentage points.`,
+        question: "Which conclusion is best supported by these results?",
+        correct: "The two population percentages could be equal, because the plausible ranges overlap",
+        distractors: [
+          "The second population percentage is greater, because its sample estimate is greater",
+          `The two population percentages differ by exactly ${gap} percentage points`,
+          "Neither estimate is usable, because the two plausible ranges overlap"
+        ],
+        explanation: `The ranges are ${firstEstimate - spread}%–${firstEstimate + spread}% and ${secondEstimate - spread}%–${secondEstimate + spread}%. Because they overlap, the difference of ${gap} percentage points between the samples does not establish a difference between the populations.`,
+        parameters: { setting, firstEstimate, secondEstimate, gap, spread }
       });
     }
     if (mode < 3) {
@@ -1353,7 +1463,11 @@
     return conceptual(ctx, {
       recipe: "generalize-random-sample", stimulus: `A researcher takes a large random sample from all students enrolled in the ${district} School District and finds that ${percent}% prefer a later start time.`,
       question: "To which group can the result most appropriately be generalized?", correct: "All students enrolled in that school district",
-      distractors: ["All students in the country", "Only the students who answered yes", "All adults who live in the district"],
+      distractors: [
+        "Students enrolled in every school district in the state",
+        "The students in the random sample who prefer a later start time",
+        `All adults enrolled in any program the ${district} School District runs`
+      ],
       explanation: `A well-drawn random sample supports generalization to the population from which it was randomly selected: the district's enrolled students.`, parameters: { percent, district }
     });
   }
