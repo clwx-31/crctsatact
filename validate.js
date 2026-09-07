@@ -7,7 +7,7 @@ require("./rw-generator.js");
 require("./test-engine.js");
 
 const BASELINE_SEED = "baseline-v3";
-const MINIMUM_RECIPES = 153;   // a floor, so adding a recipe is not a failure
+const MINIMUM_RECIPES = 200;   // a floor, so adding a recipe is not a failure
 const STRESS_SEED_COUNT = 100;
 const EXPECTED_SKILLS = {
   "Reading and Writing": [
@@ -461,6 +461,7 @@ const HEURISTIC_CEILING = 0.4;      // chance is 0.25 on a 4-choice item
 // guessing is worth about 30% against a 25% baseline on the current bank.
 const RW_DISTINCT_FLOOR = 50;       // every R&W item in a skill must be distinct
 const MATH_HARD_TEMPLATE_FLOOR = 3; // 8 hard questions may not come from 1-2 molds
+const TIER_SHAPE_FLOOR = 4;         // distinct item shapes within one skill's tier in one set
 const VISIBLY_LONGER_CHARS = 12;   // a length edge smaller than this is not a usable cue
 
 const HEURISTIC_STOPWORDS = new Set(
@@ -565,15 +566,37 @@ if (straddling) {
 }
 
 // Decorative digits must not be the only thing separating two questions.
+// Math is exempt here because a different coefficient genuinely changes the work
+// a Math item asks for. That exemption is not a licence to repeat one mold: the
+// per-tier shape floor below is what holds Math to real item variation.
 for (const skill of skillNames) {
   const items = questions.filter((question) => question.skill === skill);
-  if (items[0].section === "Math") continue; // numeric parameters are genuine content in Math
+  if (items[0].section === "Math") continue;
   const distinct = new Set(items.map(contentSignature)).size;
   if (distinct < RW_DISTINCT_FLOOR) {
     fail(
       `${skill}: only ${distinct} of ${items.length} questions are distinct once decorative digits are ` +
       `normalized (floor is ${RW_DISTINCT_FLOOR}). Years and counts are not item variation.`
     );
+  }
+}
+
+// A student working one tier of one skill must not meet the same item shape over
+// and over. Counted with digits normalized, so a rewritten sample size or growth
+// factor does not register as a second shape.
+for (const skill of skillNames) {
+  const items = questions.filter((question) => question.skill === skill);
+  for (const difficulty of ["Easy", "Medium", "Hard"]) {
+    for (const set of [1, 2]) {
+      const tier = items.filter((question) => question.difficulty === difficulty && question.practiceSet === set);
+      const shapes = new Set(tier.map(contentSignature)).size;
+      if (shapes < TIER_SHAPE_FLOOR) {
+        fail(
+          `${skill} (${difficulty.toLowerCase()}, set ${set}): its ${tier.length} questions take only ${shapes} ` +
+          `distinct shape(s) once decorative digits are normalized; the floor is ${TIER_SHAPE_FLOOR}.`
+        );
+      }
+    }
   }
 }
 
@@ -600,7 +623,9 @@ if (failures.length) {
 
 console.log("Question bank validation passed.");
 console.log("1,550 unique questions: 550 Reading and Writing, 1,000 Math.");
-console.log(`31 exact skill selectors and ${MINIMUM_RECIPES} problem recipes per set; every skill has two unique 25-question sets (8 easy, 9 medium, 8 hard per set). `);
+const baselineRecipeCount = new Set(questions.filter((question) => question.practiceSet === 1).map((question) => question.meta.recipe)).size;
+console.log(`31 exact skill selectors and ${baselineRecipeCount} problem recipes per set; every skill has two unique 25-question sets (8 easy, 9 medium, 8 hard per set).`);
+console.log(`Every skill tier carries at least ${TIER_SHAPE_FLOOR} distinct item shapes per set.`);
 console.log(`${mathTypes.mcq} Math multiple-choice and ${mathTypes.spr} Math student-produced response questions.`);
 console.log(`Deterministic generation, ${STRESS_SEED_COUNT} alternate seeds, response formats, choices, tables, figures, and independent numeric answer calculations passed.`);
 console.log("Answer-specific coaching, 31 skill mini-tests, combined mini-tests, section tests, full-test blueprints, and monotonic score estimates passed.");
