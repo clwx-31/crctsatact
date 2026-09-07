@@ -141,6 +141,8 @@ function auditMathAnswer(question) {
     }
     case "two-variable-data/model-prediction": return requireNumericAnswer(question, p.m * p.x + p.b);
     case "two-variable-data/residual": return requireNumericAnswer(question, p.observed - p.predicted);
+    case "two-variable-data/model-prediction-reverse": return requireNumericAnswer(question, (p.targetY - p.b) / p.m);
+    case "two-variable-data/scatterplot-read-value": return requireNumericAnswer(question, p.points.find((point) => point[0] === p.readX)[1]);
     case "probability/independent-intersection": return requireNumericAnswer(question, p.pA * p.pB);
     case "probability/addition-rule": return requireNumericAnswer(question, p.pA + p.pB - p.overlap);
     case "probability/expected-count": return requireNumericAnswer(question, p.probability * p.trials);

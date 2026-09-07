@@ -1144,30 +1144,84 @@
     });
   }
 
+  // Five paired-data settings, so a line of best fit is not always training
+  // hours against a performance score.
+  const PAIRED_CONTEXTS = [
+    { xName: "hours of training", yName: "performance score", xUnit: "hour of training", yUnit: "points" },
+    { xName: "weeks since planting", yName: "plant height", xUnit: "week", yUnit: "centimeters" },
+    { xName: "hundreds of dollars spent on advertising", yName: "daily sales", xUnit: "hundred dollars spent", yUnit: "sales" },
+    { xName: "minutes of daily reading", yName: "vocabulary score", xUnit: "minute of reading", yUnit: "points" },
+    { xName: "years of experience", yName: "weekly output", xUnit: "year of experience", yUnit: "units" }
+  ];
+
   function twoVariableData(ctx) {
     const { rng, difficulty, index } = ctx;
     const mode = index % 6;
+    const tierMode = index % 4;
+    const context = pick(rng, PAIRED_CONTEXTS);
     const m = nonzero(rng, 2, 9);
     const b = int(rng, 5, 30);
-    if (difficulty === "Easy") {
+    if (difficulty === "Easy" && tierMode === 0) {
       const x = int(rng, 3, 12);
       const predicted = m * x + b;
       return numeric(ctx, {
-        recipe: "model-prediction", stimulus: `A line of best fit for paired data is y = ${linearText(m, "x", b)}.`,
+        recipe: "model-prediction", stimulus: `A line of best fit relating x, ${context.xName}, to y, ${context.yName}, is y = ${linearText(m, "x", b)}.`,
         question: `What y-value does the model predict when x = ${x}?`, correct: predicted,
         distractors: [m + x + b, predicted - b, predicted + m],
         explanation: `Substitute x = ${x}: y = ${m}(${x}) + ${b} = ${predicted}.`, parameters: { m, b, x, predicted }
       });
     }
-    if (difficulty === "Medium" && mode < 3) {
-      return conceptual(ctx, {
-        recipe: "slope-interpretation", stimulus: `A line of best fit y = ${linearText(m, "x", b)} relates x hours of training to a performance score y.`,
-        question: `What is the best interpretation of ${m}?`, correct: `The predicted score increases by ${m} points for each additional hour of training.`,
-        distractors: [`The predicted score is ${m} when training time is zero.`, `The predicted training time increases by ${m} hours for each score point.`, `Every participant's score is exactly ${m} points.`],
-        explanation: `The slope gives predicted change in y for a 1-unit increase in x: ${m} score points per training hour.`, parameters: { m, b }
+    if (difficulty === "Easy" && tierMode === 1) {
+      const readX = int(rng, 2, 5);
+      const points = [1, 2, 3, 4, 5].map((x) => [x, m * x + b + pick(rng, [-2, -1, 0, 1, 2])]);
+      const target = points.find((point) => point[0] === readX);
+      return numeric(ctx, {
+        recipe: "scatterplot-read-value", figure: { kind: "scatter", label: `${context.yName} against ${context.xName}`, points },
+        question: `In the scatterplot, what is the y-value of the point whose x-value is ${readX}?`, correct: target[1],
+        distractors: [readX, target[1] + m, target[1] - 1],
+        explanation: `Find the point directly above x = ${readX} and read its height: y = ${target[1]}.`,
+        parameters: { points, readX, value: target[1] }
       });
     }
-    if (difficulty === "Medium") {
+    if (difficulty === "Easy" && tierMode === 2) {
+      return conceptual(ctx, {
+        recipe: "intercept-interpretation", stimulus: `A line of best fit relating x, ${context.xName}, to y, ${context.yName}, is y = ${linearText(m, "x", b)}.`,
+        question: `What is the best interpretation of ${b} in this model?`,
+        correct: `The model predicts ${b} ${context.yUnit} when x is 0`,
+        distractors: [
+          `The model predicts ${b} more ${context.yUnit} for each additional ${context.xUnit}`,
+          `The model predicts ${b} ${context.yUnit} for every value of x`,
+          `The largest value the model predicts for y is ${b} ${context.yUnit}`
+        ],
+        explanation: `Substituting x = 0 leaves y = ${b}, so ${b} is the predicted ${context.yName} at x = 0. The per-unit change is the slope, ${m}.`,
+        parameters: { m, b }
+      });
+    }
+    if (difficulty === "Easy") {
+      const x = int(rng, 3, 12);
+      const targetY = m * x + b;
+      return numeric(ctx, {
+        recipe: "model-prediction-reverse", stimulus: `A line of best fit relating x, ${context.xName}, to y, ${context.yName}, is y = ${linearText(m, "x", b)}.`,
+        question: `For what x-value does the model predict y = ${targetY}?`, correct: x,
+        distractors: [targetY - b, targetY, x + m],
+        explanation: `Solve ${targetY} = ${m}x + ${b}. Subtracting gives ${m}x = ${targetY - b}, so x = ${x}.`,
+        parameters: { m, b, x, targetY }
+      });
+    }
+    if (difficulty === "Medium" && tierMode === 0) {
+      return conceptual(ctx, {
+        recipe: "slope-interpretation", stimulus: `A line of best fit y = ${linearText(m, "x", b)} relates x, ${context.xName}, to y, ${context.yName}.`,
+        question: `What is the best interpretation of ${m}?`, correct: `The predicted ${context.yName} increases by ${m} ${context.yUnit} for each additional ${context.xUnit}`,
+        distractors: [
+          `The predicted ${context.yName} is ${m} ${context.yUnit} when x is 0`,
+          `The predicted x increases by ${m} ${context.xUnit} for each additional point of ${context.yName}`,
+          `Every case in the data set has a ${context.yName} of exactly ${m} ${context.yUnit}`
+        ],
+        explanation: `The slope gives the predicted change in y for a 1-unit increase in x: ${m} ${context.yUnit} per ${context.xUnit}.`,
+        parameters: { m, b }
+      });
+    }
+    if (difficulty === "Medium" && tierMode === 1) {
       const x = int(rng, 3, 10);
       const predicted = m * x + b;
       const residual = nonzero(rng, -8, 8);
@@ -1179,16 +1233,56 @@
         explanation: `The predicted value is ${predicted}. Residual = observed − predicted = ${observed} − ${predicted} = ${residual}.`, parameters: { m, b, x, predicted, observed, residual }
       });
     }
-    if (mode < 3) {
+    if (difficulty === "Medium" && tierMode === 2) {
+      const low = int(rng, 1, 4);
+      const high = low + int(rng, 6, 12);
+      const far = high * int(rng, 4, 8);
+      return conceptual(ctx, {
+        recipe: "extrapolation-caution", stimulus: `A line of best fit was computed from data in which ${context.xName} ranged from ${low} to ${high}.`,
+        question: `Why is the model's prediction at x = ${far} unreliable?`,
+        correct: `That x-value lies far outside the range the data covered`,
+        distractors: [
+          `A line of best fit can only be evaluated at the x-values in the data`,
+          `The prediction at x = ${far} is larger than any y-value in the data`,
+          `A line of best fit is unreliable whenever x is greater than ${high}`
+        ],
+        explanation: `The relationship was only observed for x between ${low} and ${high}. Extending it to x = ${far} assumes a pattern that was never measured; the model can still be evaluated between the observed values.`,
+        parameters: { low, high, far }
+      });
+    }
+    if (difficulty === "Medium") {
+      const points = [1, 2, 3, 4, 5].map((x) => [x, m * x + b + pick(rng, [-2, -1, 0, 1, 2])]);
+      return conceptual(ctx, {
+        recipe: "fit-line-from-scatterplot", figure: { kind: "scatter", label: `${context.yName} against ${context.xName}`, points },
+        question: "Which equation could represent the line of best fit for the data shown?", correct: `y = ${linearText(m, "x", b)}`,
+        distractors: [`y = ${linearText(-m, "x", b)}`, `y = ${linearText(m, "x", -b)}`, `y = ${linearText(b, "x", m)}`],
+        explanation: `The points rise about ${m} units for each 1-unit step in x and sit near y = ${b} when x is 0, so y = ${linearText(m, "x", b)} fits. A negative slope would fall as x increases.`,
+        parameters: { m, b, points }
+      });
+    }
+    if (tierMode === 0) {
       const factor = pick(rng, ctx.practiceSet === 2 ? [0.5, 0.75, 0.8, 1.05, 1.3, 1.4, 1.6, 1.75, 2.5] : [1.1, 1.2, 1.25, 1.5, 2]);
       return conceptual(ctx, {
-        recipe: "model-selection", stimulus: `In a data set, each 1-unit increase in x is associated with multiplying y by approximately ${factor}.`,
+        recipe: "model-selection", stimulus: `In a data set relating ${context.xName} to ${context.yName}, each 1-unit increase in x is associated with multiplying y by approximately ${factor}.`,
         question: "Which type of model is most appropriate?", correct: "An exponential model",
         distractors: ["A linear model", "A constant model", "No model, because y changes"],
         explanation: `A roughly constant multiplicative change for equal x-intervals is the defining pattern of exponential growth or decay.`, parameters: { factor }
       });
     }
-    if (mode === 5) {
+    if (tierMode === 1) {
+      const initial = pick(rng, [3, 4, 5, 6, 8]);
+      const growth = pick(rng, [2, 3]);
+      const rows = [0, 1, 2, 3].map((x) => [x, initial * growth ** x]);
+      return conceptual(ctx, {
+        recipe: "exponential-model-from-table",
+        table: { caption: `${context.yName} at each value of x`, headers: ["x", "y"], rows },
+        question: "Which function models the values in the table?", correct: `y = ${initial}(${growth})^x`,
+        distractors: [`y = ${initial}x + ${growth}`, `y = ${growth}(${initial})^x`, `y = ${initial}(${growth})x`],
+        explanation: `At x = 0 the value is ${initial}, so ${initial} is the initial amount. Each step in x multiplies y by ${growth}, which makes ${growth} the base: y = ${initial}(${growth})^x.`,
+        parameters: { initial, growth, rows }
+      });
+    }
+    if (tierMode === 2) {
       const slope = pick(rng, [2, 3, 4]);
       const intercept = int(rng, 5, 20);
       const xVal = pick(rng, [8, 10, 12, 15, 20]);
@@ -1207,7 +1301,7 @@
     const sampleX = [1, 2, 3, 4, 5];
     const sampleY = sampleX.map((x) => m * x + b + pick(rng, [-2, -1, 0, 1, 2]));
     return conceptual(ctx, {
-      recipe: "association-direction", figure: { kind: "scatter", label: "Scatterplot of paired observations", points: sampleX.map((x, i) => [x, sampleY[i]]) },
+      recipe: "association-direction", figure: { kind: "scatter", label: `${context.yName} against ${context.xName}`, points: sampleX.map((x, i) => [x, sampleY[i]]) },
       question: "Which statement best describes the association?", correct: "There is a positive association: y generally increases as x increases.",
       distractors: ["There is a negative association: y generally decreases as x increases.", "There is no association because the points are not identical.", "The association proves that increasing x causes y to increase."],
       explanation: `The y-values generally rise with x, indicating positive association. Association alone does not establish causation.`, parameters: { sampleX, sampleY }
