@@ -2,7 +2,7 @@
 
 **Audience:** Form SAT Practice maintainers
 
-**Research dates:** 2026-09-02 through 2026-09-03, with an item-authenticity audit on 2026-09-03 and a cold construct-validity re-audit on 2026-09-04
+**Research dates:** 2026-09-02 through 2026-09-03, with an item-authenticity audit on 2026-09-03, a cold construct-validity re-audit on 2026-09-04, and a Math item-variety audit on 2026-09-07
 
 **Scope:** Current digital SAT Math and Reading and Writing content boundaries, item structures, and their implementation as reproducible original drills.
 
@@ -40,6 +40,18 @@ A cold re-audit on 2026-09-04 found that two of the three v2 claims did not hold
 
 The `baseline-v3` pass rebuilds the affected skills from authored, difficulty-tagged case pools and adds construct-validity checks to the validator so these properties are measured rather than asserted. The lesson for future passes is that the earlier report described intentions accurately but was not checked against generated output; the claims in this document should be re-derived from the bank before they are relied on.
 
+### Correction: the v3 checks exempted Math from the finding that motivated them
+
+A follow-up audit on 2026-09-07 re-derived the v3 claims from generated output, as the paragraph above says future passes should. The Reading and Writing claims held: all eleven skills produce fifty distinct items, and no item straddles a difficulty label. The Math claims did not.
+
+- **The distinctness check skipped Math entirely.** Its stated reason — that numeric parameters are genuine content in Math — is true when the numbers change the work, and false when they do not. All eight easy items in Inference from sample statistics asked "Which quantity is a sample statistic?" about a proposal and some city residents, with a sample size and a percentage that did not affect the answer. All nine medium items were one margin-of-error interval. Probability's easy tier was one bag of blue and red tiles, eight times.
+- **The v3 pass raised the hard tier only.** The `MATH_HARD_TEMPLATE_FLOOR` added then applied to hard tiers alone. Measured as distinct item shapes per tier per set with digits normalized, ten Math skills sat at three or fewer, and fifteen of the twenty drew their whole easy tier from one recipe. A single recipe is not automatically a defect — solving eight different linear equations is eight pieces of work — but it becomes one when the recipe's only variation is a number the answer does not depend on.
+- **Where variety existed, some of it was luck.** Several tiers reached four shapes on the baseline seed only because a random pick happened to draw four different values. Bumping the baseline seed to v4 dropped the statistical-claims easy tier to two, and running the floor across a hundred alternate seeds found six more tiers that failed on at least one seed.
+
+The `baseline-v4` pass rebuilds those tiers with seventy-five added recipes, raising the catalog from 153 to 228, and adds a per-tier shape floor of four that runs on the baseline bank and on every alternate seed. A 400-seed sweep now finds no tier below the floor, where the same sweep found seven before the change. The audit gate added in v3 did its job throughout: every new numeric recipe was reported as unchecked until an independent recalculation was written for it, and the difficulty-straddle check caught a new easy inequality recipe that reproduced the hard tier's exactly.
+
+The lesson from the v2 correction repeats with a refinement. It is not enough to re-derive claims from generated output; a property that depends on a random draw must be measured across many draws, or the measurement records a coincidence.
+
 The framework also explains that College Board keeps the number of child questions from each automated parent model relatively low, reviews every permitted Reading and Writing variable in advance, constrains Math parameters for equivalent challenge, and subjects content to expert, editorial, fairness, and statistical review. The local generators can adopt the first three design principles but cannot reproduce College Board's field testing or psychometric calibration. This remains an important limit on any “true SAT” claim.
 
 ### Taxonomy resolution
@@ -52,7 +64,7 @@ The framework treats textual and quantitative Command of Evidence as distinct te
 
 The recipe catalog covers every testing point named in the framework, including algebraic manipulation and equations; nonlinear functions and systems; ratios, percentages, data, probability, inference, and study design; area, volume, similarity, angle relationships, trigonometry, unit-circle relationships, and circles. Reading and Writing recipes cover central ideas, details, evidence, inference, vocabulary in context, text purpose and structure, cross-text connections, rhetorical synthesis, transitions, sentence boundaries, and form/structure/sense conventions.
 
-Two equal 25-question sets support isolated repetition without reusing content. Each set spans the same 153 generator recipes. The skill banks intentionally do not reproduce the domain proportions in a real adaptive module; test-mode forms use separate blueprint quotas. The detailed recipe-to-skill inventory is maintained in `GENERATION.md`.
+Two equal 25-question sets support isolated repetition without reusing content. Each set spans the same 228 generator recipes. The skill banks intentionally do not reproduce the domain proportions in a real adaptive module; test-mode forms use separate blueprint quotas. The detailed recipe-to-skill inventory is maintained in `GENERATION.md`.
 
 ### Generation and answer integrity
 

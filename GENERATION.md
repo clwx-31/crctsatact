@@ -15,7 +15,7 @@ This yields:
 
 Equal-sized skill banks are for targeted drilling. They intentionally do not imitate the domain proportions of a 44-question adaptive Math section or a 54-question Reading and Writing section.
 
-Each set spans 153 distinct generator recipes across the 31 official skill categories. The validator requires both sets to contain the same recipe catalog, prohibits duplicate question content between them, and enforces a floor on the number of recipes so a recipe cannot quietly disappear.
+Each set spans 228 distinct generator recipes across the 31 official skill categories. The validator requires both sets to contain the same recipe catalog, prohibits duplicate question content between them, and enforces a floor on the number of recipes so a recipe cannot quietly disappear.
 
 ## Reproducible seeds
 
@@ -35,14 +35,14 @@ This floor is the reason the earlier generator prefixed each item with a generic
 
 Every question records `practiceSet`, `meta.practiceSet`, `meta.recipe`, `meta.generationVersion`, `meta.seed`, `meta.variant`, `meta.parameters`, and `meta.generationAttempt`. IDs include the skill slug, versioned seed hash, and variant number, so Set 1 progress cannot overwrite Set 2 progress and a revised generator cannot reuse an earlier question's saved answer. Generation checks content signatures across both sets and stops with an error rather than accepting a duplicate after its retry limit.
 
-The default seed is `baseline-v3`. This version marks the construct-validity pass of September 2026, so saved answers from the earlier bank cannot be attached to revised questions. The dashboard's **Today's set** button uses `daily-YYYY-MM-DD`; **New variant** uses `variant-N`. A developer can reproduce a bank directly:
+The default seed is `baseline-v4`. This version marks the item-variety pass of September 2026, which rebuilt the Math easy and medium tiers, so saved answers from the earlier bank cannot be attached to revised questions. The dashboard's **Today's set** button uses `daily-YYYY-MM-DD`; **New variant** uses `variant-N`. A developer can reproduce a bank directly:
 
 ```js
 const math = window.buildSATMathQuestions("daily-2026-09-03");
 const readingWriting = window.buildSATRWQuestions("daily-2026-09-03");
 ```
 
-Those calls return Set 1. Every ID and metadata record also includes the `construct-validity-v3` generator version, preventing saved daily or numbered-variant answers from being attached to content produced by a later generator. To produce both permanent sets exactly as the website does:
+Those calls return Set 1. Every ID and metadata record also includes the `construct-validity-v4` generator version, preventing saved daily or numbered-variant answers from being attached to content produced by a later generator. To produce both permanent sets exactly as the website does:
 
 ```js
 const mathSets = window.buildSATMathQuestionSets("daily-2026-09-03");
@@ -113,6 +113,7 @@ Difficulty is a property of the item, not of the slot it lands in.
 
 - In Reading and Writing, each authored case states the tier it was written for. Easy cases oppose plainly different alternatives; Medium cases require tracking the direction of a relationship; Hard cases place a near-miss among the distractors.
 - In Math, difficulty follows the recipe. A recipe belongs to exactly one tier, and every hard tier draws on at least three recipes so eight hard questions are not eight instances of one mold.
+- In every section, each tier of each skill must produce at least four distinct item shapes per set, counted with digits normalized. A rewritten sample size, growth factor, or coefficient does not count as a second shape. The check runs on the baseline bank and on all 100 alternate seeds, so a tier cannot satisfy it on a lucky draw.
 - The validator fails the bank if one question appears under more than one difficulty label.
 
 These remain instructional tiers. They have not been equated on a student population, and nothing here estimates an item's difficulty from response data.
@@ -126,11 +127,12 @@ These remain instructional tiers. They have not been equated on a student popula
 5. Keep Math student-response answers within the accepted integer, decimal, or fraction conventions, and always provide an accepted response that fits the SAT's five-character answer grid. Do not require symbols in a student response.
 6. Add an independent recalculation case to `validate.js` for any new numerical recipe. The validator now fails if a recipe with a numeric answer has none, so this is enforced rather than remembered.
 7. Tag every new Reading and Writing case with the difficulty it was written for, and keep each recipe family present at least twice per tier so both practice sets receive it.
-8. Run all validation commands in `README.md` and inspect representative easy, medium, and hard output.
+8. Give each tier of a skill at least four recipes, or one recipe with genuinely different question forms. A single recipe whose only variation is its numbers will fail the per-tier shape floor on some seed even when it passes on the baseline.
+9. Run all validation commands in `README.md` and inspect representative easy, medium, and hard output.
 
 ## Quality boundaries
 
 - All items are original and derived from skill definitions and question structures, not copied official questions.
 - Difficulty is an instructional construction based on steps, abstraction, representation, and distractor closeness. It has not been statistically equated on a student population.
 - A generated bank is a drill library, not an adaptive scored SAT form. Use official Bluebook practice tests for score prediction, timing, and adaptive-module experience.
-- Generator changes that alter an existing seed's output should use a new baseline version such as `baseline-v3` so old progress remains interpretable.
+- Generator changes that alter an existing seed's output should use a new baseline version such as `baseline-v4` so old progress remains interpretable.
