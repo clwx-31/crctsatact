@@ -273,6 +273,13 @@ for (const question of questions) {
     if (question.figure.points?.some((point) => !Array.isArray(point) || point.length !== 2 || point.some((coordinate) => !Number.isFinite(coordinate)))) fail(`${question.id} has a nonnumeric figure point.`);
   }
   if (/Alternative \d|NaN|Infinity|undefined/.test(JSON.stringify(question))) fail(`${question.id} contains a generator artifact.`);
+  // Only what a student reads. Floating-point noise inside meta.parameters is
+  // expected; the answer audit compares those with a tolerance.
+  const displayedText = JSON.stringify([
+    question.stimulus, question.question, question.explanation,
+    question.choices || null, question.answerDisplay || null, question.table || null
+  ]);
+  if (/\d\.\d{5,}/.test(displayedText)) fail(`${question.id} shows an unrounded floating-point value.`);
 }
 
 const specifications = [

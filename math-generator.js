@@ -92,6 +92,10 @@
 
   function cleanMathText(value) {
     return String(value)
+      // Binary floating point leaks values like 0.44999999999999996 into
+      // distractors and explanations. Round anything longer than the four
+      // decimals numberText produces.
+      .replace(/\d+\.\d{5,}/g, (number) => String(Number(Number(number).toFixed(4))))
       .replace(/− \((-?\d+(?:\.\d+)?)\)/g, (_, number) => Number(number) < 0 ? `+ ${Math.abs(Number(number))}` : `− ${number}`)
       .replace(/\+ \((-?\d+(?:\.\d+)?)\)/g, (_, number) => Number(number) < 0 ? `− ${Math.abs(Number(number))}` : `+ ${number}`)
       .replace(/\(−(\d+(?:\.\d+)?)\)/g, "(−$1)");
@@ -328,7 +332,7 @@
         recipe: "solve-for-input", stimulus: `The linear function f is defined by f(x) = ${linearText(m, "x", b)}.`,
         question: `For what value of x does f(x) = ${value}?`, correct: x,
         distractors: [value, value - b, m + b],
-        explanation: `Set ${linearText(m, "x", b)} equal to ${value}. Subtracting ${b} gives ${m}x = ${value - b}, so x = ${x}.`,
+        explanation: `Set ${linearText(m, "x", b)} equal to ${value}. ${b < 0 ? `Adding ${-b}` : `Subtracting ${b}`} gives ${m}x = ${value - b}, so x = ${x}.`,
         parameters: { m, b, x, value }
       });
     }
@@ -476,7 +480,7 @@
         stimulus: `Consider the system x + y = ${x + y} and ${a}x ${signedTerm(b, "y")} = ${a * x + b * y}.`,
         question: "Which ordered pair is the solution to the system?", correct: `(${x}, ${y})`,
         distractors: [`(${y}, ${x})`, `(${x + 1}, ${y - 1})`, `(${-x}, ${-y})`],
-        explanation: `Substituting x = ${x} and y = ${y} satisfies both equations: ${x} + ${y} = ${x + y}, and ${a}(${x}) ${signedTerm(b)}(${y}) = ${a * x + b * y}. The reversed pair (${y}, ${x}) fails the second equation unless the coefficients happen to match.`,
+        explanation: `Substituting x = ${x} and y = ${y} satisfies both equations: ${x} ${signedTerm(y)} = ${x + y}, and ${a}(${x}) ${signedTerm(b)}(${y}) = ${a * x + b * y}. The reversed pair (${y}, ${x}) fails the second equation unless the coefficients happen to match.`,
         parameters: { x, y, a, b }
       });
     }
@@ -488,7 +492,7 @@
       return numeric(ctx, {
         recipe: "substitution-known-y", question: `The system y = ${linearText(m, "x", b)} and y = ${known} has one solution. What is the value of x?`, correct: x,
         distractors: [known, known - b, m + b],
-        explanation: `Both equations give y, so ${linearText(m, "x", b)} = ${known}. Subtracting ${b} and dividing by ${m} gives x = ${x}.`,
+        explanation: `Both equations give y, so ${linearText(m, "x", b)} = ${known}. ${b < 0 ? `Adding ${-b}` : `Subtracting ${b}`} and dividing by ${m} gives x = ${x}.`,
         parameters: { m, b, x, known }
       });
     }
@@ -764,7 +768,9 @@
       const outer = int(rng, 2, 6);
       const inner = int(rng, 2, 8);
       const constant = int(rng, 2, 9);
-      const subtracted = int(rng, 2, 8);
+      // A distractor uses inner − subtracted, so an equal pair would print "0x".
+      let subtracted = int(rng, 2, 8);
+      while (subtracted === inner) subtracted = int(rng, 2, 8);
       return conceptual(ctx, {
         recipe: "distribute-and-combine",
         question: `Which expression is equivalent to ${outer}(${inner}x + ${constant}) − ${subtracted}x?`,
@@ -870,8 +876,8 @@
       const cube = cubeRoot ** 3;
       return numeric(ctx, {
         recipe: "cube-root-equation", question: `If x³ = ${cube}, what is the value of x?`, correct: cubeRoot,
-        distractors: [cube / 3, cubeRoot * 3, cube - cubeRoot],
-        explanation: `Take the cube root of both sides: x = ∛${cube} = ${cubeRoot}, because ${cubeRoot} × ${cubeRoot} × ${cubeRoot} = ${cube}. Dividing by 3 instead would give ${cube / 3}.`,
+        distractors: [cubeRoot * 3, cubeRoot * cubeRoot, cube - cubeRoot],
+        explanation: `Take the cube root of both sides: x = ∛${cube} = ${cubeRoot}, because ${cubeRoot} × ${cubeRoot} × ${cubeRoot} = ${cube}. Multiplying by 3 instead would give ${cubeRoot * 3}.`,
         parameters: { cubeRoot, cube }
       });
     }
@@ -986,7 +992,7 @@
       return conceptual(ctx, {
         recipe: "parabola-horizontal-roots", stimulus: `The system y = x² and y = ${square} has two solutions.`,
         question: "What are the x-coordinates of those solutions?", correct: `x = −${root} and x = ${root}`,
-        distractors: [`x = ${root} only`, `x = ${square} and x = −${square}`, `x = ${square / 2} and x = −${square / 2}`],
+        distractors: [`x = ${root} only`, `x = ${square} and x = −${square}`, `x = ${root} and x = 0`],
         explanation: `Setting the two expressions equal gives x² = ${square}, so x = ±${root}. Both points, (−${root}, ${square}) and (${root}, ${square}), lie on each graph.`,
         parameters: { root, square }
       });
@@ -1513,10 +1519,10 @@
       });
     }
     if (tierMode === 2) {
-      const groupOneCount = int(rng, 8, 16);
-      const groupTwoCount = int(rng, 4, 12);
+      const [groupOneCount, groupTwoCount] = pick(rng, [[12, 4], [15, 5], [9, 3], [18, 6], [21, 7]]);
+      const step = int(rng, 1, 3);
       const groupOneMean = int(rng, 60, 75);
-      const groupTwoMean = groupOneMean + pick(rng, [5, 10, 15]);
+      const groupTwoMean = groupOneMean + 4 * step;
       const combined = (groupOneCount * groupOneMean + groupTwoCount * groupTwoMean) / (groupOneCount + groupTwoCount);
       return numeric(ctx, {
         recipe: "combined-mean-two-groups",
@@ -1524,7 +1530,7 @@
         question: "What is the mean of all the scores combined?", correct: numberText(combined),
         distractors: [numberText((groupOneMean + groupTwoMean) / 2), numberText(groupOneMean + groupTwoMean), numberText(groupTwoMean - groupOneMean)],
         explanation: `Combine the totals, not the means: ${groupOneCount}(${groupOneMean}) + ${groupTwoCount}(${groupTwoMean}) = ${groupOneCount * groupOneMean + groupTwoCount * groupTwoMean} across ${groupOneCount + groupTwoCount} scores, giving ${numberText(combined)}. Averaging the two means would ignore the different group sizes.`,
-        parameters: { groupOneCount, groupTwoCount, groupOneMean, groupTwoMean, combined }
+        parameters: { groupOneCount, groupTwoCount, groupOneMean, groupTwoMean, step, combined }
       });
     }
     const base = [int(rng, 10, 20), int(rng, 21, 30), int(rng, 31, 40), int(rng, 41, 50)];
@@ -2414,7 +2420,7 @@
         recipe: "identify-trig-ratio", stimulus: `In a right triangle, acute angle θ has an opposite side of length ${a}, an adjacent side of length ${b}, and a hypotenuse of length ${c}.`,
         question: "What is tan θ?", correct: fraction(a, b),
         distractors: [fraction(a, c), fraction(b, c), fraction(b, a)],
-        explanation: `Tangent is opposite over adjacent: ${a}/${b} = ${fraction(a, b)}. Dividing by the hypotenuse ${c} instead would give the sine or the cosine.`,
+        explanation: `Tangent is opposite over adjacent: ${a}/${b}${`${a}/${b}` === fraction(a, b) ? "" : ` = ${fraction(a, b)}`}. Dividing by the hypotenuse ${c} instead would give the sine or the cosine.`,
         parameters: { a, b, c }
       });
     }
