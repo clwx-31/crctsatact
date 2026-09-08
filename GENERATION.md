@@ -53,35 +53,35 @@ const readingWritingSets = window.buildSATRWQuestionSets("daily-2026-09-03");
 
 ### Algebra
 
-- **Linear equations in one variable:** one- and two-step equations, distribution, variables on both sides, contextual modeling, zero/one/infinitely-many-solution reasoning, and solving for the coefficient that leaves an equation with no solution.
-- **Linear functions:** evaluation, slope/intercept recognition and interpretation, slopes from points, rules from input/output pairs, intersections of linear rules, and interpreting a rate parameter in a contextual model.
+- **Linear equations in one variable:** one- and two-step equations, distribution, variables on both sides, one-step and multi-step contextual modeling, solving and then evaluating a further expression, zero/one/infinitely-many-solution reasoning, and solving for the coefficient that leaves an equation with no solution.
+- **Linear functions:** evaluation, solving for the input that produces a given output, slope/intercept recognition and interpretation, slopes from points, rules from input/output pairs, intersections of linear rules, and interpreting a rate parameter in a contextual model.
 - **Linear equations in two variables:** coordinate substitution, standard-form slope, coefficient interpretation, parallel/perpendicular lines, and the equation of a line through two given points.
-- **Systems of two linear equations:** direct solution, elimination, contextual systems, dependent/inconsistent systems, symmetric systems solved for x + y, and the coefficient that makes a system inconsistent.
-- **Linear inequalities:** positive- and negative-coefficient solution rules, point testing in two variables, contextual maximum constraints, systems of two inequalities, and solving for a constant from a stated boundary.
+- **Systems of two linear equations:** direct solution, elimination, substitution when one variable or one equation is already isolated, verifying an ordered pair against both equations, contextual systems, dependent/inconsistent systems, symmetric systems solved for x + y, and the coefficient that makes a system inconsistent.
+- **Linear inequalities:** positive- and negative-coefficient solution rules, the least integer satisfying a strict inequality, testing a candidate value, translating a budget constraint into an inequality, point testing in two variables, contextual maximum constraints, systems of two inequalities, and solving for a constant from a stated boundary.
 
 ### Advanced Math
 
-- **Equivalent expressions:** monic trinomial factoring, common factors, differences of squares, polynomial combination and multiplication, exponent quotients, rational expressions, rational-exponent/radical forms, and completing the square.
-- **Nonlinear equations in one variable:** quadratic roots and root relationships, discriminants, absolute value, radical, rational, exponential, and factored polynomial equations.
-- **Systems of equations in two variables:** verifying intersections, linear–quadratic root sums/products, tangent systems, circle–line intersection counts, and the horizontal line meeting a parabola exactly once.
+- **Equivalent expressions:** monic trinomial factoring, common factors, differences of squares, polynomial combination and multiplication, distributing before combining like terms, exponent products and quotients, rational expressions, rational-exponent/radical forms, and completing the square.
+- **Nonlinear equations in one variable:** quadratic roots and root relationships, roots read from factored form, discriminants, absolute value, radical, cube-root, rational, exponential, and factored polynomial equations.
+- **Systems of equations in two variables:** verifying intersections, counting the intersections of a parabola and a horizontal line, the x-coordinates where they meet, identifying a system with no real solution, linear–quadratic root sums/products, tangent systems, circle–line intersection counts, and the horizontal line meeting a parabola exactly once.
 - **Nonlinear functions:** quadratic evaluation, vertices, zeros, useful forms, exponential parameters and values, and function transformations.
 
 ### Problem-Solving and Data Analysis
 
-- **Ratios, rates, proportional relationships, and units:** unit rates, scale drawings, time/rate conversion, compound-unit conversion, density, and combined rates of two sources working together.
-- **Percentages:** percent of a quantity, discounts, reverse percentages, successive changes, subgroup percentages, growth factors, and recovering a total from a nested percentage.
-- **One-variable data:** mean, median, updated mean, range/spread comparisons, standard deviation, outlier effects, and recovering a missing value from a stated mean.
-- **Two-variable data:** model prediction, slope interpretation, residuals, model selection, association, tables, scatterplots, and the gap between a predicted and an observed value.
-- **Probability and conditional probability:** simple and conditional probability, two-way tables, conditional probability within a row of a two-way table, independent intersections, unions, and expected counts.
-- **Inference from sample statistics and margin of error:** sample statistics, population estimates, intervals, interpreting a confidence interval, sample-size effects, and generalization.
-- **Evaluating statistical claims:** random samples, random assignment, observational confounding, self-selection, comparison groups, causation, generalizability, and what a randomly sampled observational study can and cannot establish.
+- **Ratios, rates, proportional relationships, and units:** unit rates, proportional scaling of a recipe, converting with a stated conversion factor, splitting a total by a part-to-part ratio, scale drawings, time/rate conversion, compound-unit conversion, density, and combined rates of two sources working together.
+- **Percentages:** percent of a quantity, what percent one number is of another, recovering the whole from a part, percent increase, discounts, reverse percentages, successive changes, subgroup percentages, growth factors, and recovering a total from a nested percentage.
+- **One-variable data:** mean, median with odd and even counts, mode, range, mean and median weighted by a frequency table, updated mean, the combined mean of two unequal groups, range/spread comparisons, standard deviation, outlier effects, and recovering a missing value from a stated mean.
+- **Two-variable data:** model prediction in both directions, reading a value off a scatterplot, slope and intercept interpretation, choosing a line of best fit for plotted data, residuals, the limits of extrapolating beyond the observed range, model selection, recovering an exponential model from a table, association, tables, scatterplots, and the gap between a predicted and an observed value.
+- **Probability and conditional probability:** simple probability, complements, probability from a frequency table, the union of two disjoint categories, two draws without replacement, conditional and joint probability from two-way tables, independent intersections, unions, and expected counts.
+- **Inference from sample statistics and margin of error:** sample statistics, what a margin of error does and does not describe, why a sample is drawn at random, plausible ranges and the values inside them, recovering an estimate and margin from a reported range, comparing two overlapping ranges, population estimates, interpreting a confidence interval, sample-size effects in both directions, and generalization.
+- **Evaluating statistical claims:** random samples, random assignment, the role of random selection, distinguishing observational studies from experiments, the purpose of a control group, the limits of a convenience sample, observational confounding, self-selection, comparison groups, causation, generalizability, and what a randomly sampled observational study can and cannot establish.
 
 ### Geometry and Trigonometry
 
 - **Area and volume:** rectangle and triangle measures, circle area, cylinder volume, prism surface area, similar-figure length/area/volume scaling, and recovering a cylinder's radius from its volume.
 - **Lines, angles, and triangles:** triangle sums, vertical/corresponding/supplementary/exterior angles, parallel-line relationships, similarity, and SAS sufficiency.
-- **Right triangles and trigonometry:** Pythagorean theorem, coordinate distance, special right triangles, sine/cosine/tangent, complementary angles, and unit-circle radians.
-- **Circles:** radius/diameter, circumference/area, equations, arc length, sector area, inscribed angles, and tangent lines.
+- **Right triangles and trigonometry:** the Pythagorean theorem for a hypotenuse or a missing leg, right-triangle area, coordinate distance, both special right triangles, identifying and computing sine/cosine/tangent, recovering a side from a given ratio, complementary angles and cofunctions within a triangle, and unit-circle radians.
+- **Circles:** radius/diameter, circumference/area, area from a given circumference, equations and the radius recovered from one, arc length, sector area, inscribed angles, and tangent lines.
 
 ## Reading and Writing recipe coverage
 
