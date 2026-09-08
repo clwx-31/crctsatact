@@ -6,7 +6,7 @@
     ...Array(9).fill("Medium"),
     ...Array(8).fill("Hard")
   ];
-  const GENERATOR_VERSION = "construct-validity-v4";
+  const GENERATOR_VERSION = "construct-validity-v5";
 
   const SKILLS = [
     { slug: "linear-equations-one", domain: "Algebra", name: "Linear equations in one variable", description: "Solve, create, and interpret linear equations in one variable." },
@@ -400,6 +400,19 @@
         recipe: "substitute-coordinate", question: `The point (${x}, y) lies on the line ${a}x ${signedTerm(b, "y")} = ${c}. What is the value of y?`, correct: y,
         distractors: [c - a * x, fraction(c - b * x, a), -y],
         explanation: `Substitute x = ${x}: ${a}(${x}) + ${b}y = ${c}. Solving gives y = ${y}.`, parameters: { a, b, c, x, y }
+      });
+    }
+    if (difficulty === "Medium" && mode === 2) {
+      const intercept = int(rng, -9, 9);
+      const gradient = nonzero(rng, 2, 6);
+      const xIntercept = fraction(-intercept, gradient);
+      return conceptual(ctx, {
+        recipe: "x-intercept-from-equation",
+        stimulus: `A line in the xy-plane is defined by y = ${linearText(gradient, "x", intercept)}.`,
+        question: "What is the x-coordinate of the line's x-intercept?", correct: xIntercept,
+        distractors: [String(intercept), fraction(intercept, gradient), String(gradient)],
+        explanation: `The x-intercept is where y = 0. Setting ${linearText(gradient, "x", intercept)} = 0 gives ${gradient}x = ${-intercept}, so x = ${xIntercept}. The value ${intercept} is the y-intercept instead.`,
+        parameters: { gradient, intercept }
       });
     }
     if (difficulty === "Medium" && mode < 3) {
@@ -1697,6 +1710,22 @@
         parameters: { slope, intercept, xVal, predicted, observed, gap }
       });
     }
+    if (tierMode === 3) {
+      const firstSlope = pick(rng, [2, 3, 4, 5]);
+      const slopeGap = pick(rng, [2, 3, 4]);
+      const secondSlope = firstSlope + slopeGap;
+      const crossing = int(rng, 3, 12);
+      const firstStart = int(rng, 40, 80);
+      const secondStart = firstStart - slopeGap * crossing;
+      return numeric(ctx, {
+        recipe: "compare-two-models",
+        stimulus: `Two linear models describe ${context.yName}: model P predicts ${linearText(firstSlope, "x", firstStart)} and model Q predicts ${linearText(secondSlope, "x", secondStart)}.`,
+        question: "For what value of x do the two models predict the same value?", correct: crossing,
+        distractors: [firstStart - secondStart, slopeGap, crossing + 1],
+        explanation: `Set the models equal: ${linearText(firstSlope, "x", firstStart)} = ${linearText(secondSlope, "x", secondStart)}. Collecting terms gives ${slopeGap}x = ${firstStart - secondStart}, so x = ${crossing}.`,
+        parameters: { firstSlope, secondSlope, firstStart, secondStart, slopeGap, crossing }
+      });
+    }
     const sampleX = [1, 2, 3, 4, 5];
     const sampleY = sampleX.map((x) => m * x + b + pick(rng, [-2, -1, 0, 1, 2]));
     return conceptual(ctx, {
@@ -1822,6 +1851,31 @@
         parameters: { survey, aYes, aNo, bYes, bNo }
       });
     }
+    if (difficulty === "Medium" && tierMode === 3) {
+      const pA = pick(rng, [0.3, 0.4, 0.5, 0.6]);
+      const pB = pick(rng, [0.2, 0.3, 0.4]);
+      const overlap = Math.min(pA, pB) / 2;
+      const union = pA + pB - overlap;
+      return numeric(ctx, {
+        recipe: "addition-rule", stimulus: `For events A and B, P(A) = ${pA}, P(B) = ${pB}, and P(A and B) = ${numberText(overlap)}.`,
+        question: "What is P(A or B)?", correct: numberText(union),
+        distractors: [numberText(pA + pB), numberText(overlap), numberText(pA * pB)],
+        explanation: `Use P(A or B) = P(A) + P(B) − P(A and B) = ${pA} + ${pB} − ${numberText(overlap)} = ${numberText(union)}.`,
+        parameters: { pA, pB, overlap, union }
+      });
+    }
+    if (difficulty === "Medium" && mode === 4) {
+      const probability = pick(rng, [0.12, 0.15, 0.2, 0.25, 0.3]);
+      const trials = pick(rng, [100, 200, 400, 500]);
+      const expected = probability * trials;
+      return numeric(ctx, {
+        recipe: "expected-count", stimulus: `An event has probability ${probability} on each of ${trials} trials.`,
+        question: "About how many times is the event expected to occur?", correct: expected,
+        distractors: [trials / probability, trials - expected, probability * 100],
+        explanation: `Expected count is probability times number of trials: ${probability}(${trials}) = ${expected}.`,
+        parameters: { probability, trials, expected }
+      });
+    }
     if (difficulty === "Medium") {
       const setting = pick(rng, DRAW_SETTINGS);
       const favorable = int(rng, 3, 8);
@@ -1836,16 +1890,64 @@
         parameters: { setting, favorable, other }
       });
     }
-    if (mode < 3) {
+    // Hard tier. The addition rule with every term supplied and the expected
+    // count are one-substitution items; both now sit in Medium, and the hard
+    // tier asks for the rearrangement, the complement of "none", and a rate
+    // that has to be weighted across two subgroups.
+    if (tierMode === 0) {
       const pA = pick(rng, [0.3, 0.4, 0.5, 0.6]);
       const pB = pick(rng, [0.2, 0.3, 0.4]);
       const overlap = Math.min(pA, pB) / 2;
       const union = pA + pB - overlap;
       return numeric(ctx, {
-        recipe: "addition-rule", stimulus: `For events A and B, P(A) = ${pA}, P(B) = ${pB}, and P(A and B) = ${overlap}.`,
-        question: "What is P(A or B)?", correct: numberText(union),
-        distractors: [numberText(pA + pB), numberText(overlap), numberText(pA * pB)],
-        explanation: `Use P(A or B) = P(A) + P(B) − P(A and B) = ${pA} + ${pB} − ${overlap} = ${union}.`, parameters: { pA, pB, overlap, union }
+        recipe: "addition-rule-solve-intersection",
+        stimulus: `For events A and B, P(A) = ${pA}, P(B) = ${pB}, and P(A or B) = ${numberText(union)}.`,
+        question: "What is P(A and B)?", correct: numberText(overlap),
+        distractors: [numberText(union), numberText(pA * pB), numberText(pA + pB)],
+        explanation: `Rearrange P(A or B) = P(A) + P(B) − P(A and B). So P(A and B) = ${pA} + ${pB} − ${numberText(union)} = ${numberText(overlap)}.`,
+        parameters: { pA, pB, overlap, union }
+      });
+    }
+    if (tierMode === 1) {
+      const setting = pick(rng, DRAW_SETTINGS);
+      const favorable = int(rng, 2, 5);
+      const other = int(rng, 3, 7);
+      const total = favorable + other;
+      const noneBoth = (other / total) * ((other - 1) / (total - 1));
+      const atLeastOne = 1 - noneBoth;
+      return conceptual(ctx, {
+        recipe: "at-least-one-complement",
+        stimulus: `A ${setting.container} contains ${favorable} ${setting.target} ${setting.plural} and ${other} ${setting.other} ${setting.plural}. Two ${setting.plural} are drawn at random without replacement.`,
+        question: `What is the probability that at least one of the ${setting.plural} drawn is ${setting.target}?`,
+        correct: fraction(total * (total - 1) - other * (other - 1), total * (total - 1)),
+        distractors: [
+          fraction(other * (other - 1), total * (total - 1)),
+          fraction(favorable, total),
+          fraction(favorable * (favorable - 1), total * (total - 1))
+        ],
+        explanation: `"At least one" is the complement of "none." The probability that neither is ${setting.target} is (${other}/${total})(${other - 1}/${total - 1}) = ${fraction(other * (other - 1), total * (total - 1))}, so the answer is 1 minus that: ${fraction(total * (total - 1) - other * (other - 1), total * (total - 1))}.`,
+        parameters: { setting, favorable, other, total }
+      });
+    }
+    if (tierMode === 2) {
+      const groupA = int(rng, 2, 6) * 50;
+      const groupB = int(rng, 2, 6) * 50;
+      const rateA = pick(rng, [10, 20, 40, 50, 60]);
+      const rateB = pick(rng, [10, 20, 40, 50, 60].filter((value) => value !== rateA));
+      const favorable = groupA * rateA / 100 + groupB * rateB / 100;
+      const total = groupA + groupB;
+      return conceptual(ctx, {
+        recipe: "weighted-subgroup-probability",
+        stimulus: `A company has ${groupA} employees at its first site and ${groupB} at its second. ${rateA}% of the first site's employees and ${rateB}% of the second site's employees commute by train.`,
+        question: "If one employee is selected at random from the whole company, what is the probability that the employee commutes by train?",
+        correct: fraction(favorable, total),
+        distractors: [
+          fraction(rateA + rateB, 200),
+          fraction(favorable, groupA),
+          fraction(groupA, total)
+        ],
+        explanation: `Count the commuters, not the percentages: ${rateA}% of ${groupA} is ${groupA * rateA / 100} and ${rateB}% of ${groupB} is ${groupB * rateB / 100}, for ${favorable} of ${total} employees, or ${fraction(favorable, total)}. Averaging ${rateA}% and ${rateB}% would ignore the unequal site sizes.`,
+        parameters: { groupA, groupB, rateA, rateB, favorable, total }
       });
     }
     if (mode === 5) {
@@ -1868,14 +1970,23 @@
         parameters: { yesA, noA, yesB, noB }
       });
     }
-    const probability = pick(rng, [0.12, 0.15, 0.2, 0.25, 0.3]);
-    const trials = pick(rng, [100, 200, 400, 500]);
-    const expected = probability * trials;
-    return numeric(ctx, {
-      recipe: "expected-count", stimulus: `An event has probability ${probability} on each of ${trials} trials.`,
-      question: "About how many times is the event expected to occur?", correct: expected,
-      distractors: [trials / probability, trials - expected, probability * 100],
-      explanation: `Expected count is probability times number of trials: ${probability}(${trials}) = ${expected}.`, parameters: { probability, trials, expected }
+    const setting = pick(rng, DRAW_SETTINGS);
+    const favorable = int(rng, 3, 6);
+    const other = int(rng, 3, 6);
+    const total = favorable + other;
+    const draws = 3;
+    return conceptual(ctx, {
+      recipe: "three-draw-sequence",
+      stimulus: `A ${setting.container} contains ${favorable} ${setting.target} ${setting.plural} and ${other} ${setting.other} ${setting.plural}. Three ${setting.plural} are drawn at random without replacement.`,
+      question: `What is the probability that all three are ${setting.target}?`,
+      correct: fraction(favorable * (favorable - 1) * (favorable - 2), total * (total - 1) * (total - 2)),
+      distractors: [
+        fraction(favorable ** draws, total ** draws),
+        fraction(favorable * (favorable - 1), total * (total - 1)),
+        fraction(favorable, total)
+      ],
+      explanation: `Each draw removes one ${setting.item} of each kind from the counts: (${favorable}/${total})(${favorable - 1}/${total - 1})(${favorable - 2}/${total - 2}) = ${fraction(favorable * (favorable - 1) * (favorable - 2), total * (total - 1) * (total - 2))}. Treating the draws as independent would give ${fraction(favorable ** draws, total ** draws)}.`,
+      parameters: { setting, favorable, other, total }
     });
   }
 
@@ -2376,10 +2487,12 @@
     const other = int(rng, 35, 120 - interior);
     const exterior = interior + other;
     return numeric(ctx, {
-      recipe: "exterior-angle", stimulus: `Two remote interior angles of a triangle measure ${interior}° and ${other}°.`,
-      question: "What is the measure of the exterior angle at the third vertex?", correct: exterior,
-      distractors: [180 - exterior, Math.abs(interior - other), 180 - interior],
-      explanation: `An exterior angle equals the sum of the two remote interior angles: ${interior} + ${other} = ${exterior}°.`, parameters: { interior, other, exterior }
+      recipe: "exterior-angle-chase",
+      stimulus: `In triangle ABC, angle A measures ${interior}° and the exterior angle at C measures ${exterior}°.`,
+      question: "What is the measure of angle B?", correct: other,
+      distractors: [exterior, 180 - exterior, interior],
+      explanation: `An exterior angle equals the sum of the two remote interior angles, so angle A + angle B = ${exterior}. With angle A = ${interior}, angle B = ${exterior} − ${interior} = ${other}°.`,
+      parameters: { interior, other, exterior }
     });
   }
 
@@ -2482,11 +2595,23 @@
       });
     }
     if (mode < 3) {
-      const angle = pick(rng, ctx.practiceSet === 2 ? [10, 15, 45, 50, 55, 60, 65, 70] : [20, 25, 30, 35, 40]);
+      // sin(ax + b)° = cos(cx + d)° holds when the two angles are complementary,
+      // so the item is solved by (a + c)x = 90 − b − d rather than by quoting the
+      // identity. Parameters are chosen to leave x a whole number.
+      const leftCoefficient = pick(rng, [2, 3, 4]);
+      const rightCoefficient = pick(rng, [1, 2, 3]);
+      const angle = leftCoefficient + rightCoefficient;
+      const shift = int(rng, 2, 9);
+      const remainder = 90 - shift;
+      const xValue = Math.floor(remainder / (angle + 1));
+      const secondShift = remainder - angle * xValue;
       return conceptual(ctx, {
-        recipe: "complementary-trig", question: `Which expression is equal to sin ${angle}°?`, correct: `cos ${90 - angle}°`,
-        distractors: [`cos ${angle}°`, `sin ${90 - angle}°`, `tan ${90 - angle}°`],
-        explanation: `Sine and cosine are cofunctions: sin θ = cos(90° − θ). Thus sin ${angle}° = cos ${90 - angle}°.`, parameters: { angle }
+        recipe: "cofunction-solve-angle",
+        stimulus: `In the equation sin(${linearText(leftCoefficient, "x", shift)})° = cos(${linearText(rightCoefficient, "x", secondShift)})°, both angles are acute.`,
+        question: "What is the value of x?", correct: String(xValue),
+        distractors: [String(90 - shift - secondShift), String(shift + secondShift), String(xValue + angle)],
+        explanation: `Sine and cosine are cofunctions, so the two angles are complementary: (${linearText(leftCoefficient, "x", shift)}) + (${linearText(rightCoefficient, "x", secondShift)}) = 90. Combining gives ${angle}x = ${remainder - secondShift}, so x = ${xValue}.`,
+        parameters: { leftCoefficient, rightCoefficient, shift, secondShift, xValue }
       });
     }
     if (mode === 3 || mode === 4) {
@@ -2630,11 +2755,14 @@
       });
     }
     const central = pick(rng, [80, 100, 120, 140, 160]);
-    return numeric(ctx, {
-      recipe: "inscribed-angle", stimulus: `An inscribed angle intercepts an arc measuring ${central}°.`,
-      question: "What is the measure of the inscribed angle?", correct: central / 2,
-      distractors: [central, 360 - central, 180 - central / 2],
-      explanation: `An inscribed angle measures half its intercepted arc: ${central}/2 = ${central / 2}°.`, parameters: { central }
+    return conceptual(ctx, {
+      recipe: "inscribed-angle-with-central",
+      stimulus: `In a circle, central angle AOC measures ${central}°, and point B lies on the major arc AC.`,
+      question: "What is the measure of inscribed angle ABC, and how does it compare with angle AOC?",
+      correct: `${central / 2}°, half of angle AOC`,
+      distractors: [`${central}°, equal to angle AOC`, `${180 - central / 2}°, supplementary to half of angle AOC`, `${2 * central}°, twice angle AOC`],
+      explanation: `An inscribed angle and a central angle that intercept the same arc are related by a factor of two: the inscribed angle ABC measures ${central}/2 = ${central / 2}°, half of the ${central}° central angle.`,
+      parameters: { central }
     });
   }
 
@@ -2661,8 +2789,8 @@
     circles
   };
 
-  function buildSATMathQuestions(seed = "baseline-v4", options = {}) {
-    const normalizedSeed = String(seed).trim() || "baseline-v4";
+  function buildSATMathQuestions(seed = "baseline-v5", options = {}) {
+    const normalizedSeed = String(seed).trim() || "baseline-v5";
     const setId = hash(`${GENERATOR_VERSION}/${normalizedSeed}`).toString(36);
     const practiceSet = Number(options.practiceSet) === 2 ? 2 : 1;
     const variantOffset = practiceSet === 2 ? 25 : 0;

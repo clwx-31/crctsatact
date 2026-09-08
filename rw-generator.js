@@ -6,7 +6,7 @@
     ...Array(9).fill("Medium"),
     ...Array(8).fill("Hard")
   ];
-  const GENERATOR_VERSION = "construct-validity-v4";
+  const GENERATOR_VERSION = "construct-validity-v5";
 
   const SKILLS = [
     { slug: "central-ideas-details", domain: "Information and Ideas", name: "Central Ideas and Details", description: "Identify a text's central idea or accurately interpret a key detail." },
@@ -1317,8 +1317,8 @@
     "form-structure-sense": formStructureSense
   };
 
-  function buildSATRWQuestions(seed = "baseline-v4", options = {}) {
-    const normalizedSeed = String(seed).trim() || "baseline-v4";
+  function buildSATRWQuestions(seed = "baseline-v5", options = {}) {
+    const normalizedSeed = String(seed).trim() || "baseline-v5";
     const setId = hash(`${GENERATOR_VERSION}/${normalizedSeed}`).toString(36);
     const practiceSet = Number(options.practiceSet) === 2 ? 2 : 1;
     const variantOffset = practiceSet === 2 ? 25 : 0;

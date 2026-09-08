@@ -6,7 +6,7 @@ require("./math-generator.js");
 require("./rw-generator.js");
 require("./test-engine.js");
 
-const BASELINE_SEED = "baseline-v4";
+const BASELINE_SEED = "baseline-v5";
 const MINIMUM_RECIPES = 200;   // a floor, so adding a recipe is not a failure
 const STRESS_SEED_COUNT = 100;
 const EXPECTED_SKILLS = {
@@ -181,6 +181,8 @@ function auditMathAnswer(question) {
     case "two-variable-data/residual": return requireNumericAnswer(question, p.observed - p.predicted);
     case "two-variable-data/model-prediction-reverse": return requireNumericAnswer(question, (p.targetY - p.b) / p.m);
     case "two-variable-data/scatterplot-read-value": return requireNumericAnswer(question, p.points.find((point) => point[0] === p.readX)[1]);
+    case "two-variable-data/compare-two-models":
+      return requireNumericAnswer(question, (p.firstStart - p.secondStart) / (p.secondSlope - p.firstSlope));
     case "probability/independent-intersection": return requireNumericAnswer(question, p.pA * p.pB);
     case "probability/addition-rule": return requireNumericAnswer(question, p.pA + p.pB - p.overlap);
     case "probability/expected-count": return requireNumericAnswer(question, p.probability * p.trials);
@@ -219,6 +221,7 @@ function auditMathAnswer(question) {
     case "two-variable-data/prediction-residual-gap": return requireNumericAnswer(question, p.slope * p.xVal + p.intercept - p.observed);
     case "area-volume/cylinder-radius-from-volume": return requireNumericAnswer(question, Math.sqrt(p.volume / p.height));
     case "linear-equations-two/standard-form-slope": return requireNumericAnswer(question, -p.a / p.b);
+    case "linear-equations-two/x-intercept-from-equation": return requireNumericAnswer(question, -p.intercept / p.gradient);
     case "nonlinear-systems/circle-horizontal-line": return requireNumericAnswer(question, Math.abs(p.y) < p.radius ? 2 : Math.abs(p.y) === p.radius ? 1 : 0);
     case "probability/simple-probability": return requireNumericAnswer(question, p.favorable / (p.favorable + p.other));
     case "probability/conditional-table": return requireNumericAnswer(question, p.bYes / (p.aYes + p.bYes));
@@ -228,6 +231,16 @@ function auditMathAnswer(question) {
     case "probability/union-of-categories": return requireNumericAnswer(question, (p.favorable + p.other) / (p.favorable + p.other + p.third));
     case "probability/joint-from-table": return requireNumericAnswer(question, p.aNo / (p.aYes + p.aNo + p.bYes + p.bNo));
     case "probability/without-replacement-pair": return requireNumericAnswer(question, p.favorable * (p.favorable - 1) / ((p.favorable + p.other) * (p.favorable + p.other - 1)));
+    case "probability/addition-rule-solve-intersection": return requireNumericAnswer(question, p.pA + p.pB - p.union);
+    case "probability/at-least-one-complement":
+      return requireNumericAnswer(question, 1 - (p.other * (p.other - 1)) / (p.total * (p.total - 1)));
+    case "probability/weighted-subgroup-probability":
+      return requireNumericAnswer(question, (p.groupA * p.rateA / 100 + p.groupB * p.rateB / 100) / (p.groupA + p.groupB));
+    case "probability/three-draw-sequence":
+      return requireNumericAnswer(
+        question,
+        (p.favorable * (p.favorable - 1) * (p.favorable - 2)) / (p.total * (p.total - 1) * (p.total - 2))
+      );
     case "sample-inference/sample-size-margin": return requireNumericAnswer(question, 1 / Math.sqrt(p.factor));
     case "area-volume/surface-area-scale": return requireNumericAnswer(question, Math.sqrt(p.ratioN / p.ratioD));
     case "right-triangles-trig/trig-ratio": return requireNumericAnswer(question, p.kind === "cos" ? p.b / p.c : p.kind === "tan" ? p.a / p.b : p.a / p.c);
@@ -236,6 +249,9 @@ function auditMathAnswer(question) {
     case "right-triangles-trig/identify-trig-ratio": return requireNumericAnswer(question, p.a / p.b);
     case "right-triangles-trig/side-from-sine": return requireNumericAnswer(question, p.c * (p.triple[0] / p.triple[2]));
     case "right-triangles-trig/thirty-sixty-ninety": return requireNumericAnswer(question, 2 * p.short);
+    case "right-triangles-trig/cofunction-solve-angle":
+      return requireNumericAnswer(question, (90 - p.shift - p.secondShift) / (p.leftCoefficient + p.rightCoefficient));
+    case "lines-angles-triangles/exterior-angle-chase": return requireNumericAnswer(question, p.exterior - p.interior);
     case "right-triangles-trig/unit-circle-radians": return requireApproxAnswer(question, Math.cos(radiansFromText(p.entry.angle)));
     default: return recipe;
   }
@@ -249,7 +265,7 @@ for (const question of questions) {
   for (const field of ["id", "section", "domain", "skill", "difficulty", "type", "question", "explanation", "meta"]) {
     if (!question[field]) fail(`${question.id || "Unknown question"} is missing ${field}.`);
   }
-  if (!question.meta?.recipe || question.meta.generationVersion !== "construct-validity-v4" || question.meta.seed !== BASELINE_SEED || !question.meta.parameters || ![1, 2].includes(question.meta.practiceSet) || question.practiceSet !== question.meta.practiceSet) fail(`${question.id} has incomplete generation provenance.`);
+  if (!question.meta?.recipe || question.meta.generationVersion !== "construct-validity-v5" || question.meta.seed !== BASELINE_SEED || !question.meta.parameters || ![1, 2].includes(question.meta.practiceSet) || question.practiceSet !== question.meta.practiceSet) fail(`${question.id} has incomplete generation provenance.`);
   if (!["Easy", "Medium", "Hard"].includes(question.difficulty)) fail(`${question.id} has an invalid difficulty.`);
   if (question.type === "mcq") {
     if (!Array.isArray(question.choices) || question.choices.length !== 4) fail(`${question.id} must have four choices.`);

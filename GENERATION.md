@@ -35,14 +35,14 @@ This floor is the reason the earlier generator prefixed each item with a generic
 
 Every question records `practiceSet`, `meta.practiceSet`, `meta.recipe`, `meta.generationVersion`, `meta.seed`, `meta.variant`, `meta.parameters`, and `meta.generationAttempt`. IDs include the skill slug, versioned seed hash, and variant number, so Set 1 progress cannot overwrite Set 2 progress and a revised generator cannot reuse an earlier question's saved answer. Generation checks content signatures across both sets and stops with an error rather than accepting a duplicate after its retry limit.
 
-The default seed is `baseline-v4`. This version marks the item-variety pass of September 2026, which rebuilt the Math easy and medium tiers, so saved answers from the earlier bank cannot be attached to revised questions. The dashboard's **Today's set** button uses `daily-YYYY-MM-DD`; **New variant** uses `variant-N`. A developer can reproduce a bank directly:
+The default seed is `baseline-v5`. This version marks the difficulty-recalibration pass of September 2026, which rebuilt the Math easy and medium tiers and corrected the hard-tier misassignments, so saved answers from the earlier bank cannot be attached to revised questions. The dashboard's **Today's set** button uses `daily-YYYY-MM-DD`; **New variant** uses `variant-N`. A developer can reproduce a bank directly:
 
 ```js
 const math = window.buildSATMathQuestions("daily-2026-09-03");
 const readingWriting = window.buildSATRWQuestions("daily-2026-09-03");
 ```
 
-Those calls return Set 1. Every ID and metadata record also includes the `construct-validity-v4` generator version, preventing saved daily or numbered-variant answers from being attached to content produced by a later generator. To produce both permanent sets exactly as the website does:
+Those calls return Set 1. Every ID and metadata record also includes the `construct-validity-v5` generator version, preventing saved daily or numbered-variant answers from being attached to content produced by a later generator. To produce both permanent sets exactly as the website does:
 
 ```js
 const mathSets = window.buildSATMathQuestionSets("daily-2026-09-03");
@@ -135,4 +135,4 @@ These remain instructional tiers. They have not been equated on a student popula
 - All items are original and derived from skill definitions and question structures, not copied official questions.
 - Difficulty is an instructional construction based on steps, abstraction, representation, and distractor closeness. It has not been statistically equated on a student population.
 - A generated bank is a drill library, not an adaptive scored SAT form. Use official Bluebook practice tests for score prediction, timing, and adaptive-module experience.
-- Generator changes that alter an existing seed's output should use a new baseline version such as `baseline-v4` so old progress remains interpretable.
+- Generator changes that alter an existing seed's output should use a new baseline version such as `baseline-v5` so old progress remains interpretable.

@@ -1,5 +1,7 @@
 # Form — SAT Practice
 
+**▶ [Open the live site — clwx-31.github.io/crctsatact](https://clwx-31.github.io/crctsatact/)**
+
 A no-build digital SAT practice site organized around exact College Board skill categories.
 
 - 1,000 generated Math questions across 20 targeted selectors
@@ -16,10 +18,6 @@ A no-build digital SAT practice site organized around exact College Board skill 
 - optional timers, deferred test feedback, score estimates and uncertainty ranges, domain results, and test history
 
 All questions are original. This project is independent and is not affiliated with or endorsed by College Board. SAT is a registered trademark of College Board.
-
-## Live site
-
-[Open Form SAT Practice](https://clwx-31.github.io/crctsatact/)
 
 ## Run the site
 
