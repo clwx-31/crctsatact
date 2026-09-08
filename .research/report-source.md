@@ -52,6 +52,18 @@ The `baseline-v4` pass rebuilds those tiers with seventy-five added recipes, rai
 
 The lesson from the v2 correction repeats with a refinement. It is not enough to re-derive claims from generated output; a property that depends on a random draw must be measured across many draws, or the measurement records a coincidence.
 
+### Correction: the hard tiers held items easier than their own medium tiers
+
+A difficulty audit on 2026-09-08 compared each Math recipe's tier against the work the item actually requires. Reading and Writing held up: its authored case pools move from a plain relationship to a near-miss to a concession or a leakage argument, and the tiers are ordered. Math did not.
+
+Six recipes labeled Hard were easier than the Medium recipes in the same skill. `association-direction` asked which way a rising scatterplot trends. `expected-count` was one multiplication. `addition-rule` supplied every term of the formula and asked for one substitution. `complementary-trig` asked the solver to quote sin θ = cos(90° − θ) with no triangle present. `inscribed-angle` was one division, and `exterior-angle` one addition. Against these, the Medium tiers of the same skills asked for a residual, a two-draw probability without replacement, a side recovered from a given sine, an arc length, and a similar-triangle proportion.
+
+The cause is visible in the v3 record: that pass raised the hard ceiling by adding harder recipes and never removed the routine ones already occupying the tier. A floor on the number of hard recipes counts molds, not difficulty, so it could not detect this.
+
+The `baseline-v5` pass replaces each of the six with a form that needs the same concept and real work, and demotes the originals to the tier that matches them. The measurable separation improved but stayed modest: mean solution operations in the hard tier moved from 2.7 to 2.8 against 2.3 in the easy tier. That number should not be read as a difficulty measure — a conceptual item performs no arithmetic and scores zero regardless of how hard it is — which is why the audit was done by reading tier assignments against their own skill's medium items rather than by ranking a proxy.
+
+The lesson extends the previous two. Re-deriving a claim from generated output catches invented variety; measuring across many draws catches lucky variety; neither catches a property that no check was ever pointed at. "Difficulty is a property of the item" was enforced only as "no item appears under two labels", which is satisfied by a bank whose tiers are ordered wrongly but consistently.
+
 The framework also explains that College Board keeps the number of child questions from each automated parent model relatively low, reviews every permitted Reading and Writing variable in advance, constrains Math parameters for equivalent challenge, and subjects content to expert, editorial, fairness, and statistical review. The local generators can adopt the first three design principles but cannot reproduce College Board's field testing or psychometric calibration. This remains an important limit on any “true SAT” claim.
 
 ### Taxonomy resolution
@@ -64,7 +76,7 @@ The framework treats textual and quantitative Command of Evidence as distinct te
 
 The recipe catalog covers every testing point named in the framework, including algebraic manipulation and equations; nonlinear functions and systems; ratios, percentages, data, probability, inference, and study design; area, volume, similarity, angle relationships, trigonometry, unit-circle relationships, and circles. Reading and Writing recipes cover central ideas, details, evidence, inference, vocabulary in context, text purpose and structure, cross-text connections, rhetorical synthesis, transitions, sentence boundaries, and form/structure/sense conventions.
 
-Two equal 25-question sets support isolated repetition without reusing content. Each set spans the same 228 generator recipes. The skill banks intentionally do not reproduce the domain proportions in a real adaptive module; test-mode forms use separate blueprint quotas. The detailed recipe-to-skill inventory is maintained in `GENERATION.md`.
+Two equal 25-question sets support isolated repetition without reusing content. Each set spans the same 231 generator recipes. The skill banks intentionally do not reproduce the domain proportions in a real adaptive module; test-mode forms use separate blueprint quotas. The detailed recipe-to-skill inventory is maintained in `GENERATION.md`.
 
 ### Generation and answer integrity
 

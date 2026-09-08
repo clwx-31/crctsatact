@@ -66,7 +66,7 @@ It also enforces construct validity, which structural checks alone cannot see:
 - three test-wiseness heuristics — topic-word overlap, longest choice, and eliminating absolutes — must stay at or below 40% per skill, against a 25% chance baseline
 - no question may appear under more than one difficulty label
 - every Reading and Writing question in a skill must be distinct once decorative digits are normalized, so a year or a counter cannot pass as item variation
-- each Math hard tier must draw on at least three recipes
+- each Math hard tier must draw on at least three recipes, and a recipe belongs there only if it takes more work than the same skill's medium recipes
 - every tier of every skill must produce at least four distinct item shapes per set, on the baseline bank and on all 100 alternate seeds, so one question with a rewritten sample size cannot fill a tier
 - any recipe with a numeric answer must have an independent recalculation in the validator
 
