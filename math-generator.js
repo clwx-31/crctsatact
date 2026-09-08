@@ -741,7 +741,7 @@
         return conceptual(ctx, {
           recipe: "difference-of-squares", question: `Which expression is equivalent to ${a * a}x² − ${b * b}?`,
           correct: `(${a}x − ${b})(${a}x + ${b})`,
-          distractors: [`(${a}x − ${b})²`, `(${a}x + ${b})²`, `(${a}x − ${b})(${a}x − ${b})`],
+          distractors: [`(${a}x − ${b})²`, `(${a}x + ${b})²`, `(${a}x − ${b * b})(${a}x + 1)`],
           explanation: `This is a difference of squares: (${a}x)² − ${b}² = (${a}x − ${b})(${a}x + ${b}).`, parameters: { a, b }
         });
       }
@@ -756,13 +756,32 @@
           explanation: `Combine like terms: (${a} + ${a + 1})x² = ${2 * a + 1}x² and (${b} + ${c})x = ${b + c}x.`, parameters: { a, b, c }
         });
       }
+      // All four choices are factored, so two of them coincide whenever their
+      // root pairs match. Compare the pairs directly rather than enumerate the
+      // cases: p = -q collapses the sign-flipped choice onto the key, and
+      // {sum, product} = {p, q} collapses the last one.
+      const rootPair = (first, second) => [first, second].sort((left, right) => left - right).join(",");
+      const choicesCollide = (first, second) => {
+        const pairs = [
+          rootPair(-first, -second),
+          rootPair(first, second),
+          rootPair(-first, second),
+          rootPair(-(first + second), -(first * second))
+        ];
+        return new Set(pairs).size !== pairs.length;
+      };
       const p = nonzero(rng, -9, 9);
-      const q = nonzero(rng, -9, 9);
+      let q = nonzero(rng, -9, 9);
+      let guard = 0;
+      while (guard < 80 && choicesCollide(p, q)) {
+        q = nonzero(rng, -9, 9);
+        guard += 1;
+      }
       const sum = p + q;
       const product = p * q;
       return conceptual(ctx, {
         recipe: "factor-monic-quadratic", question: `Which expression is equivalent to x² ${signedTerm(sum, "x")} ${signedTerm(product)}?`, correct: `(x ${signedTerm(p)})(x ${signedTerm(q)})`,
-        distractors: [`x² ${signedTerm(-sum, "x")} ${signedTerm(product)}`, `x² ${signedTerm(sum, "x")} ${signedTerm(-product)}`, `x² ${signedTerm(product, "x")} ${signedTerm(sum)}`],
+        distractors: [`(x ${signedTerm(-p)})(x ${signedTerm(-q)})`, `(x ${signedTerm(p)})(x ${signedTerm(-q)})`, `(x ${signedTerm(sum)})(x ${signedTerm(product)})`],
         explanation: `The constants ${p} and ${q} add to ${sum} and multiply to ${product}, so the expression factors as (x + (${p}))(x + (${q})).`, parameters: { p, q }
       });
     }
@@ -820,7 +839,10 @@
     }
     if (mode < 3) {
       const a = int(rng, 2, 7);
-      const b = int(rng, 2, 8);
+      // The swapped-numerator distractor is only wrong when the coefficients
+      // differ; equal ones would make it the same expression as the key.
+      let b = int(rng, 2, 8);
+      while (b === a) b = int(rng, 2, 8);
       return conceptual(ctx, {
         recipe: "rational-combination", question: `For x ≠ 0, which expression is equivalent to ${a}/x + ${b}/x²?`, correct: `(${a}x + ${b})/x²`,
         distractors: [`${a + b}/x³`, `(${a} + ${b}x)/x²`, `${a + b}/x²`],
@@ -1673,6 +1695,23 @@
       });
     }
     if (tierMode === 0) {
+      const slope = pick(rng, [3, 4, 5, 6]);
+      const intercept = int(rng, 4, 20);
+      const gaps = [1, -2, 5, -1];
+      const worst = gaps.indexOf(5);
+      const rows = gaps.map((gap, index) => [index + 2, slope * (index + 2) + intercept + gap]);
+      return conceptual(ctx, {
+        recipe: "largest-residual",
+        table: { caption: `${context.yName} at each value of x`, headers: ["x", "y"], rows },
+        stimulus: `The line of best fit for the data is y = ${linearText(slope, "x", intercept)}.`,
+        question: "For which value of x does the observed value differ most from the value the model predicts?",
+        correct: String(rows[worst][0]),
+        distractors: rows.filter((_, index) => index !== worst).map((row) => String(row[0])),
+        explanation: `Predict at each x and subtract: the model gives ${rows.map((row) => `${slope}(${row[0]}) ${signedTerm(intercept)} = ${slope * row[0] + intercept}`).join(", ")}. The observed values differ by ${gaps.join(", ")}, and the largest gap in size is ${gaps[worst]}, at x = ${rows[worst][0]}.`,
+        parameters: { slope, intercept, gaps, rows, worst }
+      });
+    }
+    if (difficulty === "Medium" && tierMode === 3) {
       const factor = pick(rng, ctx.practiceSet === 2 ? [0.5, 0.75, 0.8, 1.05, 1.3, 1.4, 1.6, 1.75, 2.5] : [1.1, 1.2, 1.25, 1.5, 2]);
       return conceptual(ctx, {
         recipe: "model-selection", stimulus: `In a data set relating ${context.xName} to ${context.yName}, each 1-unit increase in x is associated with multiplying y by approximately ${factor}.`,
@@ -2571,13 +2610,17 @@
       });
     }
     if (difficulty === "Medium") {
-      const opposite = a;
+      // A scale factor of 1 would make the hypotenuse equal the triple's own,
+      // and the answer would just be the numerator already shown in the stem.
+      const sideScale = scale > 1 ? scale : int(rng, 2, 6);
+      const scaledHypotenuse = triple[2] * sideScale;
+      const opposite = triple[0] * sideScale;
       return numeric(ctx, {
-        recipe: "side-from-sine", stimulus: `In right triangle ABC, the right angle is at C, sin A = ${fraction(triple[0], triple[2])}, and the hypotenuse AB has length ${c}.`,
+        recipe: "side-from-sine", stimulus: `In right triangle ABC, the right angle is at C, sin A = ${fraction(triple[0], triple[2])}, and the hypotenuse AB has length ${scaledHypotenuse}.`,
         question: "What is the length of side BC, which is opposite angle A?", correct: opposite,
-        distractors: [b, c - a, triple[0]],
-        explanation: `sin A is the ratio of the opposite side to the hypotenuse, so BC = ${fraction(triple[0], triple[2])} × ${c} = ${opposite}.`,
-        parameters: { a, b, c, triple, opposite }
+        distractors: [triple[1] * sideScale, scaledHypotenuse - opposite, triple[0]],
+        explanation: `sin A is the ratio of the opposite side to the hypotenuse, so BC = ${fraction(triple[0], triple[2])} × ${scaledHypotenuse} = ${opposite}.`,
+        parameters: { triple, sideScale, scaledHypotenuse, opposite }
       });
     }
     if (mode === 2) {

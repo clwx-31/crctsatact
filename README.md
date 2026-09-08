@@ -68,6 +68,7 @@ It also enforces construct validity, which structural checks alone cannot see:
 - every Reading and Writing question in a skill must be distinct once decorative digits are normalized, so a year or a counter cannot pass as item variation
 - each Math hard tier must draw on at least three recipes, and a recipe belongs there only if it takes more work than the same skill's medium recipes
 - every tier of every skill must produce at least four distinct item shapes per set, on the baseline bank and on all 100 alternate seeds, so one question with a rewritten sample size cannot fill a tier
+- no two choices in a question may be the same expression written differently, checked by evaluating every algebraic choice at several values of x
 - any recipe with a numeric answer must have an independent recalculation in the validator
 
 ## Calibration sources

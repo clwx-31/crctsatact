@@ -181,6 +181,15 @@ function auditMathAnswer(question) {
     case "two-variable-data/residual": return requireNumericAnswer(question, p.observed - p.predicted);
     case "two-variable-data/model-prediction-reverse": return requireNumericAnswer(question, (p.targetY - p.b) / p.m);
     case "two-variable-data/scatterplot-read-value": return requireNumericAnswer(question, p.points.find((point) => point[0] === p.readX)[1]);
+    case "two-variable-data/largest-residual": {
+      let bestIndex = 0;
+      let bestGap = -Infinity;
+      p.rows.forEach((row, index) => {
+        const gap = Math.abs(row[1] - (p.slope * row[0] + p.intercept));
+        if (gap > bestGap) { bestGap = gap; bestIndex = index; }
+      });
+      return requireNumericAnswer(question, p.rows[bestIndex][0]);
+    }
     case "two-variable-data/compare-two-models":
       return requireNumericAnswer(question, (p.firstStart - p.secondStart) / (p.secondSlope - p.firstSlope));
     case "probability/independent-intersection": return requireNumericAnswer(question, p.pA * p.pB);
@@ -582,6 +591,54 @@ const HEURISTICS = {
     return surviving.length === 1 ? surviving[0] : -1;
   }
 };
+
+// Two choices that are the same expression written differently — "(3x − 2)²"
+// against "(3x − 2)(3x − 2)" — leave the item a two-way guess. Choices are
+// converted to evaluable form and compared at several values of x; anything
+// that does not parse cleanly is skipped rather than guessed at.
+function evaluableForm(text) {
+  const cleaned = String(text)
+    .replace(/−/g, "-").replace(/×/g, "*").replace(/·/g, "*")
+    .replace(/√/g, "#").replace(/π/g, "#").replace(/∛/g, "#")
+    .replace(/\s+/g, "");
+  if (!/^[-+*/^().0-9x²³]+$/.test(cleaned) || !cleaned.includes("x")) return null;
+  return cleaned
+    .replace(/²/g, "**2").replace(/³/g, "**3")
+    .replace(/\)\(/g, ")*(")
+    .replace(/(\d)\(/g, "$1*(")
+    .replace(/\)(\d)/g, ")*$1")
+    .replace(/(\d)x/g, "$1*x")
+    .replace(/\)x/g, ")*x")
+    .replace(/\^/g, "**");
+}
+
+function expressionValues(text) {
+  const form = evaluableForm(text);
+  if (!form) return null;
+  try {
+    const fn = new Function("x", `return ${form};`);
+    const values = [2, 3, 5, 7].map((x) => fn(x));
+    return values.every((value) => Number.isFinite(value)) ? values : null;
+  } catch {
+    return null;
+  }
+}
+
+for (const question of questions) {
+  if (question.type !== "mcq") continue;
+  const evaluated = question.choices.map(expressionValues);
+  for (let left = 0; left < 4; left += 1) {
+    for (let right = left + 1; right < 4; right += 1) {
+      if (!evaluated[left] || !evaluated[right]) continue;
+      if (evaluated[left].every((value, index) => Math.abs(value - evaluated[right][index]) < 1e-9)) {
+        fail(
+          `${question.id} [${question.meta.recipe}]: choices "${question.choices[left]}" and ` +
+          `"${question.choices[right]}" are the same expression, so the item is not a four-way choice.`
+        );
+      }
+    }
+  }
+}
 
 const skillNames = [...new Set(questions.map((question) => question.skill))];
 

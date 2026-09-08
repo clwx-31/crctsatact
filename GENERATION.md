@@ -122,7 +122,7 @@ These remain instructional tiers. They have not been equated on a student popula
 
 1. Add the recipe inside the generator for its exact skill; do not create an unofficial skill label just for a subtype.
 2. Generate parameters from a known solution or relationship. Avoid solving a randomly generated problem after the fact when backward construction can guarantee clean values.
-3. Give each distractor a reason: sign error, wrong denominator, reciprocal, incorrect growth factor, wrong comparison group, overstatement, punctuation misconception, or another identifiable error.
+3. Give each distractor a reason: sign error, wrong denominator, reciprocal, incorrect growth factor, wrong comparison group, overstatement, punctuation misconception, or another identifiable error. Keep every choice in the same form as the key: if the key is factored and the distractors are not, the item is answerable without factoring. Check that no two choices are the same expression written differently.
 4. Record every parameter required to independently recompute the answer in `meta.parameters`.
 5. Keep Math student-response answers within the accepted integer, decimal, or fraction conventions, and always provide an accepted response that fits the SAT's five-character answer grid. Do not require symbols in a student response.
 6. Add an independent recalculation case to `validate.js` for any new numerical recipe. The validator now fails if a recipe with a numeric answer has none, so this is enforced rather than remembered.
